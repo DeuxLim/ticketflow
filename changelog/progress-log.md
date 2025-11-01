@@ -1586,3 +1586,53 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by ranking oversized app-owned screens/controllers. Avoid shadcn primitives and broad test files unless a specific defect requires it.
+
+## 2026-04-29 18:35 +08:00 - Reduced Ticket Details Mutation Duplication
+
+- Scanned oversized app-owned files and repeated function blocks.
+- Picked `frontend/src/features/workspace/pages/TicketDetailsPage.tsx` as the safest next target because it is large, app-owned, and covered by focused tests.
+- Centralized repeated ticket query invalidation blocks into local helpers:
+  - ticket record invalidation
+  - ticket activity invalidation
+  - ticket comments invalidation
+  - ticket attachments invalidation
+  - ticket list invalidation
+  - common combined invalidation flows
+- Kept mutation functions, API requests, query keys, and UI behavior unchanged.
+- Noted that a new `Add root dev runner` commit re-added root package files; those were restored to avoid mixing unrelated changes into this refactor.
+
+Verification:
+- `frontend`: focused ticket-details test run passed, 3 files / 20 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting one read-only `TicketDetailsPage.tsx` presentation section or one mutation group into a focused module.
+
+## 2026-04-29 18:40 +08:00 - Extracted Ticket Details Overview Cards
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsOverviewCards.tsx`.
+- Moved read-only ticket-details presentation rendering out of `TicketDetailsPage.tsx`:
+  - ticket summary card
+  - activity timeline card
+  - SLA card
+  - ticket tools card
+  - custom fields card
+- Moved presentation-only helpers with the new components:
+  - full-name formatting
+  - activity action humanization
+  - custom-field value formatting
+  - detail item rendering
+- Kept mutation orchestration, comments editing, and dialog wiring in `TicketDetailsPage.tsx` for a later, separate slice.
+
+Verification:
+- `frontend`: focused ticket-details page tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting comments rendering/editing or one mutation group from `TicketDetailsPage.tsx`.
