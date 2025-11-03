@@ -1658,3 +1658,24 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting one mutation group or dialog wiring group from `TicketDetailsPage.tsx`.
+
+## 2026-04-30 22:24 +08:00 - Extracted Ticket Details Header
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsHeader.tsx`.
+- Moved ticket header rendering and action button state rules out of `TicketDetailsPage.tsx`:
+  - ticket number, status, and priority badges
+  - title and description display
+  - quick transition buttons
+  - add-comment, follow/unfollow, edit, and delete action buttons
+- Kept confirmation prompts, mutations, route navigation, and query invalidation in `TicketDetailsPage.tsx`.
+- Reduced `TicketDetailsPage.tsx` to 767 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting one mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
