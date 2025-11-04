@@ -6,7 +6,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
-  addWorkspaceTicketWatcher,
   createWorkspaceChecklistItem,
   createWorkspaceRelatedTicket,
   createWorkspaceTicketComment,
@@ -20,7 +19,6 @@ import {
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
   reorderWorkspaceChecklistItems,
-  removeWorkspaceTicketWatcher,
   transitionWorkspaceTicket,
   updateWorkspaceChecklistItem,
   updateWorkspaceTicketComment,
@@ -59,6 +57,7 @@ import {
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
+import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
@@ -344,18 +343,10 @@ export function TicketDetailsPage() {
     },
   });
 
-  const addWatcher = useMutation({
-    mutationFn: () => addWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? ''),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
-  });
-
-  const removeWatcher = useMutation({
-    mutationFn: (watcherId: number) => removeWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? '', watcherId),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
+  const { addWatcher, removeWatcher } = useTicketDetailsWatcherMutations({
+    workspaceSlug,
+    ticketId,
+    onSuccess: invalidateTicketAndActivity,
   });
 
   const addChecklistItem = useMutation({
