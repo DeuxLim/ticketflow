@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "setup": "composer --working-dir=backend install && npm install --prefix frontend",
+    "dev": "concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#86efac\" -n api,queue,logs,frontend \"php backend/artisan serve --host=127.0.0.1 --port=8000\" \"php backend/artisan queue:listen --tries=1 --timeout=0\" \"php backend/artisan pail --timeout=0\" \"npm run dev --prefix frontend -- --host 127.0.0.1 --port 5173\" --kill-others"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
