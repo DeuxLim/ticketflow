@@ -6,10 +6,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
-  createWorkspaceChecklistItem,
   createWorkspaceRelatedTicket,
   createWorkspaceTicketComment,
-  deleteWorkspaceChecklistItem,
   deleteWorkspaceRelatedTicket,
   deleteWorkspaceTicket,
   deleteWorkspaceTicketComment,
@@ -17,9 +15,7 @@ import {
   listWorkspaceTicketActivity,
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
-  reorderWorkspaceChecklistItems,
   transitionWorkspaceTicket,
-  updateWorkspaceChecklistItem,
   updateWorkspaceTicketComment,
   updateWorkspaceTicket,
   uploadWorkspaceTicketAttachment,
@@ -57,11 +53,12 @@ import {
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
 import { useTicketDetailsAttachmentMutations } from '@/features/workspace/pages/useTicketDetailsAttachmentMutations';
+import { useTicketDetailsChecklistMutations } from '@/features/workspace/pages/useTicketDetailsChecklistMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketChecklistItem, TicketComment } from '@/types/api';
+import type { Ticket, TicketComment } from '@/types/api';
 
 type AuthUser = {
   id: number;
@@ -341,36 +338,19 @@ export function TicketDetailsPage() {
     onSuccess: invalidateTicketAndActivity,
   });
 
-  const addChecklistItem = useMutation({
-    mutationFn: (values: ChecklistForm) =>
-      createWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', { title: values.title }),
-    onSuccess: () => {
+  const {
+    addChecklistItem,
+    updateChecklistItem,
+    deleteChecklistItem,
+    reorderChecklistItems,
+  } = useTicketDetailsChecklistMutations({
+    workspaceSlug,
+    ticketId,
+    onAddSuccess: () => {
       checklistForm.reset({ title: '' });
       invalidateTicketAndActivity();
     },
-  });
-
-  const updateChecklistItem = useMutation({
-    mutationFn: ({ itemId, values }: { itemId: number; values: Partial<TicketChecklistItem> }) =>
-      updateWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId, values as Record<string, unknown>),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
-  });
-
-  const deleteChecklistItem = useMutation({
-    mutationFn: (itemId: number) => deleteWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
-  });
-
-  const reorderChecklistItems = useMutation({
-    mutationFn: (items: Array<{ id: number; sort_order: number }>) =>
-      reorderWorkspaceChecklistItems(workspaceSlug ?? '', ticketId ?? '', items),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
+    onMutationSuccess: invalidateTicketAndActivity,
   });
 
   const addRelatedTicket = useMutation({
