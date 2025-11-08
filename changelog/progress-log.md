@@ -1714,6 +1714,23 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting related-ticket mutations or another small support dialog wiring group from `TicketDetailsPage.tsx`.
 
+## 2026-05-01 08:26 +08:00 - Extracted Related Ticket Mutations
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsRelatedTicketMutations.ts`.
+- Moved related-ticket add/delete mutations out of `TicketDetailsPage.tsx`.
+- Kept related-ticket form reset, panel close, and query invalidation in the route through injected callbacks.
+- Reduced `TicketDetailsPage.tsx` to 720 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting comment mutations, ticket action mutations, or support dialog wiring from `TicketDetailsPage.tsx`.
+
 ## 2026-05-01 08:22 +08:00 - Extracted Ticket Attachment Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsAttachmentMutations.ts`.
