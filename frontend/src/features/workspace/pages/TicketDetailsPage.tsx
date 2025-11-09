@@ -6,17 +6,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
-  createWorkspaceTicketComment,
   deleteWorkspaceTicket,
-  deleteWorkspaceTicketComment,
   getWorkspaceTicket,
   listWorkspaceTicketActivity,
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
   transitionWorkspaceTicket,
-  updateWorkspaceTicketComment,
   updateWorkspaceTicket,
-  uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/api/ticketDetailsApi';
 import { TicketDetailsCommentsCard } from '@/features/workspace/pages/TicketDetailsCommentsCard';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
@@ -52,6 +48,7 @@ import {
 } from '@/features/workspace/pages/ticketForm';
 import { useTicketDetailsAttachmentMutations } from '@/features/workspace/pages/useTicketDetailsAttachmentMutations';
 import { useTicketDetailsChecklistMutations } from '@/features/workspace/pages/useTicketDetailsChecklistMutations';
+import { useTicketDetailsCommentMutations } from '@/features/workspace/pages/useTicketDetailsCommentMutations';
 import { useTicketDetailsRelatedTicketMutations } from '@/features/workspace/pages/useTicketDetailsRelatedTicketMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
@@ -223,45 +220,23 @@ export function TicketDetailsPage() {
     invalidateTicketComments();
   };
 
-  const addComment = useMutation({
-    mutationFn: async (values: CommentForm) => {
-      const response = await createWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', values) as { data: TicketComment };
-
-      const commentId = response.data.id;
-
-      for (const file of commentFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('comment_id', String(commentId));
-
-        await uploadWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', formData);
-      }
-
-      return response;
-    },
-    onSuccess: () => {
+  const { addComment, updateComment, deleteComment } = useTicketDetailsCommentMutations({
+    workspaceSlug,
+    ticketId,
+    commentFiles,
+    onAddSuccess: () => {
       commentForm.reset({ body: '', is_internal: false });
       setCommentFiles([]);
       setIsCommentOpen(false);
       invalidateTicketThread();
     },
-  });
-
-  const updateComment = useMutation({
-    mutationFn: ({ commentId, body }: { commentId: number; body: string }) =>
-      updateWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', commentId, { body }),
-    onSuccess: () => {
+    onUpdateSuccess: () => {
       setEditingCommentId(null);
       setEditingCommentBody('');
       invalidateTicketComments();
       invalidateTicketActivity();
     },
-  });
-
-  const deleteComment = useMutation({
-    mutationFn: (commentId: number) =>
-      deleteWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', commentId),
-    onSuccess: () => {
+    onDeleteSuccess: () => {
       invalidateTicketComments();
       invalidateTicketActivity();
       invalidateTicketAttachments();

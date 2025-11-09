@@ -1731,6 +1731,23 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting comment mutations, ticket action mutations, or support dialog wiring from `TicketDetailsPage.tsx`.
 
+## 2026-05-01 08:28 +08:00 - Extracted Ticket Comment Mutations
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsCommentMutations.ts`.
+- Moved comment add/update/delete mutations out of `TicketDetailsPage.tsx`, including comment attachment upload handling.
+- Kept comment form reset, editing state reset, panel close, and query invalidation in the route through injected callbacks.
+- Reduced `TicketDetailsPage.tsx` to 695 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting ticket action mutations or support dialog wiring from `TicketDetailsPage.tsx`.
+
 ## 2026-05-01 08:22 +08:00 - Extracted Ticket Attachment Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsAttachmentMutations.ts`.
