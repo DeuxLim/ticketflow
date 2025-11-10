@@ -1,18 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
-  deleteWorkspaceTicket,
   getWorkspaceTicket,
   listWorkspaceTicketActivity,
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
-  transitionWorkspaceTicket,
-  updateWorkspaceTicket,
 } from '@/features/workspace/api/ticketDetailsApi';
 import { TicketDetailsCommentsCard } from '@/features/workspace/pages/TicketDetailsCommentsCard';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
@@ -40,9 +37,7 @@ import {
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/api/ticketPageApi';
 import {
   applyTicketFormFieldErrors,
-  buildCustomFieldPayload,
   filterCustomFieldsByTemplate,
-  parseTicketTags,
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
@@ -50,11 +45,12 @@ import { useTicketDetailsAttachmentMutations } from '@/features/workspace/pages/
 import { useTicketDetailsChecklistMutations } from '@/features/workspace/pages/useTicketDetailsChecklistMutations';
 import { useTicketDetailsCommentMutations } from '@/features/workspace/pages/useTicketDetailsCommentMutations';
 import { useTicketDetailsRelatedTicketMutations } from '@/features/workspace/pages/useTicketDetailsRelatedTicketMutations';
+import { useTicketDetailsTicketMutations } from '@/features/workspace/pages/useTicketDetailsTicketMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketComment } from '@/types/api';
+import type { TicketComment } from '@/types/api';
 
 type AuthUser = {
   id: number;
@@ -243,54 +239,6 @@ export function TicketDetailsPage() {
     },
   });
 
-  const updateTicket = useMutation({
-    mutationFn: (values: TicketForm) =>
-      updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', {
-        customer_id: Number(values.customer_id),
-        title: values.title,
-        description: values.description,
-        status: values.status,
-        priority: values.priority,
-        assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
-        category: values.category || null,
-        queue_key: values.queue_key || null,
-        tags: parseTicketTags(values.tags),
-        custom_fields: buildCustomFieldPayload(values.custom_fields, scopedCustomFieldConfigs),
-    }),
-    onSuccess: () => {
-      setIsEditOpen(false);
-      invalidateTicket();
-      invalidateTicketList();
-      invalidateTicketActivity();
-    },
-    onError: (error) => {
-      applyTicketFormFieldErrors(editForm, error);
-    },
-  });
-
-  const quickTransition = useMutation({
-    mutationFn: async (status: Ticket['status']) => {
-      try {
-        return await transitionWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', status);
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 422) {
-          return updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', { status }) as Promise<{ data: Ticket }>;
-        }
-        throw error;
-      }
-    },
-    onSuccess: (payload) => {
-      if ((payload as { message?: string }).message) {
-        setQuickActionMessage((payload as { message?: string }).message ?? null);
-      } else {
-        setQuickActionMessage(null);
-      }
-      invalidateTicket();
-      invalidateTicketActivity();
-      invalidateTicketList();
-    },
-  });
-
   const { uploadAttachment, deleteAttachment } = useTicketDetailsAttachmentMutations({
     workspaceSlug,
     ticketId,
@@ -338,14 +286,6 @@ export function TicketDetailsPage() {
     onDeleteSuccess: invalidateTicketAndActivity,
   });
 
-  const deleteTicket = useMutation({
-    mutationFn: () => deleteWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
-    onSuccess: () => {
-      invalidateTicketList();
-      navigate(`/workspaces/${workspaceSlug}/tickets`);
-    },
-  });
-
   const ticket = ticketQuery.data?.data;
   const customers = customersQuery.data?.data ?? [];
   const customersMeta = customersQuery.data?.meta;
@@ -369,6 +309,32 @@ export function TicketDetailsPage() {
   const effectiveEditTemplateId = editTemplateId === 'none' && defaultTemplateId !== 'none' ? defaultTemplateId : editTemplateId;
   const selectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === effectiveEditTemplateId) ?? null;
   const scopedCustomFieldConfigs = filterCustomFieldsByTemplate(activeCustomFieldConfigs, selectedTemplate);
+  const { updateTicket, quickTransition, deleteTicket } = useTicketDetailsTicketMutations({
+    workspaceSlug,
+    ticketId,
+    scopedCustomFieldConfigs,
+    onUpdateSuccess: () => {
+      setIsEditOpen(false);
+      invalidateTicket();
+      invalidateTicketList();
+      invalidateTicketActivity();
+    },
+    onUpdateError: (error) => applyTicketFormFieldErrors(editForm, error),
+    onTransitionSuccess: (payload) => {
+      if ((payload as { message?: string }).message) {
+        setQuickActionMessage((payload as { message?: string }).message ?? null);
+      } else {
+        setQuickActionMessage(null);
+      }
+      invalidateTicket();
+      invalidateTicketActivity();
+      invalidateTicketList();
+    },
+    onDeleteSuccess: () => {
+      invalidateTicketList();
+      navigate(`/workspaces/${workspaceSlug}/tickets`);
+    },
+  });
   const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
   const relatedTicketsMeta = relatedTicketOptionsQuery.data?.meta;
   const relatedTicketsCoverageHint = selectorCoverageHint(relatedTicketOptions.length, relatedTicketsMeta?.total, 'tickets');
