@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { TicketDetailsCommentDialog } from '@/features/workspace/pages/TicketDetailsCommentDialog';
 import {
   bytesToReadable,
   formatTicketDetailsDate,
@@ -127,51 +127,15 @@ export function TicketDetailsSupportDialogs({
 }: Props) {
   return (
     <>
-      <Dialog onOpenChange={onCommentOpenChange} open={isCommentOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Comment</DialogTitle>
-            <DialogDescription>Internal comments are visible to workspace team members only.</DialogDescription>
-          </DialogHeader>
-
-          <form className="space-y-3" id="comment-form" onSubmit={commentForm.handleSubmit(onSubmitComment)}>
-            <div className="space-y-2">
-              <Label htmlFor="comment-body">Comment</Label>
-              <Textarea id="comment-body" {...commentForm.register('body')} />
-              {commentForm.formState.errors.body && <p className="text-xs text-destructive">{commentForm.formState.errors.body.message}</p>}
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input type="checkbox" {...commentForm.register('is_internal')} />
-              Internal comment
-            </label>
-
-            <div className="space-y-2">
-              <Label htmlFor="comment-files">Attachments (optional)</Label>
-              <Input
-                id="comment-files"
-                multiple
-                onChange={(event) => onCommentFilesChange(Array.from(event.target.files ?? []))}
-                type="file"
-              />
-              {commentFiles.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {commentFiles.length} file{commentFiles.length > 1 ? 's' : ''} selected
-                </p>
-              )}
-            </div>
-          </form>
-
-          <DialogFooter>
-            <Button onClick={() => onCommentOpenChange(false)} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={commentForm.formState.isSubmitting || isCommentPending} form="comment-form" type="submit">
-              {isCommentPending ? 'Posting...' : 'Post Comment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TicketDetailsCommentDialog
+        open={isCommentOpen}
+        onOpenChange={onCommentOpenChange}
+        form={commentForm}
+        onSubmit={onSubmitComment}
+        isPending={isCommentPending}
+        files={commentFiles}
+        onFilesChange={onCommentFilesChange}
+      />
 
       <Dialog onOpenChange={onChecklistOpenChange} open={isChecklistOpen}>
         <DialogContent className="sm:max-w-xl">

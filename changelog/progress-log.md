@@ -1697,6 +1697,23 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
 
+## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.
+- Moved add-comment dialog rendering out of `TicketDetailsSupportDialogs.tsx`.
+- Kept route-owned form state, selected files, submission callback, and close/reset behavior unchanged.
+- Reduced `TicketDetailsSupportDialogs.tsx` to 389 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue support dialog decomposition by extracting checklist, watchers, attachments, and related-ticket dialogs.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.
