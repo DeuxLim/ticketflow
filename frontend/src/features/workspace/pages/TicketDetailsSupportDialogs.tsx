@@ -2,10 +2,10 @@ import type { UseFormReturn } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TicketDetailsChecklistDialog } from '@/features/workspace/pages/TicketDetailsChecklistDialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TicketDetailsCommentDialog } from '@/features/workspace/pages/TicketDetailsCommentDialog';
 import {
@@ -137,69 +137,19 @@ export function TicketDetailsSupportDialogs({
         onFilesChange={onCommentFilesChange}
       />
 
-      <Dialog onOpenChange={onChecklistOpenChange} open={isChecklistOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Checklist</DialogTitle>
-            <DialogDescription>Track the operator tasks that still block closure or handoff.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            {checklistItems.map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                <label className="flex min-w-0 items-center gap-3 text-sm">
-                  <Checkbox
-                    checked={item.is_completed}
-                    disabled={!canManage || isChecklistMutating}
-                    onCheckedChange={(checked) => onToggleChecklistItem(item.id, checked === true)}
-                  />
-                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
-                  {canManage && (
-                    <>
-                      <Button
-                        disabled={isChecklistMutating || checklistItems[0]?.id === item.id}
-                        onClick={() => onMoveChecklistItem(item.id, 'up')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Up
-                      </Button>
-                      <Button
-                        disabled={isChecklistMutating || checklistItems[checklistItems.length - 1]?.id === item.id}
-                        onClick={() => onMoveChecklistItem(item.id, 'down')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Down
-                      </Button>
-                      <Button disabled={isChecklistMutating} onClick={() => onDeleteChecklistItem(item.id)} size="sm" type="button" variant="outline">
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
-
-            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit(onSubmitChecklist)}>
-              <Input disabled={!canManage} placeholder="Add an operator task..." {...checklistForm.register('title')} />
-              <Button disabled={!canManage || isChecklistMutating} type="submit">
-                {isChecklistMutating ? 'Adding...' : 'Add Task'}
-              </Button>
-            </form>
-            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
-            {checklistMutationError ? (
-              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TicketDetailsChecklistDialog
+        open={isChecklistOpen}
+        onOpenChange={onChecklistOpenChange}
+        canManage={canManage}
+        form={checklistForm}
+        items={checklistItems}
+        onSubmit={onSubmitChecklist}
+        onToggleItem={onToggleChecklistItem}
+        onMoveItem={onMoveChecklistItem}
+        onDeleteItem={onDeleteChecklistItem}
+        isMutating={isChecklistMutating}
+        mutationError={checklistMutationError}
+      />
 
       <Dialog onOpenChange={onWatchersOpenChange} open={isWatchersOpen}>
         <DialogContent className="sm:max-w-lg">
