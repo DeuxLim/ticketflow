@@ -1731,6 +1731,23 @@ Verification:
 
 Continue support dialog decomposition by extracting watchers, attachments, and related-ticket dialogs.
 
+## 2026-05-01 08:59 +08:00 - Extracted Watchers Dialog
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsWatchersDialog.tsx`.
+- Moved watchers dialog rendering out of `TicketDetailsSupportDialogs.tsx`.
+- Kept open-state wiring and watcher mutation error display unchanged.
+- Reduced `TicketDetailsSupportDialogs.tsx` to 324 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue support dialog decomposition by extracting attachments and related-ticket dialogs.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.
