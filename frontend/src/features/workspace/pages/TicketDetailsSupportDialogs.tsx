@@ -3,15 +3,13 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TicketDetailsAttachmentsDialog } from '@/features/workspace/pages/TicketDetailsAttachmentsDialog';
 import { TicketDetailsChecklistDialog } from '@/features/workspace/pages/TicketDetailsChecklistDialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TicketDetailsCommentDialog } from '@/features/workspace/pages/TicketDetailsCommentDialog';
 import { TicketDetailsWatchersDialog } from '@/features/workspace/pages/TicketDetailsWatchersDialog';
 import {
-  bytesToReadable,
-  formatTicketDetailsDate,
   mutationErrorMessage,
   statusLabel,
   type ChecklistForm,
@@ -159,66 +157,21 @@ export function TicketDetailsSupportDialogs({
         mutationError={watcherMutationError}
       />
 
-      <Dialog onOpenChange={onAttachmentsOpenChange} open={isAttachmentsOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Attachments</DialogTitle>
-            <DialogDescription>Upload or review files without pushing upload controls into the main ticket view.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                accept="*/*"
-                onChange={(event) => onAttachmentFileChange(event.target.files?.[0] ?? null)}
-                type="file"
-              />
-              <Button
-                disabled={!canComment || !attachmentFile || isUploadingAttachment}
-                onClick={onUploadAttachment}
-                size="sm"
-                type="button"
-              >
-                {isUploadingAttachment ? 'Uploading...' : 'Upload'}
-              </Button>
-            </div>
-            {uploadAttachmentError && <p className="text-xs text-destructive">{uploadAttachmentError}</p>}
-
-            {ticketLevelAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
-                <div>
-                  <p className="font-medium">{attachment.original_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatTicketDetailsDate(attachment.created_at)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => onDownloadAttachment(attachment.id, attachment.original_name)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    disabled={!canManage || isDeletingAttachment}
-                    onClick={() => onDeleteAttachment(attachment.id, attachment.original_name)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {!ticketLevelAttachments.length && (
-              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TicketDetailsAttachmentsDialog
+        open={isAttachmentsOpen}
+        onOpenChange={onAttachmentsOpenChange}
+        canComment={canComment}
+        canManage={canManage}
+        attachmentFile={attachmentFile}
+        onAttachmentFileChange={onAttachmentFileChange}
+        onUploadAttachment={onUploadAttachment}
+        isUploadingAttachment={isUploadingAttachment}
+        uploadAttachmentError={uploadAttachmentError}
+        attachments={ticketLevelAttachments}
+        onDownloadAttachment={onDownloadAttachment}
+        onDeleteAttachment={onDeleteAttachment}
+        isDeletingAttachment={isDeletingAttachment}
+      />
 
       <Dialog onOpenChange={onRelatedOpenChange} open={isRelatedOpen}>
         <DialogContent className="sm:max-w-lg">

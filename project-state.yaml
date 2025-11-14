@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-01T08:59:00+08:00"
+updated_at: "2026-05-01T09:01:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -42,13 +42,14 @@ items:
       - "2026-05-01: Extracted add-comment dialog rendering into `TicketDetailsCommentDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 389 lines while keeping route wiring unchanged."
       - "2026-05-01: Extracted checklist dialog rendering into `TicketDetailsChecklistDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 339 lines while keeping route wiring unchanged."
       - "2026-05-01: Extracted watchers dialog rendering into `TicketDetailsWatchersDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 324 lines while keeping route wiring unchanged."
-    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and thirteen TicketDetails slices are complete, but support dialogs still need attachment and related-ticket decomposition and the route still owns derived page orchestration."
+      - "2026-05-01: Extracted attachments dialog rendering into `TicketDetailsAttachmentsDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 277 lines while keeping route wiring unchanged."
+    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and fourteen TicketDetails slices are complete, but support dialogs still need related-ticket decomposition and the route still owns derived page orchestration."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
       - Rank remaining app-owned oversized files by risk and value, excluding shadcn primitives and broad test files.
-      - Continue support dialog decomposition by extracting attachments and related-ticket dialogs.
+      - Continue support dialog decomposition by extracting the related-ticket dialog.
       - Continue `TicketDetailsPage.tsx` extraction by moving derived page orchestration into focused modules after support dialogs are smaller.
       - Run backend and frontend verification after each behavior-preserving slice.
     tags:
@@ -58,8 +59,8 @@ items:
       - react
       - maintainability
     created_at: "2026-04-29T18:24:00+08:00"
-    updated_at: "2026-05-01T08:59:00+08:00"
-    changed_at: "2026-05-01T08:59:00+08:00"
+    updated_at: "2026-05-01T09:01:00+08:00"
+    changed_at: "2026-05-01T09:01:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1
