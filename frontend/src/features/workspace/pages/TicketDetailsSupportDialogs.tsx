@@ -1,29 +1,16 @@
 import type { UseFormReturn } from 'react-hook-form';
-import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { TicketDetailsAttachmentsDialog } from '@/features/workspace/pages/TicketDetailsAttachmentsDialog';
 import { TicketDetailsChecklistDialog } from '@/features/workspace/pages/TicketDetailsChecklistDialog';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TicketDetailsCommentDialog } from '@/features/workspace/pages/TicketDetailsCommentDialog';
+import { TicketDetailsRelatedTicketsDialog, type RelatedTicketOption } from '@/features/workspace/pages/TicketDetailsRelatedTicketsDialog';
 import { TicketDetailsWatchersDialog } from '@/features/workspace/pages/TicketDetailsWatchersDialog';
 import {
-  mutationErrorMessage,
-  statusLabel,
   type ChecklistForm,
   type CommentForm,
   type RelatedTicketForm,
   type TicketDetailsAttachment,
 } from '@/features/workspace/pages/ticketDetailsHelpers';
 import type { Ticket, TicketChecklistItem } from '@/types/api';
-
-type RelatedTicketOption = {
-  id: number;
-  ticket_number: string;
-  title: string;
-};
 
 type Props = {
   workspaceSlug?: string;
@@ -173,105 +160,22 @@ export function TicketDetailsSupportDialogs({
         isDeletingAttachment={isDeletingAttachment}
       />
 
-      <Dialog onOpenChange={onRelatedOpenChange} open={isRelatedOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Related Tickets</DialogTitle>
-            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work from one focused panel.</DialogDescription>
-          </DialogHeader>
-
-          <div className="mb-4 flex flex-col gap-3">
-            {relatedTickets.map((link) => (
-              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    {link.ticket ? (
-                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
-                        {link.ticket.ticket_number}
-                      </Link>
-                    ) : (
-                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
-                    )}
-                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
-                  </div>
-                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
-                </div>
-                {canManage && (
-                  <Button
-                    className="mt-2"
-                    disabled={isRelatedTicketPending}
-                    onClick={() => onDeleteRelatedTicket(link.id)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
-          </div>
-
-          <form className="space-y-3" id="related-ticket-form" onSubmit={relatedTicketForm.handleSubmit(onSubmitRelatedTicket)}>
-            <div className="space-y-2">
-              <Label>Ticket</Label>
-              <Select
-                onValueChange={(value) => relatedTicketForm.setValue('related_ticket_id', value ?? '', { shouldValidate: true })}
-                value={relatedTicketIdValue ?? ''}
-              >
-                <SelectTrigger><SelectValue placeholder="Select ticket" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {relatedTicketOptions.map((option) => (
-                      <SelectItem key={option.id} value={String(option.id)}>
-                        {option.ticket_number} — {option.title}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {relatedTicketsCoverageHint && (
-                <p className="text-xs text-muted-foreground">{relatedTicketsCoverageHint}</p>
-              )}
-              {relatedTicketForm.formState.errors.related_ticket_id && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.related_ticket_id.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Relationship</Label>
-              <Select
-                onValueChange={(value) => relatedTicketForm.setValue('relationship_type', value ?? 'related', { shouldValidate: true })}
-                value={relatedTicketRelationshipValue ?? 'related'}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="related">Related</SelectItem>
-                    <SelectItem value="blocks">Blocks</SelectItem>
-                    <SelectItem value="blocked_by">Blocked By</SelectItem>
-                    <SelectItem value="duplicate">Duplicate</SelectItem>
-                    <SelectItem value="caused_by">Caused By</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {relatedTicketForm.formState.errors.relationship_type && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.relationship_type.message}</p>}
-            </div>
-          </form>
-
-          {relatedTicketMutationError ? (
-            <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
-          ) : null}
-
-          <DialogFooter>
-            <Button onClick={() => onRelatedOpenChange(false)} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={isRelatedTicketPending || relatedTicketForm.formState.isSubmitting} form="related-ticket-form" type="submit">
-              {isRelatedTicketPending ? 'Linking...' : 'Link Ticket'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <TicketDetailsRelatedTicketsDialog
+        open={isRelatedOpen}
+        onOpenChange={onRelatedOpenChange}
+        workspaceSlug={workspaceSlug}
+        canManage={canManage}
+        form={relatedTicketForm}
+        onSubmit={onSubmitRelatedTicket}
+        relatedTickets={relatedTickets}
+        relatedTicketOptions={relatedTicketOptions}
+        relatedTicketsCoverageHint={relatedTicketsCoverageHint}
+        relatedTicketIdValue={relatedTicketIdValue}
+        relatedTicketRelationshipValue={relatedTicketRelationshipValue}
+        onDeleteRelatedTicket={onDeleteRelatedTicket}
+        isPending={isRelatedTicketPending}
+        mutationError={relatedTicketMutationError}
+      />
     </>
   );
 }

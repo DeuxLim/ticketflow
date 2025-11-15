@@ -1765,6 +1765,23 @@ Verification:
 
 Continue support dialog decomposition by extracting the related-ticket dialog.
 
+## 2026-05-01 09:04 +08:00 - Extracted Related Tickets Dialog
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsRelatedTicketsDialog.tsx`.
+- Moved related-ticket dialog rendering out of `TicketDetailsSupportDialogs.tsx`.
+- Kept related-ticket form, selection values, option coverage hint, remove/link callbacks, and mutation error display unchanged.
+- Reduced `TicketDetailsSupportDialogs.tsx` to 181 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting derived page orchestration from `TicketDetailsPage.tsx`, then re-rank remaining app-owned oversized files.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.
