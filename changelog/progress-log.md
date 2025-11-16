@@ -1782,6 +1782,31 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting derived page orchestration from `TicketDetailsPage.tsx`, then re-rank remaining app-owned oversized files.
 
+## 2026-05-01 13:38 +08:00 - Extracted Ticket Details Derived State
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsDerivedState.ts`.
+- Moved query-derived page values and form watch values out of `TicketDetailsPage.tsx`:
+  - active queue/category/tag/custom-field/template config sorting
+  - effective edit template and scoped custom-field config derivation
+  - related-ticket/customer selector coverage hints
+  - attachment grouping by comment
+  - SLA signal derivation
+  - edit and related-ticket watched form values
+- Reduced `TicketDetailsPage.tsx` to 615 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+Progress:
+- `REFACTOR-P1`: 90% complete.
+
+## Resume From Here
+
+Re-rank remaining app-owned oversized files by risk and value, then decide whether `REFACTOR-P1` should close or continue with the next highest-value refactor target.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.

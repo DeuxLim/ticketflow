@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
@@ -37,7 +37,6 @@ import {
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/api/ticketPageApi';
 import {
   applyTicketFormFieldErrors,
-  filterCustomFieldsByTemplate,
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
@@ -47,8 +46,8 @@ import { useTicketDetailsCommentMutations } from '@/features/workspace/pages/use
 import { useTicketDetailsRelatedTicketMutations } from '@/features/workspace/pages/useTicketDetailsRelatedTicketMutations';
 import { useTicketDetailsTicketMutations } from '@/features/workspace/pages/useTicketDetailsTicketMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
+import { useTicketDetailsDerivedState } from '@/features/workspace/pages/useTicketDetailsDerivedState';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
-import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
 import type { TicketComment } from '@/types/api';
 
@@ -98,14 +97,6 @@ export function TicketDetailsPage() {
     resolver: zodResolver(relatedTicketSchema),
     defaultValues: { related_ticket_id: '', relationship_type: 'related' },
   });
-  const editCustomerIdValue = useWatch({ control: editForm.control, name: 'customer_id' });
-  const editAssigneeIdValue = useWatch({ control: editForm.control, name: 'assigned_to_user_id' });
-  const editStatusValue = useWatch({ control: editForm.control, name: 'status' });
-  const editPriorityValue = useWatch({ control: editForm.control, name: 'priority' });
-  const editCustomFieldsValue = useWatch({ control: editForm.control, name: 'custom_fields' });
-  const relatedTicketIdValue = useWatch({ control: relatedTicketForm.control, name: 'related_ticket_id' });
-  const relatedTicketRelationshipValue = useWatch({ control: relatedTicketForm.control, name: 'relationship_type' });
-
   const ticketQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId],
     queryFn: () => getWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
@@ -287,28 +278,58 @@ export function TicketDetailsPage() {
   });
 
   const ticket = ticketQuery.data?.data;
-  const customers = customersQuery.data?.data ?? [];
-  const customersMeta = customersQuery.data?.meta;
-  const members = membersQuery.data?.data ?? [];
-  const activeQueueConfigs = (queueConfigsQuery.data?.data ?? [])
-    .filter((queue) => queue.is_active)
-    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
-  const activeCategoryConfigs = (categoryConfigsQuery.data?.data ?? [])
-    .filter((category) => category.is_active)
-    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
-  const activeTagConfigs = (tagConfigsQuery.data?.data ?? [])
-    .filter((tag) => tag.is_active)
-    .sort((left, right) => left.name.localeCompare(right.name));
-  const activeCustomFieldConfigs = (customFieldConfigsQuery.data?.data ?? [])
-    .filter((field) => field.is_active)
-    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
-  const activeTemplateConfigs = (templateConfigsQuery.data?.data ?? [])
-    .filter((template) => template.is_active)
-    .sort((left, right) => Number(right.is_default) - Number(left.is_default) || left.id - right.id);
-  const defaultTemplateId = activeTemplateConfigs.length > 0 ? String(activeTemplateConfigs[0].id) : 'none';
-  const effectiveEditTemplateId = editTemplateId === 'none' && defaultTemplateId !== 'none' ? defaultTemplateId : editTemplateId;
-  const selectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === effectiveEditTemplateId) ?? null;
-  const scopedCustomFieldConfigs = filterCustomFieldsByTemplate(activeCustomFieldConfigs, selectedTemplate);
+  const currentUserId = meQuery.data?.data.id;
+  const {
+    customers,
+    members,
+    activeQueueConfigs,
+    activeCategoryConfigs,
+    activeTagConfigs,
+    activeTemplateConfigs,
+    defaultTemplateId,
+    effectiveEditTemplateId,
+    scopedCustomFieldConfigs,
+    relatedTicketOptions,
+    relatedTicketsCoverageHint,
+    customersCoverageHint,
+    activityLogs,
+    watchers,
+    checklistItems,
+    relatedTickets,
+    customFields,
+    ticketLevelAttachments,
+    selfWatcher,
+    editCustomerIdValue,
+    editAssigneeIdValue,
+    editStatusValue,
+    editPriorityValue,
+    editCustomFieldsValue,
+    relatedTicketIdValue,
+    relatedTicketRelationshipValue,
+    editQueueValue,
+    editCategoryValue,
+    hasLegacyEditQueueValue,
+    hasLegacyEditCategoryValue,
+    attachmentsByComment,
+    slaSignals,
+  } = useTicketDetailsDerivedState({
+    ticket,
+    ticketId,
+    customersResponse: customersQuery.data,
+    membersResponse: membersQuery.data,
+    queueConfigsResponse: queueConfigsQuery.data,
+    categoryConfigsResponse: categoryConfigsQuery.data,
+    tagConfigsResponse: tagConfigsQuery.data,
+    customFieldConfigsResponse: customFieldConfigsQuery.data,
+    templateConfigsResponse: templateConfigsQuery.data,
+    relatedTicketOptionsResponse: relatedTicketOptionsQuery.data,
+    attachmentsResponse: attachmentsQuery.data,
+    activityResponse: activityQuery.data,
+    currentUserId,
+    editForm,
+    relatedTicketForm,
+    editTemplateId,
+  });
   const { updateTicket, quickTransition, deleteTicket } = useTicketDetailsTicketMutations({
     workspaceSlug,
     ticketId,
@@ -335,40 +356,9 @@ export function TicketDetailsPage() {
       navigate(`/workspaces/${workspaceSlug}/tickets`);
     },
   });
-  const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
-  const relatedTicketsMeta = relatedTicketOptionsQuery.data?.meta;
-  const relatedTicketsCoverageHint = selectorCoverageHint(relatedTicketOptions.length, relatedTicketsMeta?.total, 'tickets');
-  const customersCoverageHint = selectorCoverageHint(customers.length, customersMeta?.total, 'customers');
-  const attachments = useMemo(() => attachmentsQuery.data?.data ?? [], [attachmentsQuery.data?.data]);
-  const activityLogs = useMemo(() => activityQuery.data?.data ?? [], [activityQuery.data?.data]);
-  const watchers = ticket?.watchers ?? [];
-  const checklistItems = ticket?.checklist_items ?? [];
-  const relatedTickets = ticket?.related_tickets ?? [];
-  const customFields = ticket?.custom_fields ?? [];
-  const currentUserId = meQuery.data?.data.id;
-  const ticketLevelAttachments = attachments.filter((attachment) => attachment.comment_id === null);
-  const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
-  const editQueueValue = useWatch({ control: editForm.control, name: 'queue_key' }) || 'none';
-  const editCategoryValue = useWatch({ control: editForm.control, name: 'category' }) || 'none';
-  const hasLegacyEditQueueValue = editQueueValue !== 'none' && !activeQueueConfigs.some((queue) => queue.key === editQueueValue);
-  const hasLegacyEditCategoryValue = editCategoryValue !== 'none' && !activeCategoryConfigs.some((category) => category.key === editCategoryValue);
   const watcherMutationError = addWatcher.error ?? removeWatcher.error;
   const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error ?? reorderChecklistItems.error;
   const relatedTicketMutationError = addRelatedTicket.error ?? deleteRelatedTicket.error;
-  const attachmentsByComment = useMemo(() => {
-    return attachments.reduce<Record<number, TicketDetailsAttachment[]>>((acc, attachment) => {
-      if (attachment.comment_id === null) {
-        return acc;
-      }
-
-      if (!acc[attachment.comment_id]) {
-        acc[attachment.comment_id] = [];
-      }
-
-      acc[attachment.comment_id].push(attachment);
-      return acc;
-    }, {});
-  }, [attachments]);
 
   const moveChecklistItem = (itemId: number, direction: 'up' | 'down') => {
     const index = checklistItems.findIndex((item) => item.id === itemId);
@@ -388,42 +378,6 @@ export function TicketDetailsPage() {
       })),
     );
   };
-
-  const slaSignals = useMemo(() => {
-    if (!ticket) return [] as Array<{ key: string; label: string; time: string | null; severity: 'warning' | 'info' }>;
-
-    const now = new Date();
-    const signals: Array<{ key: string; label: string; time: string | null; severity: 'warning' | 'info' }> = [];
-
-    if (ticket.first_response_due_at && !ticket.first_responded_at && new Date(ticket.first_response_due_at) < now) {
-      signals.push({
-        key: 'first-response-breach',
-        label: 'First response SLA breached',
-        time: ticket.first_response_due_at,
-        severity: 'warning',
-      });
-    }
-
-    if (ticket.resolution_due_at && !ticket.resolved_at && new Date(ticket.resolution_due_at) < now) {
-      signals.push({
-        key: 'resolution-breach',
-        label: 'Resolution SLA breached',
-        time: ticket.resolution_due_at,
-        severity: 'warning',
-      });
-    }
-
-    if (signals.length === 0) {
-      signals.push({
-        key: 'sla-healthy',
-        label: 'No active SLA breaches',
-        time: null,
-        severity: 'info',
-      });
-    }
-
-    return signals;
-  }, [ticket]);
 
   useEffect(() => {
     if (!ticket) return;
