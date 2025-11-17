@@ -1697,6 +1697,36 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
 
+## 2026-05-02 17:44 +08:00 - Re-ranked Refactor Targets
+
+- Re-ranked remaining app-owned oversized files after the ticket-details extraction pass.
+- Closed `REFACTOR-P1` because its definition of done is now satisfied:
+  - starter metadata/docs were replaced
+  - frontend API boundaries were aligned under `frontend/src/features/workspace/api/`
+  - safe behavior-preserving ticket-details extractions were landed and verified incrementally
+  - remaining oversized targets were re-ranked by risk and value
+- Created `REFACTOR-P2` for the next decomposition pass instead of stretching the completed standards-alignment item.
+- Current priority order:
+  - `CustomersPage.tsx` (678 lines)
+  - `TicketsPage.tsx` (608 lines)
+  - `GovernanceSettingsSection.tsx` / `GovernanceSettingsDialogs.tsx` (565/520 lines)
+  - `frontend/src/types/api.ts` (529 lines)
+  - `TicketController.php` (511 lines)
+  - `settings-api.ts` (477 lines)
+  - `WorkflowAutomationSettingsSection.tsx` (457 lines)
+
+Verification:
+- `project-state.yaml` parsed successfully with Ruby YAML.
+- `git diff --check` passed.
+
+Progress:
+- `REFACTOR-P1`: 100% complete.
+- `REFACTOR-P2`: 0% complete.
+
+## Resume From Here
+
+Start `REFACTOR-P2` with `CustomersPage.tsx`. Prefer a behavior-preserving extraction of customer table rendering, profile/details dialog rendering, or customer form sections, then run focused frontend tests plus lint/build before committing and pushing.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.
