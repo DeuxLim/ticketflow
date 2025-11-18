@@ -1727,6 +1727,27 @@ Progress:
 
 Start `REFACTOR-P2` with `CustomersPage.tsx`. Prefer a behavior-preserving extraction of customer table rendering, profile/details dialog rendering, or customer form sections, then run focused frontend tests plus lint/build before committing and pushing.
 
+## 2026-05-02 18:27 +08:00 - Decomposed Customer Directory Route
+
+- Added `frontend/src/features/workspace/pages/customerForm.ts` for customer form schema, defaults, payload mapping, and API field-error mapping.
+- Added `CustomerFormFields.tsx`, `CustomerProfileDetails.tsx`, and `CustomersTable.tsx`.
+- Kept `CustomersPage.tsx` responsible for workspace access checks, query state, dialogs, and mutations.
+- Reduced `CustomersPage.tsx` from 678 to 312 lines.
+- Removed generated `frontend/dist/` output after the production build.
+
+Verification:
+- `frontend`: `npm run test -- CustomersPage.test.tsx`, 1 file / 2 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+Progress:
+- Overall tracker progress: 61 of 62 work items complete, 98.4% overall.
+- `REFACTOR-P2`: in progress.
+
+## Resume From Here
+
+Continue `REFACTOR-P2` with `TicketsPage.tsx`. Choose one narrow ticket queue extraction, keep behavior unchanged, then run focused tests, lint, and build before committing and pushing.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.
