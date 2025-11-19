@@ -7,7 +7,6 @@ import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { ApiError } from '@/services/api/client';
 import {
@@ -29,7 +28,7 @@ import {
   listTicketQueues,
   listTicketTags,
 } from '@/features/workspace/api/settings-api';
-import { TicketFormFields } from '@/features/workspace/pages/TicketFormFields';
+import { CreateTicketDialog, EditTicketDialog } from '@/features/workspace/pages/TicketFormDialogs';
 import { TicketQueueControlsSheet } from '@/features/workspace/pages/TicketQueueControlsSheet';
 import { TicketQueueSearchBar } from '@/features/workspace/pages/TicketQueueSearchBar';
 import { TicketQueueTable } from '@/features/workspace/pages/TicketQueueTable';
@@ -523,7 +522,15 @@ export function TicketsPage() {
         onResetControls={resetAllControls}
       />
 
-      <Dialog
+      <CreateTicketDialog
+        activeCategories={activeCategoryConfigs}
+        activeCustomFields={createTemplateFields}
+        activeQueues={activeQueueConfigs}
+        activeTags={activeTagConfigs}
+        customers={customers}
+        errorMessage={createTicket.isError ? (createTicket.error as Error).message : null}
+        form={createForm}
+        isPending={createTicket.isPending}
         onOpenChange={(open) => {
           setIsCreateOpen(open);
           if (!open) {
@@ -532,77 +539,41 @@ export function TicketsPage() {
           }
         }}
         open={isCreateOpen}
-      >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create Ticket</DialogTitle>
-            <DialogDescription>Create a ticket with status, priority, and assignee details.</DialogDescription>
-          </DialogHeader>
-          <TicketFormFields
-            activeCategories={activeCategoryConfigs}
-            activeCustomFields={createTemplateFields}
-            activeQueues={activeQueueConfigs}
-            activeTags={activeTagConfigs}
-            customers={customers}
-            form={createForm}
-            formId="create-ticket-form"
-            members={members}
-            selectedTemplateId={createTemplateId}
-            templates={activeTemplateConfigs}
-            onTemplateChange={setCreateTemplateId}
-            onSubmit={(values) => createTicket.mutate(values)}
-          />
-          {createTicket.isError && <p className="text-xs text-destructive">{(createTicket.error as Error).message}</p>}
-          <DialogFooter>
-            <Button onClick={() => setIsCreateOpen(false)} type="button" variant="outline">Cancel</Button>
-            <Button disabled={createForm.formState.isSubmitting || createTicket.isPending} form="create-ticket-form" type="submit">
-              {createTicket.isPending ? 'Creating...' : 'Create Ticket'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        members={members}
+        onSubmit={(values) => createTicket.mutate(values)}
+        onTemplateChange={setCreateTemplateId}
+        selectedTemplateId={createTemplateId}
+        templates={activeTemplateConfigs}
+      />
 
-      <Dialog
+      <EditTicketDialog
+        activeCategories={activeCategoryConfigs}
+        activeCustomFields={editTemplateFields}
+        activeQueues={activeQueueConfigs}
+        activeTags={activeTagConfigs}
+        customers={customers}
+        errorMessage={updateTicket.isError ? (updateTicket.error as Error).message : null}
+        form={editForm}
+        isPending={updateTicket.isPending}
+        members={members}
+        onCancel={() => setEditTarget(null)}
         onOpenChange={(open) => {
           if (!open) {
             setEditTarget(null);
             setEditTemplateId(defaultTemplateId);
           }
         }}
+        onSubmit={(values) => {
+          if (editTarget) {
+            updateTicket.mutate({ ticketId: editTarget.id, values });
+          }
+        }}
+        onTemplateChange={setEditTemplateId}
         open={Boolean(editTarget)}
-      >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Ticket</DialogTitle>
-            <DialogDescription>Update customer, assignee, status, priority, and details.</DialogDescription>
-          </DialogHeader>
-          <TicketFormFields
-            activeCategories={activeCategoryConfigs}
-            activeCustomFields={editTemplateFields}
-            activeQueues={activeQueueConfigs}
-            activeTags={activeTagConfigs}
-            customers={customers}
-            form={editForm}
-            formId="edit-ticket-form"
-            members={members}
-            selectedTemplateId={editTemplateId}
-            templates={activeTemplateConfigs}
-            onTemplateChange={setEditTemplateId}
-            onSubmit={(values) => {
-              if (editTarget) {
-                updateTicket.mutate({ ticketId: editTarget.id, values });
-              }
-            }}
-          />
-          {updateTicket.isError && <p className="text-xs text-destructive">{(updateTicket.error as Error).message}</p>}
-          <DialogFooter>
-            <Button onClick={() => setEditTarget(null)} type="button" variant="outline">Cancel</Button>
-            <Button disabled={updateTicket.isPending || editForm.formState.isSubmitting || !editTarget} form="edit-ticket-form" type="submit">
-              {updateTicket.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        selectedTemplateId={editTemplateId}
+        submitDisabled={updateTicket.isPending || editForm.formState.isSubmitting || !editTarget}
+        templates={activeTemplateConfigs}
+      />
     </section>
   );
 }
