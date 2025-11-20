@@ -114,8 +114,8 @@ export function FormsSettingsDialogs({
           title="Field dictionary"
         />
 
-        <div className="rounded-lg border">
-          <Table>
+        <div className="overflow-x-auto rounded-lg border">
+          <Table className="min-w-[520px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Label</TableHead>
@@ -140,7 +140,7 @@ export function FormsSettingsDialogs({
         </div>
 
         <Dialog open={isFieldsOpen} onOpenChange={onSetFieldsOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Manage Custom Fields</DialogTitle>
             <DialogDescription>Create and update dynamic fields without crowding the settings overview.</DialogDescription>
@@ -148,7 +148,7 @@ export function FormsSettingsDialogs({
 
           <div className="flex flex-col gap-5">
             <form
-              className="grid gap-3 md:grid-cols-[1fr_180px_auto]"
+              className="grid gap-3 lg:grid-cols-[1fr_180px_auto]"
               onSubmit={(event) => {
                 event.preventDefault();
                 onCreateField();
@@ -177,7 +177,7 @@ export function FormsSettingsDialogs({
                   </Select>
                 </Field>
               </FieldGroup>
-              <Button type="submit" className="self-end" disabled={!fieldLabel || isCreatingField}>
+              <Button type="submit" className="w-full lg:w-auto lg:self-end" disabled={!fieldLabel || isCreatingField}>
                 Add field
               </Button>
             </form>
@@ -187,7 +187,7 @@ export function FormsSettingsDialogs({
                 <h3 className="text-sm font-medium">Edit field</h3>
                 <Badge variant="outline">{fields.length} records</Badge>
               </div>
-              <div className="grid gap-3 md:grid-cols-[180px_1fr_180px_120px_auto_auto]">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[180px_minmax(0,1fr)_180px_120px_auto_auto]">
                 <Select
                   value={selectedFieldId}
                   onValueChange={(value) => {
@@ -252,8 +252,8 @@ export function FormsSettingsDialogs({
         title="Template library"
       />
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="overflow-x-auto rounded-lg border">
+        <Table className="min-w-[520px]">
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
@@ -278,7 +278,7 @@ export function FormsSettingsDialogs({
       </div>
 
       <Dialog open={isTemplatesOpen} onOpenChange={onSetTemplatesOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Manage Form Templates</DialogTitle>
             <DialogDescription>Create and update reusable intake templates from the custom field dictionary.</DialogDescription>
@@ -286,7 +286,7 @@ export function FormsSettingsDialogs({
 
           <div className="flex flex-col gap-5">
             <form
-              className="grid gap-3 md:grid-cols-[1fr_180px_auto]"
+              className="grid gap-3 lg:grid-cols-[1fr_180px_auto]"
               onSubmit={(event) => {
                 event.preventDefault();
                 onCreateTemplate();
@@ -316,7 +316,7 @@ export function FormsSettingsDialogs({
                   </Select>
                 </Field>
               </FieldGroup>
-              <Button type="submit" className="self-end" disabled={!templateName || isCreatingTemplate}>
+              <Button type="submit" className="w-full lg:w-auto lg:self-end" disabled={!templateName || isCreatingTemplate}>
                 Add template
               </Button>
             </form>
@@ -326,7 +326,7 @@ export function FormsSettingsDialogs({
                 <h3 className="text-sm font-medium">Edit template</h3>
                 <Badge variant="outline">{templates.length} records</Badge>
               </div>
-              <div className="grid gap-3 md:grid-cols-[180px_1fr_180px_auto_auto]">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[180px_minmax(0,1fr)_180px_auto_auto]">
                 <Select
                   value={selectedTemplateId}
                   onValueChange={(value) => {

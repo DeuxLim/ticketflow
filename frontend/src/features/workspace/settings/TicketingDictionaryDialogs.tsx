@@ -108,8 +108,8 @@ export function TicketingDictionaryDialogs({
 }: TicketingDictionaryDialogsProps) {
   return (
     <>
-      <div className="rounded-lg border">
-        <Table>
+      <div className="overflow-x-auto rounded-lg border">
+        <Table className="min-w-[420px]">
           <TableHeader>
             <TableRow>
               <TableHead>Categories</TableHead>
@@ -149,7 +149,7 @@ export function TicketingDictionaryDialogs({
       </div>
 
       <Dialog open={activeDictionary === 'categories'} onOpenChange={(open) => onSetActiveDictionary(open ? 'categories' : null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Manage Categories</DialogTitle>
             <DialogDescription>Create or update ticket categories without crowding the settings overview.</DialogDescription>
@@ -176,7 +176,7 @@ export function TicketingDictionaryDialogs({
       </Dialog>
 
       <Dialog open={activeDictionary === 'types'} onOpenChange={(open) => onSetActiveDictionary(open ? 'types' : null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Manage Ticket Types</DialogTitle>
             <DialogDescription>Create or update intake types used by templates and routing.</DialogDescription>
@@ -203,7 +203,7 @@ export function TicketingDictionaryDialogs({
       </Dialog>
 
       <Dialog open={activeDictionary === 'tags'} onOpenChange={(open) => onSetActiveDictionary(open ? 'tags' : null)}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Manage Tags</DialogTitle>
             <DialogDescription>Create or update lightweight tags used to mark and filter tickets.</DialogDescription>
@@ -271,7 +271,7 @@ function DictionaryEditor<T extends { id: number; name: string; is_active: boole
         <h3 className="text-sm font-medium">{title}</h3>
         <Badge variant="outline">{rows.length} records</Badge>
       </div>
-      <div className="grid gap-3 md:grid-cols-[220px_1fr_1fr_auto_auto]">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[220px_minmax(0,1fr)_1fr_auto_auto]">
         <Select
           value={selectedId}
           onValueChange={(value) => {

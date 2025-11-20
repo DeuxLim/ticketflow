@@ -71,7 +71,8 @@ export function WorkspaceSettingsPage() {
       />
 
       <Tabs value={resolvedActiveTab} onValueChange={setActiveTab} className="flex flex-col gap-5">
-        <TabsList variant="line" className="flex h-auto w-full flex-wrap justify-start gap-2">
+        <div className="overflow-x-auto pb-1">
+        <TabsList variant="line" className="flex h-auto w-max min-w-full flex-nowrap justify-start gap-2">
           {availableTabs.general && <TabsTrigger value="general">General</TabsTrigger>}
           {availableTabs.ticketing && <TabsTrigger value="ticketing">Ticketing</TabsTrigger>}
           {availableTabs.forms && <TabsTrigger value="forms">Forms</TabsTrigger>}
@@ -79,43 +80,44 @@ export function WorkspaceSettingsPage() {
           {availableTabs.security && <TabsTrigger value="security">Security & Access</TabsTrigger>}
           {availableTabs.integrations && <TabsTrigger value="integrations">Integrations</TabsTrigger>}
         </TabsList>
+        </div>
 
-        <TabsContent value="general" className="flex-none">
+        <TabsContent value="general" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'general' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading general settings...</p>}>
               <GeneralSettingsSection workspaceSlug={workspaceSlug} />
             </Suspense>
           ) : null}
         </TabsContent>
-        <TabsContent value="ticketing" className="flex-none">
+        <TabsContent value="ticketing" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'ticketing' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading ticketing settings...</p>}>
               <TicketingSettingsSection workspaceSlug={workspaceSlug} />
             </Suspense>
           ) : null}
         </TabsContent>
-        <TabsContent value="forms" className="flex-none">
+        <TabsContent value="forms" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'forms' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading form settings...</p>}>
               <FormsSettingsSection workspaceSlug={workspaceSlug} />
             </Suspense>
           ) : null}
         </TabsContent>
-        <TabsContent value="workflow" className="flex-none">
+        <TabsContent value="workflow" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'workflow' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading workflow settings...</p>}>
               <WorkflowAutomationSettingsSection workspaceSlug={workspaceSlug} />
             </Suspense>
           ) : null}
         </TabsContent>
-        <TabsContent value="security" className="flex-none">
+        <TabsContent value="security" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'security' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading security settings...</p>}>
               <GovernanceSettingsSection workspaceSlug={workspaceSlug} />
             </Suspense>
           ) : null}
         </TabsContent>
-        <TabsContent value="integrations" className="flex-none">
+        <TabsContent value="integrations" className="flex-none motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
           {resolvedActiveTab === 'integrations' ? (
             <Suspense fallback={<p className="text-sm text-muted-foreground">Loading integrations...</p>}>
               <IntegrationsSettingsSection workspaceSlug={workspaceSlug} />

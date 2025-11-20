@@ -87,7 +87,7 @@ export function WorkspaceDashboardPage() {
         description="Current work, queue health, and tenant scope."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard label="Customers" value={customersTotal} description="Total customer records" icon={<Users className="size-4" />} />
         <StatCard label="Tickets" value={ticketsTotal} description="All ticket records" icon={<Ticket className="size-4" />} />
         <StatCard label="Open Work" value={openCount === null ? '—' : openCount} description="Open and in-progress tickets" icon={<Inbox className="size-4" />} tone="info" />
@@ -95,7 +95,7 @@ export function WorkspaceDashboardPage() {
         <StatCard label="High Priority" value={highPriorityCount === null ? '—' : highPriorityCount} description="High and urgent backlog items" icon={<AlertCircle className="size-4" />} tone="warning" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card className="shadow-none">
           <CardHeader className="border-b">
             <CardTitle>Recent Tickets</CardTitle>

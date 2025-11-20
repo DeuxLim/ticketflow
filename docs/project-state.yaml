@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-09T21:40:00+08:00"
+updated_at: "2026-05-14T12:20:00+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -8,6 +8,192 @@ source_files:
   progress_log: docs/changelog/progress-log.md
 current_focus: []
 items:
+  - id: MOBILE-RESP-P2
+    title: Operational Compact Responsive Hardening
+    type: epic
+    parent_id: null
+    status: complete
+    priority: high
+    mvp: true
+    description: Run a second app-wide responsive hardening pass focused on dense workspace/admin operational surfaces while preserving large-screen compact productivity layouts.
+    definition_of_done:
+      - Shared responsive behavior contract is applied across routed surfaces for tabs, dialogs/sheets, action rows, and table/card transitions.
+      - Workspace surfaces and dense settings dialogs avoid clipping, hidden actions, and horizontal overflow at phone and tablet widths.
+      - Admin list and editor surfaces remain usable on mobile/tablet while preserving desktop scanability and action density.
+      - Frontend lint, build, and tests pass, and tracker docs are synchronized.
+    dependencies:
+      - MOBILE-RESP-P1
+    notes:
+      - "2026-05-14: Added horizontal tab overflow handling and restrained transition polish in `WorkspaceSettingsPage` to keep settings navigation usable on narrow screens."
+      - "2026-05-14: Hardened Forms/Ticketing settings dialogs with mobile-safe scroll containers, overflow control, and stacked edit grids while keeping desktop multi-column editing."
+      - "2026-05-14: Tightened admin workspace editor and dashboard breakpoints for tablet stability without reducing desktop density."
+      - "2026-05-14: Completed frontend verification (`npm run lint`, `npm run build`, `npm test`) and synced tracker docs."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - mobile
+      - responsive
+      - desktop
+      - ui
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T12:20:00+08:00"
+    changed_at: "2026-05-14T12:20:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P2-T01
+    title: Establish shared responsive contract for operational surfaces
+    type: feature
+    parent_id: MOBILE-RESP-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Define and apply consistent breakpoint behavior for settings tabs, dialog/sheet sizing, and action accessibility without changing product behavior.
+    definition_of_done:
+      - Settings tabs remain reachable via overflow-safe navigation on small screens.
+      - Section transitions are restrained and orienting rather than decorative.
+      - Shared UI chrome remains compact on desktop.
+    dependencies: []
+    notes:
+      - "2026-05-14: Updated `WorkspaceSettingsPage` tabs to use horizontal overflow-safe navigation and lightweight content transitions."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - responsive
+      - settings
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T10:10:00+08:00"
+    changed_at: "2026-05-14T10:10:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P2-T02
+    title: Harden workspace page breakpoint transitions
+    type: feature
+    parent_id: MOBILE-RESP-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Stabilize workspace dashboard and high-churn route layouts at intermediate breakpoints while preserving wide-screen density.
+    definition_of_done:
+      - Dashboard metric and split-column regions remain readable and unclipped from phone through desktop.
+      - No primary ticket/workspace actions are hidden at transition widths.
+    dependencies:
+      - MOBILE-RESP-P2-T01
+    notes:
+      - "2026-05-14: Updated `WorkspaceDashboardPage` metric grid and split layout breakpoints to reduce mid-width compression."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - responsive
+      - workspace
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T10:10:00+08:00"
+    changed_at: "2026-05-14T10:10:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P2-T03
+    title: Harden dense settings management dialogs
+    type: feature
+    parent_id: MOBILE-RESP-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Rework desktop-first multi-column form and dictionary management dialogs into responsive stacks for mobile/tablet while preserving compact desktop operators' workflow.
+    definition_of_done:
+      - Forms and dictionary management dialogs avoid horizontal overflow on small screens.
+      - Multi-input edit rows stack safely on small widths and remain multi-column on large screens.
+      - Dialog content keeps footer actions reachable with internal scrolling where needed.
+    dependencies:
+      - MOBILE-RESP-P2-T01
+    notes:
+      - "2026-05-14: Updated `FormsSettingsDialogs` and `TicketingDictionaryDialogs` with overflow-safe summary tables, dialog max-height scrolling, and responsive edit grids."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - responsive
+      - settings
+      - dialogs
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T10:10:00+08:00"
+    changed_at: "2026-05-14T10:10:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P2-T04
+    title: Harden admin list and editor surfaces for tablet/mobile
+    type: feature
+    parent_id: MOBILE-RESP-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Ensure admin list and workspace editor operations remain accessible across breakpoints without sacrificing desktop action density.
+    definition_of_done:
+      - Admin workspace editor rows stack cleanly on smaller widths.
+      - Admin dashboard list and controls remain discoverable from mobile through desktop.
+    dependencies:
+      - MOBILE-RESP-P2-T01
+    notes:
+      - "2026-05-14: Updated `AdminWorkspaceEditorDialog` row layout/action sizing and aligned dashboard breakpoint behavior via workspace dashboard companion changes."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - responsive
+      - admin
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T10:10:00+08:00"
+    changed_at: "2026-05-14T10:10:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P2-T05
+    title: Verify responsive hardening and sync tracker docs
+    type: test
+    parent_id: MOBILE-RESP-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Run frontend verification and synchronize canonical tracker artifacts for the responsive hardening pass.
+    definition_of_done:
+      - Frontend lint/build/test checks pass.
+      - Canonical state, roadmap, and progress log reflect the verified outcome.
+    dependencies:
+      - MOBILE-RESP-P2-T02
+      - MOBILE-RESP-P2-T03
+      - MOBILE-RESP-P2-T04
+    notes:
+      - "2026-05-14: Ran `npm run lint`, `npm run build`, and `npm test` from `frontend/`."
+      - "2026-05-14: Updated `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - verification
+      - docs
+    created_at: "2026-05-14T10:10:00+08:00"
+    updated_at: "2026-05-14T12:20:00+08:00"
+    changed_at: "2026-05-14T12:20:00+08:00"
+    changed_source: codex
+
   - id: DEPLOY-P1
     title: Free-Platform Deployment Preparation
     type: epic

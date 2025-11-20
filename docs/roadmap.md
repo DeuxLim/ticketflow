@@ -8,6 +8,23 @@ No active focus is set.
 
 ## MVP Items
 
+### `MOBILE-RESP-P2` Operational Compact Responsive Hardening
+
+- Status: `complete`
+- Priority: high
+- Scope: Run a second responsive hardening pass for dense workspace/admin operational surfaces while preserving compact desktop productivity.
+- Current state: complete after adding overflow-safe settings tab navigation, responsive stacking and scroll behavior in dense settings dialogs, tighter admin editor breakpoint handling, and dashboard breakpoint stabilization for tablet widths.
+- Next actions: none. Continue monitoring viewport regressions when new settings/admin controls are added.
+- Blockers: none.
+
+#### Child Items
+
+- `MOBILE-RESP-P2-T01` Establish shared responsive contract for operational surfaces - `complete`
+- `MOBILE-RESP-P2-T02` Harden workspace page breakpoint transitions - `complete`
+- `MOBILE-RESP-P2-T03` Harden dense settings management dialogs - `complete`
+- `MOBILE-RESP-P2-T04` Harden admin list and editor surfaces for tablet/mobile - `complete`
+- `MOBILE-RESP-P2-T05` Verify responsive hardening and sync tracker docs - `complete`
+
 ### `DEPLOY-P1` Free-Platform Deployment Preparation
 
 - Status: `complete`

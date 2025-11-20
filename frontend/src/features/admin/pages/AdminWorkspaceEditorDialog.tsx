@@ -62,7 +62,7 @@ export function AdminWorkspaceEditorDialog({
           <p className="text-xs font-medium text-muted-foreground">{title}</p>
           <div className="flex flex-col gap-2">
             {rows.map((row) => (
-              <div key={row.id} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_120px_1fr_auto]">
+              <div key={row.id} className="grid grid-cols-1 gap-2 lg:grid-cols-[1fr_120px_1fr_auto]">
                 <Input
                   aria-label={`${title} key`}
                   placeholder="key"
@@ -105,7 +105,7 @@ export function AdminWorkspaceEditorDialog({
                   />
                 )}
                 <Button
-                  className="md:justify-self-start"
+                  className="w-full lg:w-auto lg:justify-self-start"
                   disabled={rows.length <= 1 || disabled}
                   size="sm"
                   type="button"

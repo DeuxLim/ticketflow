@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-05-14 12:20 +08:00 - Closed Operational Compact Responsive Hardening
+
+- Added and completed `MOBILE-RESP-P2` plus child items `MOBILE-RESP-P2-T01` through `MOBILE-RESP-P2-T05`.
+- Kept the active focus clear because the responsive pass is closed and verified.
+- Hardened settings tab responsiveness with horizontal overflow-safe navigation and restrained tab-content transitions in `WorkspaceSettingsPage`.
+- Hardened dense settings dialogs for mobile/tablet in `FormsSettingsDialogs` and `TicketingDictionaryDialogs` by adding overflow-safe tables, internal dialog scrolling, and stacked edit-row grids that preserve compact desktop multi-column workflows.
+- Hardened admin workspace editor row controls for small screens in `AdminWorkspaceEditorDialog`.
+- Tuned workspace dashboard breakpoints in `WorkspaceDashboardPage` to reduce compression in mid-width ranges while preserving wide-screen density.
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+- Ran `npm test` from `frontend/` (28 files / 105 tests passed).
+
 ## 2026-05-09 21:40 +08:00 - Closed Free-Platform Deployment Preparation
 
 - Completed `DEPLOY-P1-T03`.
