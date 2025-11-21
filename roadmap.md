@@ -21,13 +21,14 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
-- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`, then extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`. `TicketsPage.tsx` still owns form state, selected templates, and mutations and dropped from 608 to 579 lines.
-- Next actions: continue with another narrow `TicketsPage.tsx` slice, or move to governance/settings dialogs if the next ticket slice is not clearly safer. Verify each slice with focused tests, lint, and build before committing and pushing.
+- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`, extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`, and moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`. `TicketsPage.tsx` now focuses more tightly on access, query, mutation, filter, and dialog state and dropped from 608 to 551 lines across the ticket slices.
+- Next actions: move to governance/settings dialogs unless another clearly safer `TicketsPage.tsx` slice is identified. Verify each slice with focused tests, lint, and build before committing and pushing.
 
 #### Child Items
 
 - `REFACTOR-P2-T01` Decompose customer directory route - `complete`
 - `REFACTOR-P2-T02` Extract ticket form dialogs - `complete`
+- `REFACTOR-P2-T03` Extract ticket queue config derivation - `complete`
 
 ### `CLEAN-P1` Repository Cleanup Pass
 

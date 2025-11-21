@@ -35,7 +35,6 @@ import { TicketQueueTable } from '@/features/workspace/pages/TicketQueueTable';
 import {
   applyTicketFormFieldErrors,
   buildCustomFieldPayload,
-  filterCustomFieldsByTemplate,
   parseTicketTags,
   ticketFormSchema,
   type TicketForm,
@@ -46,6 +45,7 @@ import {
   createTicketFormDefaults,
   findSavedViewName,
 } from '@/features/workspace/pages/ticketQueueHelpers';
+import { useTicketQueueConfigOptions } from '@/features/workspace/pages/useTicketQueueConfigOptions';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import type { Ticket } from '@/types/api';
 
@@ -151,51 +151,23 @@ export function TicketsPage() {
     enabled: Boolean(workspaceSlug && canManage),
   });
 
-  const activeQueueConfigs = useMemo(
-    () =>
-      (queueConfigsQuery.data?.data ?? [])
-        .filter((queue) => queue.is_active)
-        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
-    [queueConfigsQuery.data?.data],
-  );
-
-  const activeCategoryConfigs = useMemo(
-    () =>
-      (categoryConfigsQuery.data?.data ?? [])
-        .filter((category) => category.is_active)
-        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
-    [categoryConfigsQuery.data?.data],
-  );
-
-  const activeTagConfigs = useMemo(
-    () =>
-      (tagConfigsQuery.data?.data ?? [])
-        .filter((tag) => tag.is_active)
-        .sort((left, right) => left.name.localeCompare(right.name)),
-    [tagConfigsQuery.data?.data],
-  );
-
-  const activeCustomFieldConfigs = useMemo(
-    () =>
-      (customFieldConfigsQuery.data?.data ?? [])
-        .filter((field) => field.is_active)
-        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
-    [customFieldConfigsQuery.data?.data],
-  );
-
-  const activeTemplateConfigs = useMemo(
-    () =>
-      (templateConfigsQuery.data?.data ?? [])
-        .filter((template) => template.is_active)
-        .sort((left, right) => Number(right.is_default) - Number(left.is_default) || left.id - right.id),
-    [templateConfigsQuery.data?.data],
-  );
-
-  const defaultTemplateId = activeTemplateConfigs.length > 0 ? String(activeTemplateConfigs[0].id) : 'none';
-  const createSelectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === createTemplateId) ?? null;
-  const editSelectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === editTemplateId) ?? null;
-  const createTemplateFields = filterCustomFieldsByTemplate(activeCustomFieldConfigs, createSelectedTemplate);
-  const editTemplateFields = filterCustomFieldsByTemplate(activeCustomFieldConfigs, editSelectedTemplate);
+  const {
+    activeCategoryConfigs,
+    activeQueueConfigs,
+    activeTagConfigs,
+    activeTemplateConfigs,
+    createTemplateFields,
+    defaultTemplateId,
+    editTemplateFields,
+  } = useTicketQueueConfigOptions({
+    categoryConfigs: categoryConfigsQuery.data?.data ?? [],
+    createTemplateId,
+    customFieldConfigs: customFieldConfigsQuery.data?.data ?? [],
+    editTemplateId,
+    queueConfigs: queueConfigsQuery.data?.data ?? [],
+    tagConfigs: tagConfigsQuery.data?.data ?? [],
+    templateConfigs: templateConfigsQuery.data?.data ?? [],
+  });
 
   const createTicket = useMutation({
     mutationFn: (values: TicketForm) =>
