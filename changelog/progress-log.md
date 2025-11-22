@@ -1792,6 +1792,27 @@ Progress:
 
 Continue `REFACTOR-P2` with governance/settings dialogs unless another clearly safer `TicketsPage.tsx` slice is identified.
 
+## 2026-05-02 18:38 +08:00 - Extracted Governance Policy Dialogs
+
+- Added `frontend/src/features/workspace/settings/GovernancePolicyDialogs.tsx`.
+- Moved retention policy and tenant security policy dialog rendering out of `GovernanceSettingsDialogs.tsx`.
+- Kept all governance state and mutation ownership in `GovernanceSettingsSection.tsx`.
+- Reduced `GovernanceSettingsDialogs.tsx` from 520 to 437 lines.
+- Removed generated `frontend/dist/` output after the production build.
+
+Verification:
+- `frontend`: `npm run test -- GovernanceSettingsSection.test.tsx`, 1 file / 7 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+Progress:
+- Overall tracker progress: 64 of 65 work items complete, 98.5% overall.
+- `REFACTOR-P2`: in progress.
+
+## Resume From Here
+
+Continue `REFACTOR-P2` by extracting another governance dialog group, preferably identity provider or SLA/break-glass/SCIM dialogs, then run focused governance tests, lint, and build.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.

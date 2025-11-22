@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-02T18:35:00+08:00"
+updated_at: "2026-05-02T18:38:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -83,13 +83,14 @@ items:
       - "2026-05-02: Completed the first customer slice by extracting customer form helpers, form fields, profile details, and directory table rendering out of `CustomersPage.tsx`; route component now keeps access, query, and mutation orchestration only and dropped from 678 to 312 lines."
       - "2026-05-02: Completed the first ticket queue slice by extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`; `TicketsPage.tsx` now keeps form state, template state, and mutations while dropping from 608 to 579 lines."
       - "2026-05-02: Completed the ticket queue config derivation slice by moving active queue/category/tag/custom-field/template sorting and selected template field derivation into `useTicketQueueConfigOptions.ts`; `TicketsPage.tsx` dropped from 579 to 551 lines."
+      - "2026-05-02: Completed the governance policy dialog slice by extracting retention and security policy dialogs into `GovernancePolicyDialogs.tsx`; `GovernanceSettingsDialogs.tsx` dropped from 520 to 437 lines."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Move to governance/settings dialogs unless another clearly safer `TicketsPage.tsx` slice is identified.
-      - Prefer extracting one behavior-preserving orchestration or rendering section at a time.
+      - Continue governance/settings dialog decomposition with identity provider, SLA, break-glass, or SCIM directory dialogs.
+      - Prefer extracting one behavior-preserving dialog group at a time.
       - Verify each frontend slice with focused tests, lint, and build before committing and pushing.
     tags:
       - refactor
@@ -98,8 +99,8 @@ items:
       - maintainability
       - workspace
     created_at: "2026-05-02T17:44:00+08:00"
-    updated_at: "2026-05-02T18:35:00+08:00"
-    changed_at: "2026-05-02T18:35:00+08:00"
+    updated_at: "2026-05-02T18:38:00+08:00"
+    changed_at: "2026-05-02T18:38:00+08:00"
     changed_source: codex
 
   - id: REFACTOR-P2-T01
@@ -199,6 +200,39 @@ items:
     created_at: "2026-05-02T18:35:00+08:00"
     updated_at: "2026-05-02T18:35:00+08:00"
     changed_at: "2026-05-02T18:35:00+08:00"
+    changed_source: codex
+
+  - id: REFACTOR-P2-T04
+    title: Extract governance policy dialogs
+    type: task
+    parent_id: REFACTOR-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Move retention and tenant security policy dialog rendering out of `GovernanceSettingsDialogs.tsx`.
+    definition_of_done:
+      - Retention policy dialog rendering lives outside the aggregate governance dialog stack.
+      - Security policy dialog rendering lives outside the aggregate governance dialog stack.
+      - Governance settings behavior remains covered by focused tests.
+      - Frontend lint and build pass after the extraction.
+    dependencies:
+      - REFACTOR-P2
+    notes:
+      - "2026-05-02: Added `GovernancePolicyDialogs.tsx` with retention and security policy dialogs."
+      - "2026-05-02: Verified with focused governance settings tests, frontend lint, and frontend build."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - refactor
+      - react
+      - governance
+      - workspace-settings
+    created_at: "2026-05-02T18:38:00+08:00"
+    updated_at: "2026-05-02T18:38:00+08:00"
+    changed_at: "2026-05-02T18:38:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1
