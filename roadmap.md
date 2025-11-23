@@ -21,8 +21,8 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
-- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`, extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`, moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`, and extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`.
-- Next actions: continue governance/settings dialog decomposition with identity provider, SLA, break-glass, or SCIM directory dialogs. Verify each slice with focused tests, lint, and build before committing and pushing.
+- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`, extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`, moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`, extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`, and extracting identity provider creation into `GovernanceIdentityProviderDialog.tsx`.
+- Next actions: continue governance/settings dialog decomposition with SLA, break-glass, or SCIM directory dialogs. Verify each slice with focused tests, lint, and build before committing and pushing.
 
 #### Child Items
 
@@ -30,6 +30,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `REFACTOR-P2-T02` Extract ticket form dialogs - `complete`
 - `REFACTOR-P2-T03` Extract ticket queue config derivation - `complete`
 - `REFACTOR-P2-T04` Extract governance policy dialogs - `complete`
+- `REFACTOR-P2-T05` Extract governance identity provider dialog - `complete`
 
 ### `CLEAN-P1` Repository Cleanup Pass
 

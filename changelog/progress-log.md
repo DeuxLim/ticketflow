@@ -1813,6 +1813,27 @@ Progress:
 
 Continue `REFACTOR-P2` by extracting another governance dialog group, preferably identity provider or SLA/break-glass/SCIM dialogs, then run focused governance tests, lint, and build.
 
+## 2026-05-02 18:41 +08:00 - Extracted Governance Identity Provider Dialog
+
+- Added `frontend/src/features/workspace/settings/GovernanceIdentityProviderDialog.tsx`.
+- Moved OIDC/SAML identity provider creation rendering out of `GovernanceSettingsDialogs.tsx`.
+- Kept provider state and mutation ownership in `GovernanceSettingsSection.tsx`.
+- Reduced `GovernanceSettingsDialogs.tsx` from 437 to 381 lines.
+- Removed generated `frontend/dist/` output after the production build.
+
+Verification:
+- `frontend`: `npm run test -- GovernanceSettingsSection.test.tsx`, 1 file / 7 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+Progress:
+- Overall tracker progress: 65 of 66 work items complete, 98.5% overall.
+- `REFACTOR-P2`: in progress.
+
+## Resume From Here
+
+Continue `REFACTOR-P2` by extracting SLA, break-glass, or SCIM directory dialogs from `GovernanceSettingsDialogs.tsx`, then run focused governance tests, lint, and build.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.
