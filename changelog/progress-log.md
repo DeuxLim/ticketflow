@@ -1834,6 +1834,29 @@ Progress:
 
 Continue `REFACTOR-P2` by extracting SLA, break-glass, or SCIM directory dialogs from `GovernanceSettingsDialogs.tsx`, then run focused governance tests, lint, and build.
 
+## 2026-05-02 18:44 +08:00 - Extracted Governance Operational Dialogs and Closed REFACTOR-P2
+
+- Added `frontend/src/features/workspace/settings/GovernanceOperationalDialogs.tsx`.
+- Moved SLA policy, break-glass request, and SCIM directory creation dialog rendering out of `GovernanceSettingsDialogs.tsx`.
+- Kept governance state and mutation ownership in `GovernanceSettingsSection.tsx`.
+- Reduced `GovernanceSettingsDialogs.tsx` from 381 to 268 lines.
+- Closed `REFACTOR-P2` as complete.
+- Deferred larger API/backend contract surfaces (`frontend/src/types/api.ts`, `settings-api.ts`, `TicketController.php`, and workflow automation settings) to a separate future item only when there is a concrete behavior-safe extraction plan.
+- Removed generated `frontend/dist/` output after the production build.
+
+Verification:
+- `frontend`: `npm run test -- GovernanceSettingsSection.test.tsx`, 1 file / 7 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+Progress:
+- Overall tracker progress: 67 of 67 work items complete, 100% overall.
+- `REFACTOR-P2`: complete.
+
+## Resume From Here
+
+All current tracked cleanup/refactor work items are complete. Start a new tracker item before doing any additional refactor, API-contract, backend-controller, or feature work.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.

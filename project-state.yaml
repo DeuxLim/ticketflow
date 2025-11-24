@@ -1,13 +1,12 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-02T18:41:00+08:00"
+updated_at: "2026-05-02T18:44:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus:
-  - REFACTOR-P2
+current_focus: []
 items:
   - id: REFACTOR-P1
     title: Laravel and React Standards Alignment
@@ -67,7 +66,7 @@ items:
     title: High-Churn Workspace Surface Decomposition
     type: refactor
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
@@ -85,14 +84,13 @@ items:
       - "2026-05-02: Completed the ticket queue config derivation slice by moving active queue/category/tag/custom-field/template sorting and selected template field derivation into `useTicketQueueConfigOptions.ts`; `TicketsPage.tsx` dropped from 579 to 551 lines."
       - "2026-05-02: Completed the governance policy dialog slice by extracting retention and security policy dialogs into `GovernancePolicyDialogs.tsx`; `GovernanceSettingsDialogs.tsx` dropped from 520 to 437 lines."
       - "2026-05-02: Completed the identity provider dialog slice by extracting OIDC/SAML provider creation into `GovernanceIdentityProviderDialog.tsx`; `GovernanceSettingsDialogs.tsx` dropped from 437 to 381 lines."
+      - "2026-05-02: Completed the remaining governance operational dialog slice by extracting SLA, break-glass, and SCIM directory dialogs into `GovernanceOperationalDialogs.tsx`; `GovernanceSettingsDialogs.tsx` dropped from 381 to 268 lines."
+      - "2026-05-02: Closed `REFACTOR-P2`. Customer, ticket queue, and governance/settings oversized frontend surfaces were decomposed with focused verification. Remaining large contract/backend surfaces (`frontend/src/types/api.ts`, `settings-api.ts`, `TicketController.php`, and workflow automation settings) are explicitly deferred because they carry higher API/backend regression risk and should be handled as a separate future item only when there is a concrete behavior-safe extraction plan."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Continue governance/settings dialog decomposition with SLA, break-glass, or SCIM directory dialogs.
-      - Prefer extracting one behavior-preserving dialog group at a time.
-      - Verify each frontend slice with focused tests, lint, and build before committing and pushing.
+    next_actions: []
     tags:
       - refactor
       - react
@@ -100,8 +98,8 @@ items:
       - maintainability
       - workspace
     created_at: "2026-05-02T17:44:00+08:00"
-    updated_at: "2026-05-02T18:41:00+08:00"
-    changed_at: "2026-05-02T18:41:00+08:00"
+    updated_at: "2026-05-02T18:44:00+08:00"
+    changed_at: "2026-05-02T18:44:00+08:00"
     changed_source: codex
 
   - id: REFACTOR-P2-T01
@@ -268,6 +266,40 @@ items:
     created_at: "2026-05-02T18:41:00+08:00"
     updated_at: "2026-05-02T18:41:00+08:00"
     changed_at: "2026-05-02T18:41:00+08:00"
+    changed_source: codex
+
+  - id: REFACTOR-P2-T06
+    title: Extract governance operational dialogs
+    type: task
+    parent_id: REFACTOR-P2
+    status: complete
+    priority: high
+    mvp: true
+    description: Move SLA, break-glass, and SCIM directory dialog rendering out of `GovernanceSettingsDialogs.tsx`.
+    definition_of_done:
+      - SLA policy dialog rendering lives outside the aggregate governance dialog stack.
+      - Break-glass request dialog rendering lives outside the aggregate governance dialog stack.
+      - SCIM directory dialog rendering lives outside the aggregate governance dialog stack.
+      - Governance settings behavior remains covered by focused tests.
+      - Frontend lint and build pass after the extraction.
+    dependencies:
+      - REFACTOR-P2
+    notes:
+      - "2026-05-02: Added `GovernanceOperationalDialogs.tsx` and replaced inline SLA, break-glass, and SCIM directory dialogs with focused components."
+      - "2026-05-02: Verified with focused governance settings tests, frontend lint, and frontend build."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - refactor
+      - react
+      - governance
+      - workspace-settings
+    created_at: "2026-05-02T18:44:00+08:00"
+    updated_at: "2026-05-02T18:44:00+08:00"
+    changed_at: "2026-05-02T18:44:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1

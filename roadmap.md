@@ -4,7 +4,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-`REFACTOR-P2`
+None
 
 ## MVP Items
 
@@ -18,11 +18,11 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ### `REFACTOR-P2` High-Churn Workspace Surface Decomposition
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
-- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`, extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`, moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`, extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`, and extracting identity provider creation into `GovernanceIdentityProviderDialog.tsx`.
-- Next actions: continue governance/settings dialog decomposition with SLA, break-glass, or SCIM directory dialogs. Verify each slice with focused tests, lint, and build before committing and pushing.
+- Current state: complete after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`; extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`; moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`; extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`; extracting identity provider creation into `GovernanceIdentityProviderDialog.tsx`; and extracting SLA, break-glass, and SCIM directory dialogs into `GovernanceOperationalDialogs.tsx`.
+- Next actions: none for this item. Larger API/backend contract surfaces are deferred to a separate future item only when there is a concrete behavior-safe extraction plan.
 
 #### Child Items
 
@@ -31,6 +31,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `REFACTOR-P2-T03` Extract ticket queue config derivation - `complete`
 - `REFACTOR-P2-T04` Extract governance policy dialogs - `complete`
 - `REFACTOR-P2-T05` Extract governance identity provider dialog - `complete`
+- `REFACTOR-P2-T06` Extract governance operational dialogs - `complete`
 
 ### `CLEAN-P1` Repository Cleanup Pass
 
