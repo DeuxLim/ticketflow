@@ -21,14 +21,14 @@ class WorkspaceInvitationsTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
             'expires_in_days' => 7,
         ])->assertCreated()->json('data');
 
@@ -54,7 +54,7 @@ class WorkspaceInvitationsTest extends TestCase
 
         $this->assertDatabaseHas('workspace_membership_roles', [
             'workspace_membership_id' => $membershipId,
-            'workspace_role_id' => $memberRoleId,
+            'workspace_role_id' => $agentRoleId,
         ]);
 
         $this->assertDatabaseHas('workspace_invitations', [
@@ -81,7 +81,7 @@ class WorkspaceInvitationsTest extends TestCase
 
         $roleFromOtherWorkspace = \DB::table('workspace_roles')
             ->where('workspace_id', $workspaceB['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $this->postJson("/api/workspaces/{$workspaceA['slug']}/invitations", [
@@ -119,14 +119,14 @@ class WorkspaceInvitationsTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'expected@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->assertCreated()->json('data');
 
         $differentUser = User::factory()->create([

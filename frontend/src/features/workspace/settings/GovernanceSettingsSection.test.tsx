@@ -9,20 +9,14 @@ import {
   approveBreakGlassRequest,
   createBreakGlassRequest,
   createExport,
-  createIdentityProvider,
-  createProvisioningDirectory,
   createSlaPolicy,
-  deleteIdentityProvider,
   downloadExport,
   getRetentionPolicy,
   getTenantSecurityPolicy,
   listAuditEvents,
   listBreakGlassRequests,
   listExports,
-  listIdentityProviders,
-  listProvisioningDirectories,
   listSlaPolicies,
-  startOidcSso,
   updateRetentionPolicy,
   updateTenantSecurityPolicy,
 } from '@/features/workspace/api/settings-api';
@@ -31,20 +25,14 @@ vi.mock('@/features/workspace/api/settings-api', () => ({
   approveBreakGlassRequest: vi.fn(),
   createBreakGlassRequest: vi.fn(),
   createExport: vi.fn(),
-  createIdentityProvider: vi.fn(),
-  createProvisioningDirectory: vi.fn(),
   createSlaPolicy: vi.fn(),
-  deleteIdentityProvider: vi.fn(),
   downloadExport: vi.fn(),
   getRetentionPolicy: vi.fn(),
   getTenantSecurityPolicy: vi.fn(),
   listAuditEvents: vi.fn(),
   listBreakGlassRequests: vi.fn(),
   listExports: vi.fn(),
-  listIdentityProviders: vi.fn(),
-  listProvisioningDirectories: vi.fn(),
   listSlaPolicies: vi.fn(),
-  startOidcSso: vi.fn(),
   updateRetentionPolicy: vi.fn(),
   updateTenantSecurityPolicy: vi.fn(),
 }));
@@ -99,7 +87,6 @@ describe('GovernanceSettingsSection', () => {
       data: {
         id: 1,
         workspace_id: 1,
-        require_sso: false,
         require_mfa: false,
         session_ttl_minutes: 720,
         ip_allowlist: [],
@@ -108,63 +95,12 @@ describe('GovernanceSettingsSection', () => {
         feature_flags: {},
       },
     } as never);
-    vi.mocked(listIdentityProviders).mockResolvedValue({ data: [] } as never);
-    vi.mocked(listProvisioningDirectories).mockResolvedValue({ data: [] } as never);
     vi.mocked(updateRetentionPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(createExport).mockResolvedValue({ data: {} } as never);
     vi.mocked(createBreakGlassRequest).mockResolvedValue({ data: {} } as never);
     vi.mocked(approveBreakGlassRequest).mockResolvedValue({ data: {} } as never);
     vi.mocked(createSlaPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(downloadExport).mockResolvedValue(undefined);
-    vi.mocked(createIdentityProvider).mockResolvedValue({ data: {} } as never);
-    vi.mocked(deleteIdentityProvider).mockResolvedValue({ message: 'ok' } as never);
-    vi.mocked(startOidcSso).mockResolvedValue({ data: { authorization_url: 'https://example.test', state: 'state' } } as never);
-  });
-
-  it('creates provisioning directory and shows one-time SCIM token', async () => {
-    vi.mocked(createProvisioningDirectory).mockResolvedValue({
-      data: { id: 10, name: 'Azure AD', status: 'active', workspace_id: 1, created_at: '', updated_at: '' },
-      meta: { token: 'scim_abc123' },
-    } as never);
-
-    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Create directory' }));
-    const dialog = within(screen.getByRole('dialog'));
-    fireEvent.change(dialog.getByLabelText('Directory name'), { target: { value: 'Azure AD' } });
-    fireEvent.click(dialog.getByRole('button', { name: 'Create directory' }));
-
-    await waitFor(() => {
-      expect(createProvisioningDirectory).toHaveBeenCalledWith('acme', 'Azure AD');
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/Latest SCIM token \(shown once\): scim_abc123/i)).not.toBeNull();
-    });
-  });
-
-  it('creates an identity provider from a focused dialog', async () => {
-    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Add provider' }));
-    const dialog = within(screen.getByRole('dialog'));
-    fireEvent.change(dialog.getByLabelText('Name'), { target: { value: 'Acme OIDC' } });
-    fireEvent.change(dialog.getByLabelText('Issuer'), { target: { value: 'https://idp.example.test' } });
-    fireEvent.change(dialog.getByLabelText('Authorization URL'), { target: { value: 'https://idp.example.test/auth' } });
-    fireEvent.change(dialog.getByLabelText('Token URL'), { target: { value: 'https://idp.example.test/token' } });
-    fireEvent.change(dialog.getByLabelText('Redirect URI'), { target: { value: 'https://app.example.test/callback' } });
-    fireEvent.change(dialog.getByLabelText('Client ID'), { target: { value: 'client-id' } });
-    fireEvent.change(dialog.getByLabelText('Client secret'), { target: { value: 'client-secret' } });
-    fireEvent.click(dialog.getByRole('button', { name: 'Create provider' }));
-
-    await waitFor(() => {
-      expect(createIdentityProvider).toHaveBeenCalledWith('acme', expect.objectContaining({
-        provider_type: 'oidc',
-        name: 'Acme OIDC',
-        issuer: 'https://idp.example.test',
-        authorization_url: 'https://idp.example.test/auth',
-      }));
-    });
   });
 
   it('updates retention policy from a focused dialog', async () => {

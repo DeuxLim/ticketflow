@@ -96,6 +96,25 @@ describe('TicketsPage interactions', () => {
     });
   });
 
+  it('distinguishes empty queues from filtered empty results', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets" element={<TicketsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No tickets yet.')).not.toBeNull();
+    });
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'missing ticket' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('No tickets match these filters.')).not.toBeNull();
+      expect(screen.getByText('Search: missing ticket')).not.toBeNull();
+    });
+  });
+
   it('shows list error message when ticket query fails', async () => {
     vi.mocked(apiRequest).mockImplementation(async (path: string) => {
       if (path.includes('/customers?per_page=200')) {
@@ -122,6 +141,53 @@ describe('TicketsPage interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Ticket list failed.')).not.toBeNull();
+    });
+  });
+
+  it('shows inline assignee control in the ticket list for users who can manage tickets', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+      if (path.includes('/members/assignable')) {
+        return {
+          data: [{ id: 1, user: { id: 22, first_name: 'Ava', last_name: 'Agent', email: 'ava@example.test' } }],
+        } as never;
+      }
+      if (path === '/workspaces/acme/saved-views') {
+        return { data: [] } as never;
+      }
+      if (path.startsWith('/workspaces/acme/tickets')) {
+        return {
+          data: [
+            {
+              id: 7,
+              customer_id: 10,
+              ticket_number: 'TKT-000007',
+              title: 'Branch outage',
+              description: 'Router offline',
+              status: 'open',
+              priority: 'high',
+              assigned_to_user_id: null,
+              assignee: null,
+              customer: { id: 10, name: 'Acme Corp', email: 'help@acme.test' },
+            },
+          ],
+          meta: { current_page: 1, last_page: 1, per_page: 20, total: 1 },
+        } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets" element={<TicketsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Assign TKT-000007')).not.toBeNull();
     });
   });
 

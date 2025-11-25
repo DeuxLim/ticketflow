@@ -9,6 +9,7 @@ type TicketQueueSearchBarProps = {
   savedViewName: string | null;
   activeFilterCount: number;
   selectedVisibleTicketIdsCount: number;
+  activeFilterLabels: string[];
   onResetControls: () => void;
 };
 
@@ -18,6 +19,7 @@ export function TicketQueueSearchBar({
   savedViewName,
   activeFilterCount,
   selectedVisibleTicketIdsCount,
+  activeFilterLabels,
   onResetControls,
 }: TicketQueueSearchBarProps) {
   return (
@@ -39,6 +41,10 @@ export function TicketQueueSearchBar({
           </Badge>
         )}
         {activeFilterCount > 0 && <Badge variant="outline">{activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}</Badge>}
+        {activeFilterLabels.slice(0, 3).map((label) => (
+          <Badge key={label} variant="secondary">{label}</Badge>
+        ))}
+        {activeFilterLabels.length > 3 && <Badge variant="secondary">+{activeFilterLabels.length - 3} more</Badge>}
         {selectedVisibleTicketIdsCount > 0 && (
           <Badge variant="secondary">{selectedVisibleTicketIdsCount} selected</Badge>
         )}

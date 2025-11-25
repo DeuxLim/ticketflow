@@ -21,14 +21,14 @@ class WorkspaceInvitationLifecycleTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invitation = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->assertCreated()->json('data');
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/invitations/{$invitation['id']}/cancel")
@@ -50,14 +50,14 @@ class WorkspaceInvitationLifecycleTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invitation = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->assertCreated()->json('data');
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/invitations/{$invitation['id']}/cancel")

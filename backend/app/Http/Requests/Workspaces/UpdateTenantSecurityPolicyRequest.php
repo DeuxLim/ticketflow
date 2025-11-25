@@ -14,7 +14,6 @@ class UpdateTenantSecurityPolicyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'require_sso' => ['sometimes', 'boolean'],
             'require_mfa' => ['sometimes', 'boolean'],
             'session_ttl_minutes' => ['sometimes', 'integer', 'min:15', 'max:43200'],
             'ip_allowlist' => ['nullable', 'array'],

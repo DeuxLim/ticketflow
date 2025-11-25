@@ -4,9 +4,44 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-None
+`MEDIUM-P1-T01` Ticket lifecycle cleanup
 
 ## MVP Items
+
+### `SCOPE-P1` Remove SCIM and SSO from product scope
+
+- Status: `complete`
+- Priority: high
+- Scope: Fully remove SCIM provisioning and SSO identity-provider flows so the project returns toward a medium-level internal ticketing app.
+- Current state: complete after removing SCIM/SSO routes, controllers, middleware, models, request classes, route bindings, rate limiting, frontend settings UI, frontend API helpers/types/tests, local-login SSO blocking, and fresh-install SCIM/SSO schema creation. A cleanup migration drops the old SCIM/SSO tables and fields for existing local databases.
+- Next actions: none for this item. Remaining enterprise features are reviewed under `SCOPE-D01`.
+
+### `MEDIUM-P1` Medium Ticketing Completion
+
+- Status: `incomplete`
+- Priority: high
+- Scope: Finish the product as a medium-level internal ticketing app focused on practical support workflows instead of enterprise identity scope.
+- Current state: roadmap created after the scope decision. `MEDIUM-P1-T02` through `MEDIUM-P1-T08` are complete after adding in-app notifications, better search/filter states, readable activity labels, simple role docs/demo account, full-flow demo seed data, and a clean root README.
+- Next actions: complete `MEDIUM-P1-T01` final lifecycle UX review across queue, detail, forms, filters, bulk updates, and workflow status displays.
+
+#### Child Items
+
+- `MEDIUM-P1-T01` Ticket lifecycle cleanup - `incomplete`
+- `MEDIUM-P1-T02` Assignee workflow clarity - `complete`
+- `MEDIUM-P1-T03` In-app notifications - `complete`
+- `MEDIUM-P1-T04` Search and filtering quality - `complete`
+- `MEDIUM-P1-T05` Ticket activity readability - `complete`
+- `MEDIUM-P1-T06` Simple role set - `complete`
+- `MEDIUM-P1-T07` Demo data for full flow - `complete`
+- `MEDIUM-P1-T08` Clean project README - `complete`
+
+### `SCOPE-D01` Review remaining enterprise features
+
+- Status: `planned`
+- Priority: medium
+- Scope: Decide whether to keep, simplify, defer, or remove remaining enterprise features after SCIM/SSO removal.
+- Current state: user chose to remove only SCIM/SSO now and review the rest later.
+- Next actions: review SLA policy UI, break-glass, tenant exports, retention, advanced automation, webhooks, and platform isolation after `MEDIUM-P1` priorities are confirmed.
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
@@ -21,7 +56,7 @@ None
 - Status: `complete`
 - Priority: high
 - Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
-- Current state: complete after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`; extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`; moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`; extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`; extracting identity provider creation into `GovernanceIdentityProviderDialog.tsx`; and extracting SLA, break-glass, and SCIM directory dialogs into `GovernanceOperationalDialogs.tsx`.
+- Current state: complete after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`; extracting create/edit ticket dialog rendering into `TicketFormDialogs.tsx`; moving ticket queue config option derivation into `useTicketQueueConfigOptions.ts`; extracting governance retention/security policy dialogs into `GovernancePolicyDialogs.tsx`; and extracting the remaining governance operational dialogs that are still in scope.
 - Next actions: none for this item. Larger API/backend contract surfaces are deferred to a separate future item only when there is a concrete behavior-safe extraction plan.
 
 #### Child Items
@@ -30,7 +65,6 @@ None
 - `REFACTOR-P2-T02` Extract ticket form dialogs - `complete`
 - `REFACTOR-P2-T03` Extract ticket queue config derivation - `complete`
 - `REFACTOR-P2-T04` Extract governance policy dialogs - `complete`
-- `REFACTOR-P2-T05` Extract governance identity provider dialog - `complete`
 - `REFACTOR-P2-T06` Extract governance operational dialogs - `complete`
 
 ### `CLEAN-P1` Repository Cleanup Pass
@@ -191,4 +225,4 @@ None
 
 ## Resume From Here
 
-Select the next intentional epic before doing more implementation work.
+Continue `MEDIUM-P1` with `MEDIUM-P1-T01` ticket lifecycle cleanup, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.

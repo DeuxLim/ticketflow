@@ -22,7 +22,6 @@ class User extends Authenticatable
         'password',
         'is_platform_admin',
         'is_mfa_enrolled',
-        'last_sso_at',
     ];
 
     protected $hidden = [
@@ -37,7 +36,6 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_platform_admin' => 'boolean',
             'is_mfa_enrolled' => 'boolean',
-            'last_sso_at' => 'datetime',
         ];
     }
 

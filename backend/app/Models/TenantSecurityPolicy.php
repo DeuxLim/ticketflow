@@ -9,7 +9,6 @@ class TenantSecurityPolicy extends Model
 {
     protected $fillable = [
         'workspace_id',
-        'require_sso',
         'require_mfa',
         'session_ttl_minutes',
         'ip_allowlist',
@@ -18,7 +17,6 @@ class TenantSecurityPolicy extends Model
     protected function casts(): array
     {
         return [
-            'require_sso' => 'boolean',
             'require_mfa' => 'boolean',
         ];
     }

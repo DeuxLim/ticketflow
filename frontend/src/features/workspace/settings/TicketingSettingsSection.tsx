@@ -254,7 +254,7 @@ export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSec
       <Card className="shadow-none">
         <CardHeader>
           <CardTitle>Config dictionaries</CardTitle>
-          <CardDescription>Review owner-managed terms first, then open the focused manager for changes.</CardDescription>
+          <CardDescription>Review admin-managed terms first, then open the focused manager for changes.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <TicketingDictionaryDialogs

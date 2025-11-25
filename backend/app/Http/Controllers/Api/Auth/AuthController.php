@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\TenantIdentityProvider;
 use App\Models\TenantSecurityPolicy;
 use App\Models\User;
 use App\Models\Workspace;
@@ -54,16 +53,6 @@ class AuthController extends Controller
 
             if ($hasMembership) {
                 $policy = TenantSecurityPolicy::query()->where('workspace_id', $workspace->id)->first();
-                $hasIdentityProvider = TenantIdentityProvider::query()
-                    ->where('workspace_id', $workspace->id)
-                    ->where('is_active', true)
-                    ->exists();
-
-                if ($policy?->require_sso && $hasIdentityProvider) {
-                    return response()->json([
-                        'message' => 'Local login is disabled for this workspace. Use SSO.',
-                    ], 403);
-                }
 
                 if ($policy && $policy->session_ttl_minutes > 0) {
                     $expiresAt = now()->addMinutes($policy->session_ttl_minutes);

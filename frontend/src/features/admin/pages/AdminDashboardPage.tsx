@@ -257,7 +257,6 @@ export function AdminDashboardPage() {
         <AdminMetric title="Suspended" value={stats.suspended_workspaces_count} description="Suspended tenants" />
         <AdminMetric title="Maintenance" value={stats.maintenance_workspaces_count} description="Workspaces in maintenance mode" />
         <AdminMetric title="Dedicated" value={stats.dedicated_workspaces_count} description="Dedicated isolation tenants" />
-        <AdminMetric title="Stale IdP Certs" value={stats.stale_idp_certificates_count} description="Expires within 30 days" />
         <AdminMetric title="Automation Failures" value={stats.failed_automation_executions_count} description="Failed rule executions" />
         <AdminMetric title="Break-Glass Pending" value={stats.pending_break_glass_count} description="Dual-control pending" />
       </div>

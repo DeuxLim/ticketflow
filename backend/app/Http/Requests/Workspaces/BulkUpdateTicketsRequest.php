@@ -19,7 +19,7 @@ class BulkUpdateTicketsRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1'],
             'ticket_ids.*' => ['required', 'integer', 'exists:tickets,id'],
-            'status' => ['nullable', 'in:open,in_progress,resolved,closed'],
+            'status' => ['nullable', 'in:open,in_progress,pending,resolved,closed'],
             'priority' => ['nullable', 'in:low,medium,high,urgent'],
             'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
         ];

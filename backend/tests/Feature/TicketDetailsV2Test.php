@@ -77,7 +77,7 @@ class TicketDetailsV2Test extends TestCase
         $this->assertSame('manual', $response['state_summary']['assignment']['strategy']);
     }
 
-    public function test_member_can_self_follow_but_cannot_add_other_watchers(): void
+    public function test_agent_can_follow_and_manage_other_watchers(): void
     {
         $owner = User::factory()->create();
         Sanctum::actingAs($owner);
@@ -86,14 +86,14 @@ class TicketDetailsV2Test extends TestCase
         $customer = $this->createCustomer($workspace['slug']);
         $ticket = $this->createTicket($workspace['slug'], $customer['id']);
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->json('data');
 
         $member = User::factory()->create(['email' => 'agent@example.com']);
@@ -106,7 +106,8 @@ class TicketDetailsV2Test extends TestCase
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/tickets/{$ticket['id']}/watchers", [
             'user_id' => $owner->id,
-        ])->assertForbidden();
+        ])->assertCreated()
+            ->assertJsonPath('data.user_id', $owner->id);
     }
 
     public function test_related_ticket_rejects_cross_workspace_links(): void

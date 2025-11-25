@@ -6,15 +6,14 @@ use App\Models\Customer;
 use App\Models\SavedView;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
-use App\Models\TenantIdentityProvider;
 use App\Models\WebhookDelivery;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,10 +30,6 @@ class AppServiceProvider extends ServiceProvider
             $tokenKey = $request->bearerToken() ?: $request->ip();
 
             return Limit::perMinute(600)->by("tenant:{$workspaceKey}:{$tokenKey}");
-        });
-
-        RateLimiter::for('scim', function (Request $request): Limit {
-            return Limit::perMinute(1200)->by('scim:'.($request->bearerToken() ?: $request->ip()));
         });
 
         Route::bind('workspace', function (string $value): Workspace {
@@ -72,19 +67,6 @@ class AppServiceProvider extends ServiceProvider
             $workspace = $route->parameter('workspace');
 
             $query = Ticket::query()->whereKey($value);
-
-            if ($workspace) {
-                $query->where('workspace_id', $workspace->id);
-            }
-
-            return $query->firstOrFail();
-        });
-
-        Route::bind('provider', function (string $value, $route): TenantIdentityProvider {
-            /** @var Workspace|null $workspace */
-            $workspace = $route->parameter('workspace');
-
-            $query = TenantIdentityProvider::query()->whereKey($value);
 
             if ($workspace) {
                 $query->where('workspace_id', $workspace->id);

@@ -51,6 +51,15 @@ describe('ticketPageApi', () => {
     expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets?search=router&status=open&priority=high&queue_key=ops&category=incident&customer_id=10&assignee_id=22&page=3');
   });
 
+  it('keeps unassigned assignee filter in the ticket list endpoint', async () => {
+    await listWorkspaceTickets('acme', {
+      assigneeId: 'unassigned',
+      page: 1,
+    });
+
+    expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets?assignee_id=unassigned&page=1');
+  });
+
   it('creates, updates, bulk updates, and deletes tickets', async () => {
     await createWorkspaceTicket('acme', { title: 'Router down' });
     expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets', {

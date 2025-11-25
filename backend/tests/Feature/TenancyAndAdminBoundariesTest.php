@@ -11,7 +11,7 @@ class TenancyAndAdminBoundariesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_workspace_bootstrap_assigns_owner_membership_and_owner_role(): void
+    public function test_workspace_bootstrap_assigns_owner_membership_and_admin_role(): void
     {
         $user = User::factory()->create();
 
@@ -41,14 +41,14 @@ class TenancyAndAdminBoundariesTest extends TestCase
             ->where('user_id', $user->id)
             ->value('id');
 
-        $ownerRoleId = \DB::table('workspace_roles')
+        $adminRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspaceId)
-            ->where('slug', 'owner')
+            ->where('slug', 'admin')
             ->value('id');
 
         $this->assertDatabaseHas('workspace_membership_roles', [
             'workspace_membership_id' => $membershipId,
-            'workspace_role_id' => $ownerRoleId,
+            'workspace_role_id' => $adminRoleId,
         ]);
     }
 

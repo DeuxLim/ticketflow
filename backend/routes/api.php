@@ -1,26 +1,21 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AdminDashboardController;
-use App\Http\Controllers\Api\Admin\AdminWorkspaceOperationsController;
 use App\Http\Controllers\Api\Admin\AdminUserIndexController;
 use App\Http\Controllers\Api\Admin\AdminWorkspaceIndexController;
+use App\Http\Controllers\Api\Admin\AdminWorkspaceOperationsController;
 use App\Http\Controllers\Api\Auth\AuthController;
-use App\Http\Controllers\Api\Auth\SsoController;
-use App\Http\Controllers\Api\Scim\ScimGroupController;
-use App\Http\Controllers\Api\Scim\ScimUserController;
 use App\Http\Controllers\Api\Workspaces\ApprovalController;
-use App\Http\Controllers\Api\Workspaces\AutomationRuleController;
 use App\Http\Controllers\Api\Workspaces\AuditEventController;
+use App\Http\Controllers\Api\Workspaces\AutomationRuleController;
 use App\Http\Controllers\Api\Workspaces\BreakGlassController;
 use App\Http\Controllers\Api\Workspaces\CustomerController;
 use App\Http\Controllers\Api\Workspaces\InvitationAcceptanceController;
-use App\Http\Controllers\Api\Workspaces\ProvisioningDirectoryController;
 use App\Http\Controllers\Api\Workspaces\ReportingController;
 use App\Http\Controllers\Api\Workspaces\RetentionPolicyController;
 use App\Http\Controllers\Api\Workspaces\SavedViewController;
 use App\Http\Controllers\Api\Workspaces\SlaPolicyController;
 use App\Http\Controllers\Api\Workspaces\TenantExportController;
-use App\Http\Controllers\Api\Workspaces\TenantIdentityProviderController;
 use App\Http\Controllers\Api\Workspaces\TenantSecurityPolicyController;
 use App\Http\Controllers\Api\Workspaces\TicketAttachmentController;
 use App\Http\Controllers\Api\Workspaces\TicketCategoryController;
@@ -40,22 +35,13 @@ use App\Http\Controllers\Api\Workspaces\WorkspaceAccessController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceInvitationController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceMemberController;
+use App\Http\Controllers\Api\Workspaces\WorkspaceNotificationController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceRoleController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
-Route::get('/auth/sso/oidc/callback', [SsoController::class, 'oidcCallback']);
-Route::post('/workspaces/{workspace}/auth/sso/saml/acs', [SsoController::class, 'samlAcs']);
-Route::middleware(['scim_auth', 'throttle:scim'])->prefix('/scim/v2')->group(function (): void {
-    Route::get('/Users', [ScimUserController::class, 'index']);
-    Route::post('/Users', [ScimUserController::class, 'store']);
-    Route::patch('/Users/{id}', [ScimUserController::class, 'patch']);
-    Route::get('/Groups', [ScimGroupController::class, 'index']);
-    Route::post('/Groups', [ScimGroupController::class, 'store']);
-    Route::patch('/Groups/{id}', [ScimGroupController::class, 'patch']);
-});
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -69,6 +55,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         ->middleware(['workspace_member', 'tenant_network', 'throttle:tenant-api'])
         ->group(function (): void {
             Route::get('/access', [WorkspaceAccessController::class, 'show']);
+            Route::get('/notifications', [WorkspaceNotificationController::class, 'index']);
+            Route::post('/notifications/read-all', [WorkspaceNotificationController::class, 'markAllRead']);
+            Route::post('/notifications/{notification}/read', [WorkspaceNotificationController::class, 'markRead']);
 
             Route::get('/settings/general', [WorkspaceSettingsController::class, 'general'])
                 ->middleware('workspace_permission:workspace.manage');
@@ -200,20 +189,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/security-policy', [TenantSecurityPolicyController::class, 'show'])
                 ->middleware('workspace_permission:security.manage');
             Route::patch('/security-policy', [TenantSecurityPolicyController::class, 'update'])
-                ->middleware('workspace_permission:security.manage');
-
-            Route::get('/identity-providers', [TenantIdentityProviderController::class, 'index'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/identity-providers', [TenantIdentityProviderController::class, 'store'])
-                ->middleware('workspace_permission:security.manage');
-            Route::delete('/identity-providers/{provider}', [TenantIdentityProviderController::class, 'destroy'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/auth/sso/oidc/start', [SsoController::class, 'startOidc'])
-                ->middleware('workspace_permission:security.manage');
-
-            Route::get('/provisioning-directories', [ProvisioningDirectoryController::class, 'index'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/provisioning-directories', [ProvisioningDirectoryController::class, 'store'])
                 ->middleware('workspace_permission:security.manage');
 
             Route::get('/sla-policies', [SlaPolicyController::class, 'index'])

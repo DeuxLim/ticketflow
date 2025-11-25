@@ -10,9 +10,7 @@ import type {
   SavedViewRecord,
   SlaPolicyConfig,
   TenantExportRecord,
-  TenantIdentityProviderConfig,
   TenantSecurityPolicyConfig,
-  ProvisioningDirectoryRecord,
   WebhookDeliveryRecord,
   WebhookEndpointRecord,
   TicketWorkflowConfig,
@@ -360,19 +358,6 @@ export function listAuditEvents(workspaceSlug: string) {
   return apiRequest<{ data: AuditEventRecord[] }>(`/workspaces/${workspaceSlug}/audit-events?per_page=20`);
 }
 
-type OidcStartResponse = {
-  data: {
-    authorization_url: string;
-    state: string;
-  };
-};
-
-type CreateProvisioningDirectoryResponse = ApiEnvelope<ProvisioningDirectoryRecord> & {
-  meta?: {
-    token?: string;
-  };
-};
-
 export function getTenantSecurityPolicy(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<TenantSecurityPolicyConfig>>(`/workspaces/${workspaceSlug}/security-policy`);
 }
@@ -381,41 +366,6 @@ export function updateTenantSecurityPolicy(workspaceSlug: string, payload: Parti
   return apiRequest<ApiEnvelope<TenantSecurityPolicyConfig>>(`/workspaces/${workspaceSlug}/security-policy`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-  });
-}
-
-export function listIdentityProviders(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<TenantIdentityProviderConfig[]>>(`/workspaces/${workspaceSlug}/identity-providers`);
-}
-
-export function createIdentityProvider(workspaceSlug: string, payload: Record<string, unknown>) {
-  return apiRequest<ApiEnvelope<TenantIdentityProviderConfig>>(`/workspaces/${workspaceSlug}/identity-providers`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-export function deleteIdentityProvider(workspaceSlug: string, providerId: number) {
-  return apiRequest<{ message: string }>(`/workspaces/${workspaceSlug}/identity-providers/${providerId}`, {
-    method: 'DELETE',
-  });
-}
-
-export function startOidcSso(workspaceSlug: string, providerId: number) {
-  return apiRequest<OidcStartResponse>(`/workspaces/${workspaceSlug}/auth/sso/oidc/start`, {
-    method: 'POST',
-    body: JSON.stringify({ provider_id: providerId }),
-  });
-}
-
-export function listProvisioningDirectories(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<ProvisioningDirectoryRecord[]>>(`/workspaces/${workspaceSlug}/provisioning-directories`);
-}
-
-export function createProvisioningDirectory(workspaceSlug: string, name: string) {
-  return apiRequest<CreateProvisioningDirectoryResponse>(`/workspaces/${workspaceSlug}/provisioning-directories`, {
-    method: 'POST',
-    body: JSON.stringify({ name }),
   });
 }
 

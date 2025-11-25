@@ -95,14 +95,12 @@ export function SecurityPolicyDialog({
   onOpenChange,
   onSave,
   requireMfa,
-  requireSso,
   saveError,
   savePending,
   sessionTtl,
   setDataPlaneKeyDraft,
   setIpAllowlistDraft,
   setRequireMfaDraft,
-  setRequireSsoDraft,
   setSessionTtlDraft,
   setTenantModeDraft,
   tenantMode,
@@ -113,14 +111,12 @@ export function SecurityPolicyDialog({
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
   requireMfa: boolean;
-  requireSso: boolean;
   saveError: string | null;
   savePending: boolean;
   sessionTtl: number;
   setDataPlaneKeyDraft: (value: string) => void;
   setIpAllowlistDraft: (value: string) => void;
   setRequireMfaDraft: (value: boolean) => void;
-  setRequireSsoDraft: (value: boolean) => void;
   setSessionTtlDraft: (value: number) => void;
   setTenantModeDraft: (value: TenantMode) => void;
   tenantMode: TenantMode;
@@ -142,11 +138,7 @@ export function SecurityPolicyDialog({
           }}
         >
           <FieldGroup>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
-                <Checkbox checked={requireSso} onCheckedChange={(checked) => setRequireSsoDraft(checked === true)} />
-                <span>Require SSO</span>
-              </label>
+            <div className="grid grid-cols-1 gap-3">
               <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
                 <Checkbox checked={requireMfa} onCheckedChange={(checked) => setRequireMfaDraft(checked === true)} />
                 <span>Require MFA</span>

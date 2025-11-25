@@ -4,13 +4,12 @@ use App\Http\Middleware\EnsurePlatformAdmin;
 use App\Http\Middleware\EnsureTenantNetworkAllowed;
 use App\Http\Middleware\EnsureWorkspaceMember;
 use App\Http\Middleware\EnsureWorkspacePermission;
-use App\Http\Middleware\AuthenticateScimProvisioning;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -33,7 +32,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'workspace_member' => EnsureWorkspaceMember::class,
             'workspace_permission' => EnsureWorkspacePermission::class,
             'tenant_network' => EnsureTenantNetworkAllowed::class,
-            'scim_auth' => AuthenticateScimProvisioning::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

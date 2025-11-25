@@ -205,6 +205,7 @@ export function TicketQueueControlsSheet({
                       <SelectItem value="all">All status</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectGroup>
@@ -289,6 +290,7 @@ export function TicketQueueControlsSheet({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="all">All assignees</SelectItem>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
                       {members.map((member) => (
                         <SelectItem key={member.user.id} value={String(member.user.id)}>
                           {member.user.first_name} {member.user.last_name}
@@ -312,6 +314,7 @@ export function TicketQueueControlsSheet({
                       <SelectItem value="none">Keep status</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
                     </SelectGroup>

@@ -21,7 +21,7 @@ class UpdateTicketRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string', 'max:10000'],
             'priority' => ['sometimes', 'required', 'in:low,medium,high,urgent'],
-            'status' => ['sometimes', 'required', 'in:open,in_progress,resolved,closed'],
+            'status' => ['sometimes', 'required', 'in:open,in_progress,pending,resolved,closed'],
             'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'queue_key' => ['sometimes', 'nullable', 'string', 'max:120'],
             'category' => ['sometimes', 'nullable', 'string', 'max:120'],

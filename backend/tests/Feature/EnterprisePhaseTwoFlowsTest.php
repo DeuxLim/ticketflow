@@ -108,50 +108,6 @@ class EnterprisePhaseTwoFlowsTest extends TestCase
         $this->assertSame('Open P1', $list[0]['name']);
     }
 
-    public function test_scim_group_patch_assigns_workspace_role_to_provisioned_member(): void
-    {
-        $owner = User::factory()->create();
-        Sanctum::actingAs($owner);
-
-        $workspace = $this->postJson('/api/workspaces', [
-            'name' => 'Ops Hub',
-            'slug' => 'ops-hub',
-        ])->json('data');
-
-        $directory = $this->postJson("/api/workspaces/{$workspace['slug']}/provisioning-directories", [
-            'name' => 'Azure AD',
-        ])->assertCreated()->json();
-
-        $token = $directory['meta']['token'];
-
-        $this->withToken($token)->postJson('/api/scim/v2/Users', [
-            'userName' => 'sync.user@example.com',
-            'name' => ['givenName' => 'Sync', 'familyName' => 'User'],
-            'active' => true,
-            'externalId' => 'ext-user-1',
-        ])->assertCreated();
-
-        $group = $this->withToken($token)->postJson('/api/scim/v2/Groups', [
-            'displayName' => 'SCIM Support Admins',
-        ])->assertCreated()->json();
-
-        $this->withToken($token)->patchJson('/api/scim/v2/Groups/'.$group['id'], [
-            'Operations' => [
-                [
-                    'op' => 'Add',
-                    'path' => 'members',
-                    'value' => [
-                        ['value' => 'ext-user-1'],
-                    ],
-                ],
-            ],
-        ])->assertOk();
-
-        $this->assertDatabaseHas('workspace_membership_roles', [
-            'workspace_role_id' => (int) $group['id'],
-        ]);
-    }
-
     public function test_workflow_transition_simulation_reports_allowed_and_disallowed_paths(): void
     {
         $owner = User::factory()->create();

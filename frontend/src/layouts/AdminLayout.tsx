@@ -34,7 +34,7 @@ export function AdminLayout() {
             <p className="text-xs text-muted-foreground">Global system controls</p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="secondary">Owner only</Badge>
+            <Badge variant="secondary">Platform admin only</Badge>
             <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
               {isLoggingOut ? 'Logging out...' : 'Log out'}
             </Button>

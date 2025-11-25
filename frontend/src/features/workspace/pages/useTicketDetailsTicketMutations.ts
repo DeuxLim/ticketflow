@@ -64,6 +64,14 @@ export function useTicketDetailsTicketMutations({
     onSuccess: onTransitionSuccess,
   });
 
+  const quickAssign = useMutation({
+    mutationFn: (assigneeId: number | null) =>
+      updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', {
+        assigned_to_user_id: assigneeId,
+      }),
+    onSuccess: onUpdateSuccess,
+  });
+
   const deleteTicket = useMutation({
     mutationFn: () => deleteWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
     onSuccess: onDeleteSuccess,
@@ -72,6 +80,7 @@ export function useTicketDetailsTicketMutations({
   return {
     updateTicket,
     quickTransition,
+    quickAssign,
     deleteTicket,
   };
 }

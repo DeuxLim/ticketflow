@@ -330,7 +330,7 @@ export function TicketDetailsPage() {
     relatedTicketForm,
     editTemplateId,
   });
-  const { updateTicket, quickTransition, deleteTicket } = useTicketDetailsTicketMutations({
+  const { updateTicket, quickTransition, quickAssign, deleteTicket } = useTicketDetailsTicketMutations({
     workspaceSlug,
     ticketId,
     scopedCustomFieldConfigs,
@@ -444,7 +444,16 @@ export function TicketDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-6">
-          <TicketDetailsSummaryCard ticket={ticket} />
+          <TicketDetailsSummaryCard
+            ticket={ticket}
+            canManage={canManage}
+            members={members}
+            isAssigning={quickAssign.isPending}
+            onAssign={(assigneeId) => {
+              if (ticket.assigned_to_user_id === assigneeId) return;
+              quickAssign.mutate(assigneeId);
+            }}
+          />
 
           <TicketDetailsCommentsCard
             comments={commentsQuery.data?.data ?? []}
