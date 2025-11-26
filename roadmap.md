@@ -4,7 +4,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-`MEDIUM-P1-T01` Ticket lifecycle cleanup
+`SCOPE-D01` Review remaining enterprise features
 
 ## MVP Items
 
@@ -18,15 +18,15 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ### `MEDIUM-P1` Medium Ticketing Completion
 
-- Status: `incomplete`
+- Status: `complete`
 - Priority: high
 - Scope: Finish the product as a medium-level internal ticketing app focused on practical support workflows instead of enterprise identity scope.
-- Current state: roadmap created after the scope decision. `MEDIUM-P1-T02` through `MEDIUM-P1-T08` are complete after adding in-app notifications, better search/filter states, readable activity labels, simple role docs/demo account, full-flow demo seed data, and a clean root README.
-- Next actions: complete `MEDIUM-P1-T01` final lifecycle UX review across queue, detail, forms, filters, bulk updates, and workflow status displays.
+- Current state: complete after adding the final ticket lifecycle pass for open, in progress, pending, resolved, and closed; completing assignee clarity, in-app notifications, search/filter quality, readable activity labels, simple roles, full-flow demo data, and a clean root README.
+- Next actions: none for this item. Remaining enterprise-scope decisions continue under `SCOPE-D01`.
 
 #### Child Items
 
-- `MEDIUM-P1-T01` Ticket lifecycle cleanup - `incomplete`
+- `MEDIUM-P1-T01` Ticket lifecycle cleanup - `complete`
 - `MEDIUM-P1-T02` Assignee workflow clarity - `complete`
 - `MEDIUM-P1-T03` In-app notifications - `complete`
 - `MEDIUM-P1-T04` Search and filtering quality - `complete`
@@ -225,4 +225,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `MEDIUM-P1` with `MEDIUM-P1-T01` ticket lifecycle cleanup, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.
+Continue with `SCOPE-D01` to review remaining enterprise features and decide what to keep, simplify, defer, or remove.

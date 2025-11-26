@@ -106,13 +106,12 @@ describe('WorkflowAutomationSettingsSection', () => {
 
     const dialog = within(screen.getByRole('dialog'));
     fireEvent.change(dialog.getByLabelText('Workflow name'), { target: { value: 'Escalation Flow' } });
-    fireEvent.change(dialog.getByLabelText('From status'), { target: { value: 'open' } });
-    fireEvent.change(dialog.getByLabelText('To status'), { target: { value: 'in_progress' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Create workflow' }));
 
     await waitFor(() => {
       expect(createWorkflow).toHaveBeenCalledWith('acme', expect.objectContaining({
         name: 'Escalation Flow',
+        transitions: [expect.objectContaining({ from_status: 'open', to_status: 'in_progress' })],
       }));
     });
   });

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type { SavedViewRecord } from '@/types/api';
-import type { TicketForm } from '@/features/workspace/pages/ticketForm';
+import { ticketStatusLabel, ticketStatusValues, type TicketForm } from '@/features/workspace/pages/ticketForm';
 
 type MemberOption = {
   id: number;
@@ -203,11 +203,9 @@ export function TicketQueueControlsSheet({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="all">All status</SelectItem>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      {ticketStatusValues.map((status) => (
+                        <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -312,11 +310,9 @@ export function TicketQueueControlsSheet({
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="none">Keep status</SelectItem>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
+                      {ticketStatusValues.map((status) => (
+                        <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>

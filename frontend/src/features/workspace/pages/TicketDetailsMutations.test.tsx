@@ -210,6 +210,9 @@ describe('TicketDetailsPage mutations', () => {
     await waitFor(() => {
       expect(screen.getByText('Status changed')).not.toBeNull();
       expect(screen.getByText('Open to Pending')).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Move to In Progress' })).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Move to Resolved' })).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Move to Closed' })).not.toBeNull();
     });
   });
 

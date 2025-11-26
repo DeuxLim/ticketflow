@@ -1,13 +1,13 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T14:07:52+08:00"
+updated_at: "2026-05-03T14:26:39+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
 current_focus:
-  - MEDIUM-P1-T01
+  - SCOPE-D01
 items:
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
@@ -46,7 +46,7 @@ items:
     title: Medium Ticketing Completion
     type: epic
     parent_id: null
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Finish the product as a medium-level internal ticketing app focused on practical support workflows instead of enterprise identity scope.
@@ -61,26 +61,26 @@ items:
       - "2026-05-02: Roadmap created after scope decision. Customer-facing ticket creation is out of scope; in-app notifications are the first notification channel."
       - "2026-05-02: `MEDIUM-P1-T01` and `MEDIUM-P1-T06` received first implementation slices during `SCOPE-P1`, but remain open until the full child definitions of done are verified in focused follow-up work."
       - "2026-05-03: `MEDIUM-P1-T08` is complete after adding a root README for app purpose, reduced scope, setup, seeded accounts, roles, main flows, verification commands, and SCIM/SSO/email/customer portal boundaries."
-    incomplete_reason: "`MEDIUM-P1-T01` still needs final lifecycle UX review."
+      - "2026-05-03: Closed `MEDIUM-P1-T01` after aligning visible status labels and workflow controls around open, in progress, pending, resolved, and closed; focused backend/frontend verification passed."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Complete `MEDIUM-P1-T01` final lifecycle UX review across queue, detail, forms, filters, bulk updates, and workflow status displays.
+    next_actions: []
     tags:
       - roadmap
       - medium
       - tickets
     created_at: "2026-05-02T19:20:00+08:00"
-    updated_at: "2026-05-03T14:07:52+08:00"
-    changed_at: "2026-05-03T14:07:52+08:00"
+    updated_at: "2026-05-03T14:26:39+08:00"
+    changed_at: "2026-05-03T14:26:39+08:00"
     changed_source: codex
 
   - id: MEDIUM-P1-T01
     title: Ticket lifecycle cleanup
     type: feature
     parent_id: MEDIUM-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Standardize the ticket lifecycle around open, in progress, pending, resolved, and closed.
@@ -92,18 +92,18 @@ items:
       - SCOPE-P1
     notes:
       - "2026-05-02: First implementation slice added `pending` to backend validation/default workflow and core frontend status controls."
-    incomplete_reason: "Initial status support is implemented, but a focused UX/lifecycle review is still needed to confirm labels and workflow behavior across every ticket surface."
+      - "2026-05-03: Final lifecycle pass added shared frontend status values/labels, replaced raw status badges and quick-transition labels, kept `pending` in forms/filters/bulk/workflow controls, and verified backend ticket filters/seed lifecycle plus focused frontend lifecycle tests."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Review ticket queue/detail lifecycle labels and workflow transition behavior with seeded examples.
+    next_actions: []
     tags:
       - tickets
       - lifecycle
     created_at: "2026-05-02T19:20:00+08:00"
-    updated_at: "2026-05-02T22:52:00+08:00"
-    changed_at: "2026-05-02T22:52:00+08:00"
+    updated_at: "2026-05-03T14:26:39+08:00"
+    changed_at: "2026-05-03T14:26:39+08:00"
     changed_source: codex
 
   - id: MEDIUM-P1-T02

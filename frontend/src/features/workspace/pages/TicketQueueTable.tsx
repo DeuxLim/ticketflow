@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { MemberOption } from '@/features/workspace/api/ticketPageApi';
+import { ticketStatusLabel } from '@/features/workspace/pages/ticketForm';
 import type { ApiPaginationMeta, Ticket } from '@/types/api';
 
 type TicketQueueTableProps = {
@@ -153,7 +154,7 @@ export function TicketQueueTable({
                     <span>{ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'}</span>
                   )}
                 </TableCell>
-                <TableCell><Badge variant="outline">{ticket.status}</Badge></TableCell>
+                <TableCell><Badge variant="outline">{ticketStatusLabel(ticket.status)}</Badge></TableCell>
                 <TableCell><Badge variant="secondary">{ticket.priority}</Badge></TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {ticket.updated_at ? new Date(ticket.updated_at).toLocaleDateString() : '—'}

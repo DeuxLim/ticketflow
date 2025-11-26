@@ -3,6 +3,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ticketStatusLabel, ticketStatusValues } from '@/features/workspace/pages/ticketForm';
 
 const eventTypeOptions = ['ticket.created', 'ticket.updated', 'ticket.comment_added', 'ticket.sla.breached'];
 
@@ -105,11 +107,29 @@ export function WorkflowAutomationDialogs({
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="workflow-from-status">From status</FieldLabel>
-                  <Input id="workflow-from-status" value={transitionFromStatus} onChange={(event) => setTransitionFromStatus(event.target.value)} />
+                  <Select value={transitionFromStatus} onValueChange={(value) => value && setTransitionFromStatus(value)}>
+                    <SelectTrigger id="workflow-from-status"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {ticketStatusValues.map((status) => (
+                          <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="workflow-to-status">To status</FieldLabel>
-                  <Input id="workflow-to-status" value={transitionToStatus} onChange={(event) => setTransitionToStatus(event.target.value)} />
+                  <Select value={transitionToStatus} onValueChange={(value) => value && setTransitionToStatus(value)}>
+                    <SelectTrigger id="workflow-to-status"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {ticketStatusValues.map((status) => (
+                          <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
               <Field>

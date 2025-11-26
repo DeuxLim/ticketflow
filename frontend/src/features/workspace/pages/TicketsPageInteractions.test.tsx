@@ -166,7 +166,7 @@ describe('TicketsPage interactions', () => {
               ticket_number: 'TKT-000007',
               title: 'Branch outage',
               description: 'Router offline',
-              status: 'open',
+              status: 'pending',
               priority: 'high',
               assigned_to_user_id: null,
               assignee: null,
@@ -188,6 +188,7 @@ describe('TicketsPage interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByLabelText('Assign TKT-000007')).not.toBeNull();
+      expect(screen.getByText('Pending')).not.toBeNull();
     });
   });
 

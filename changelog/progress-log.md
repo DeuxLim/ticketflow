@@ -1,5 +1,26 @@
 # Progress Log
 
+## 2026-05-03 14:26 +08:00 - Completed Medium Ticketing Lifecycle Cleanup
+
+- Added shared frontend ticket lifecycle values and readable labels for `open`, `in_progress`, `pending`, `resolved`, and `closed`.
+- Replaced raw ticket status display in the ticket queue and ticket detail header with beginner-friendly labels.
+- Updated quick-transition buttons to show readable status names.
+- Kept forms, filters, bulk updates, and workflow controls aligned to the same final lifecycle.
+- Marked `MEDIUM-P1-T01` and parent epic `MEDIUM-P1` complete.
+- Moved current focus to `SCOPE-D01`.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/pages/TicketsPageInteractions.test.tsx src/features/workspace/pages/TicketDetailsMutations.test.tsx src/features/workspace/settings/WorkflowAutomationSettingsSection.test.tsx` passed, 3 files / 20 tests.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `backend`: `php artisan test --filter=TicketingBaseFunctionsTest` passed, 11 tests / 87 assertions.
+- `backend`: `php artisan test --filter=DatabaseSeederTest` passed, 2 tests / 14 assertions.
+- `project-state.yaml` parsed successfully.
+
+## Resume From Here
+
+Continue with `SCOPE-D01` to review remaining enterprise features and decide what to keep, simplify, defer, or remove.
+
 ## 2026-05-03 14:07 +08:00 - Added Clean Project README
 
 - Added a root `README.md` for the medium-level internal ticketing scope.
