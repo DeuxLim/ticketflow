@@ -1,6 +1,6 @@
 # Roadmap
 
-This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` as canonical and update it first.
+This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-state.yaml` as canonical and update it first.
 
 ## Current Focus
 

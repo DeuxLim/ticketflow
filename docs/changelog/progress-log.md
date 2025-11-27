@@ -1,5 +1,39 @@
 # Progress Log
 
+## 2026-05-03 14:41 +08:00 - Added Developer Documentation
+
+- Added `docs/developer/README.md` as the main developer guide.
+- Added `docs/developer/routes.md` as the backend API and frontend route reference.
+- Covered project scope, stack, setup, seeded accounts, backend/frontend architecture, authorization, data model, common workflows, testing, and where to change common areas.
+- Linked the developer docs from `docs/README.md`.
+
+Verification:
+- Read the new developer docs for clarity and current path consistency.
+- Validated `docs/project-state.yaml` parses successfully.
+- Ran Markdown/reference checks against the new docs.
+
+## Resume From Here
+
+Continue with `SCOPE-D01` to review remaining enterprise features and decide what to keep, simplify, defer, or remove.
+
+## 2026-05-03 14:33 +08:00 - Consolidated Repository Documentation Under Docs
+
+- Moved root Markdown documentation and tracker files into `docs/`.
+- Moved `README.md`, `SEED_CREDENTIALS.md`, `project-state.yaml`, `roadmap.md`, and `changelog/progress-log.md` to their new `docs/` paths.
+- Moved backend/frontend README-style docs into `docs/backend/` and `docs/frontend/`.
+- Moved root agent guidance to `docs/agents/AGENTS.md`.
+- Kept `.agents/` in place because it powers local project skills and could not be moved without elevated filesystem permission.
+- Kept root `.gitignore`, `package.json`, and `package-lock.json` in place to preserve ignore behavior and the one-command local dev runner.
+- Updated README/tracker references to the new docs paths.
+
+Verification:
+- `docs/project-state.yaml` parsed successfully.
+- Markdown/reference search confirmed active docs point at the new `docs/` tracker paths.
+
+## Resume From Here
+
+Continue with `SCOPE-D01` to review remaining enterprise features and decide what to keep, simplify, defer, or remove.
+
 ## 2026-05-03 14:26 +08:00 - Completed Medium Ticketing Lifecycle Cleanup
 
 - Added shared frontend ticket lifecycle values and readable labels for `open`, `in_progress`, `pending`, `resolved`, and `closed`.

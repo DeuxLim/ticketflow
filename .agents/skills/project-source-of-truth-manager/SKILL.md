@@ -11,29 +11,29 @@ Use this skill to keep one trusted project-state system current across sessions.
 
 Default to these root-level files unless the user gives another location:
 
-- `project-state.yaml`: canonical structured source of truth.
-- `roadmap.md`: required human-readable projection generated from canonical state.
-- `changelog/progress-log.md`: required append-only history of meaningful session updates.
+- `docs/project-state.yaml`: canonical structured source of truth.
+- `docs/roadmap.md`: required human-readable projection generated from canonical state.
+- `docs/changelog/progress-log.md`: required append-only history of meaningful session updates.
 
-If `project-state.yaml` and `project-state.json` both exist, ask which is canonical before editing. If neither exists, initialize `project-state.yaml` from `roadmap.md`. If `roadmap.md` does not exist, use existing plans/specs only as bootstrap input and record that assumption in notes.
+If `docs/project-state.yaml` and `project-state.yaml` both exist, treat `docs/project-state.yaml` as canonical unless the user explicitly says otherwise. If no canonical state exists, initialize `docs/project-state.yaml` from `docs/roadmap.md`. If `docs/roadmap.md` does not exist, use existing plans/specs only as bootstrap input and record that assumption in notes.
 
 ## Synchronization Contract
 
-- `project-state.yaml` is the canonical source.
-- `roadmap.md` is a synchronized human-readable view. Regenerate or patch it after every meaningful canonical state change.
-- `changelog/progress-log.md` is append-only history for meaningful session updates.
+- `docs/project-state.yaml` is the canonical source.
+- `docs/roadmap.md` is a synchronized human-readable view. Regenerate or patch it after every meaningful canonical state change.
+- `docs/changelog/progress-log.md` is append-only history for meaningful session updates.
 - Every major update must end with a `Resume From Here` section in the progress log and summary output.
 - Preserve stable item IDs. Do not rename or renumber existing IDs unless the user explicitly requests an ID migration.
 - Never silently overwrite implementation notes, blockers, incomplete reasons, or definitions of done. Append notes or explicitly state the replacement.
 - Prefer updating an existing roadmap item over creating a duplicate. Search IDs, titles, tags, parents, and notes before adding a new item.
-- If `roadmap.md` and `project-state.yaml` disagree, trust `project-state.yaml` after initialization and record the discrepancy in the progress log.
+- If `docs/roadmap.md` and `docs/project-state.yaml` disagree, trust `docs/project-state.yaml` after initialization and record the discrepancy in the progress log.
 
 ## Required First Step
 
 Before creating, updating, or summarizing state:
 
 1. Read the existing canonical state file.
-2. Read `roadmap.md` and `changelog/progress-log.md` when initializing, synchronizing, summarizing, or resolving gaps.
+2. Read `docs/roadmap.md` and `docs/changelog/progress-log.md` when initializing, synchronizing, summarizing, or resolving gaps.
 3. Understand existing IDs, parent-child structure, statuses, and next actions.
 4. Update the canonical state file instead of creating disconnected notes.
 
@@ -114,10 +114,10 @@ Use ISO-8601 timestamps with timezone. Use the project timezone when known.
 Use when no canonical state exists or the user asks to bootstrap it.
 
 1. Inspect `backend/`, `frontend/`, README/docs, routes, tests, and visible feature areas.
-2. Create `project-state.yaml` with stable IDs, current assumptions, and conservative statuses.
+2. Create `docs/project-state.yaml` with stable IDs, current assumptions, and conservative statuses.
 3. Mark uncertain items as `planned` or `incomplete`, not `complete`.
 4. Record assumptions in `notes`.
-5. Generate or update `roadmap.md` as a projection from the YAML.
+5. Generate or update `docs/roadmap.md` as a projection from the YAML.
 6. Append a progress-log entry with a `Resume From Here` section.
 
 ### Update Item After Work
@@ -129,7 +129,7 @@ Use when feature work, refactoring, testing, or roadmap discussion changes state
 3. Update status, notes, incomplete details, blockers, and next actions.
 4. Add discovered subtasks under the right parent with new stable IDs.
 5. Check parent-child consistency.
-6. Synchronize `roadmap.md` from the canonical state.
+6. Synchronize `docs/roadmap.md` from the canonical state.
 7. Append a concise progress-log entry for major updates, including `Resume From Here`.
 
 ### Mark Item Complete
@@ -211,12 +211,12 @@ Run these checks before finalizing any state update:
 - Duplicate or overlapping tasks are merged or flagged.
 - Next actions match the current status.
 - Major changes are reflected in progress history when history exists.
-- `roadmap.md` reflects the current canonical status after any major update.
-- `changelog/progress-log.md` includes a meaningful session update and `Resume From Here` for major updates.
+- `docs/roadmap.md` reflects the current canonical status after any major update.
+- `docs/changelog/progress-log.md` includes a meaningful session update and `Resume From Here` for major updates.
 
 ## Required End-of-Work State Update
 
-At the end of any feature planning, feature implementation, refactor, or roadmap discussion, generate a state update that can be applied to `project-state.yaml`.
+At the end of any feature planning, feature implementation, refactor, or roadmap discussion, generate a state update that can be applied to `docs/project-state.yaml`.
 
 Use this format:
 
@@ -237,9 +237,9 @@ Use this format:
   - Implement frontend integration for `FEAT-001`.
   - Add backend regression coverage for resend audit event.
 - Roadmap synchronized:
-  - `roadmap.md` updated from `project-state.yaml`.
+  - `docs/roadmap.md` updated from `docs/project-state.yaml`.
 - Progress log appended:
-  - `changelog/progress-log.md` updated with session notes and `Resume From Here`.
+  - `docs/changelog/progress-log.md` updated with session notes and `Resume From Here`.
 ```
 
 If the update was applied to the file, say so. If it is only a proposed update, label it `Proposed State Update`.

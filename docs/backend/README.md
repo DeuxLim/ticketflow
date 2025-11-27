@@ -18,7 +18,7 @@ php artisan key:generate
 php artisan migrate
 ```
 
-Seeded demo users are documented in the root `SEED_CREDENTIALS.md`.
+Seeded demo users are documented in `docs/SEED_CREDENTIALS.md`.
 
 ## Development
 

@@ -37,10 +37,12 @@ Remaining enterprise-style features such as SLA policy UI, break-glass, exports,
 
 - `backend/`: Laravel API, migrations, seeders, routes, controllers, models, and feature tests.
 - `frontend/`: React app, workspace UI, API clients, types, and frontend tests.
-- `SEED_CREDENTIALS.md`: demo accounts and role summary.
-- `project-state.yaml`: canonical roadmap and project state.
-- `roadmap.md`: readable roadmap projection.
-- `changelog/progress-log.md`: implementation history.
+- `docs/SEED_CREDENTIALS.md`: demo accounts and role summary.
+- `docs/project-state.yaml`: canonical roadmap and project state.
+- `docs/roadmap.md`: readable roadmap projection.
+- `docs/changelog/progress-log.md`: implementation history.
+- `docs/agents/`: project guidance and agent-facing documentation.
+- `docs/developer/`: developer-friendly project guide and route reference.
 
 ## Local Setup
 
@@ -81,7 +83,7 @@ The seeded demo workspace is `demo-workspace`.
 | Workspace agent | `member@ticketing.local` | `Member@12345` |
 | Workspace viewer | `viewer@ticketing.local` | `Viewer@12345` |
 
-Full account details live in `SEED_CREDENTIALS.md`.
+Full account details live in `docs/SEED_CREDENTIALS.md`.
 
 ## Roles
 
@@ -126,9 +128,9 @@ npm run test
 Docs/tracker:
 
 ```bash
-ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml OK"'
+ruby -e 'require "yaml"; YAML.load_file("docs/project-state.yaml"); puts "project-state.yaml OK"'
 ```
 
 ## Roadmap Source Of Truth
 
-Use `project-state.yaml` as the canonical tracker. Update `roadmap.md` and `changelog/progress-log.md` whenever scope, feature status, or next steps change.
+Use `docs/project-state.yaml` as the canonical tracker. Update `docs/roadmap.md` and `docs/changelog/progress-log.md` whenever scope, feature status, or next steps change.

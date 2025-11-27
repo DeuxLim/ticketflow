@@ -1,11 +1,11 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T14:26:39+08:00"
+updated_at: "2026-05-03T14:33:17+08:00"
 updated_by: codex
 source_files:
-  canonical: project-state.yaml
-  roadmap: roadmap.md
-  progress_log: changelog/progress-log.md
+  canonical: docs/project-state.yaml
+  roadmap: docs/roadmap.md
+  progress_log: docs/changelog/progress-log.md
 current_focus:
   - SCOPE-D01
 items:
@@ -663,6 +663,7 @@ items:
       - "2026-04-29: Updated backend root web route to return a minimal JSON status response and trimmed backend package/composer scripts around the removed Vite starter workflow."
       - "2026-04-29: Verified cleanup with backend `composer test`, frontend `npm run lint`, `npm run build`, and `npm run test`."
       - "2026-04-29: Removed ignored Playwright/browser output folders (`.playwright-cli/` and `output/`) from the repo root while keeping canonical root coordination files in place."
+      - "2026-05-03: Moved root Markdown docs, tracker files, changelog, and backend/frontend README files under `docs/`; kept root dev runner, `.gitignore`, and `.agents/` in place to preserve local startup and project skill behavior."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -674,8 +675,8 @@ items:
       - backend
       - frontend
     created_at: "2026-04-29T18:13:00+08:00"
-    updated_at: "2026-04-29T18:13:00+08:00"
-    changed_at: "2026-04-29T18:13:00+08:00"
+    updated_at: "2026-05-03T14:33:17+08:00"
+    changed_at: "2026-05-03T14:33:17+08:00"
     changed_source: codex
 
   - id: MAINT-P1
