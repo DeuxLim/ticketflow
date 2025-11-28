@@ -1,13 +1,13 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T14:33:17+08:00"
+updated_at: "2026-05-03T14:52:11+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
 current_focus:
-  - SCOPE-D01
+  - SCOPE-P2
 items:
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
@@ -323,7 +323,7 @@ items:
     title: Review remaining enterprise features
     type: decision
     parent_id: null
-    status: planned
+    status: complete
     priority: medium
     mvp: false
     description: Decide whether to keep, simplify, defer, or remove remaining enterprise features after SCIM/SSO removal.
@@ -335,19 +335,256 @@ items:
       - SCOPE-P1
     notes:
       - "2026-05-02: User chose to remove only SCIM/SSO now and review the rest later."
+      - "2026-05-03: Completed enterprise feature scope review in `docs/scope/enterprise-feature-review.md`. Decisions: simplify SLA policy UI, remove break-glass, defer tenant exports, defer retention, simplify advanced automation, defer webhooks, and simplify platform isolation language."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run a scope-review audit after `MEDIUM-P1` priorities are confirmed.
+    next_actions: []
     tags:
       - scope
       - decision
       - enterprise
     created_at: "2026-05-02T19:20:00+08:00"
-    updated_at: "2026-05-02T19:20:00+08:00"
-    changed_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2
+    title: Simplify remaining enterprise features
+    type: epic
+    parent_id: null
+    status: planned
+    priority: medium
+    mvp: false
+    description: Implement the SCOPE-D01 decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
+    definition_of_done:
+      - SLA policy UI is simplified around basic response and resolution targets.
+      - Break-glass is removed from the product surface and codebase.
+      - Tenant exports and retention are deferred or hidden from the main product surface.
+      - Automation is simplified away from raw JSON editing.
+      - Webhooks are deferred or hidden unless explicitly brought back into scope.
+      - Platform isolation language no longer implies infrastructure isolation that the app does not provide.
+      - Tracker, docs, backend tests, and frontend checks are updated for each implemented decision.
+    dependencies:
+      - SCOPE-D01
+    notes:
+      - "2026-05-03: Created from `SCOPE-D01` decision review. Implementation should be done in focused child tasks instead of one large cleanup."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Start with `SCOPE-P2-T01` to simplify SLA language and placement, or `SCOPE-P2-T02` to remove break-glass first if reducing scope is preferred.
+    tags:
+      - scope
+      - enterprise
+      - cleanup
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T01
+    title: Simplify SLA language and placement
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: medium
+    mvp: false
+    description: Keep SLA as a simple ticketing target concept and avoid enterprise contract language.
+    definition_of_done:
+      - SLA UI explains first response and resolution targets in beginner-friendly language.
+      - SLA remains limited to basic priority-based targets.
+      - Docs describe SLA as optional ticket timing targets, not a contract system.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - sla
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T02
+    title: Remove break-glass feature
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: medium
+    mvp: false
+    description: Remove the enterprise break-glass access flow from UI, API, models, migrations, tests, and docs.
+    definition_of_done:
+      - Break-glass routes, controller, model, UI, and tests are removed.
+      - Existing local databases have a cleanup migration for break-glass tables/fields if needed.
+      - Admin/Agent/Viewer permissions remain the only intended access model.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - break-glass
+      - removal
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T03
+    title: Defer or hide tenant exports
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: low
+    mvp: false
+    description: Remove tenant exports from the visible medium-ticketing product surface until a real export requirement exists.
+    definition_of_done:
+      - Export UI is hidden or removed from the main settings flow.
+      - Docs state exports are deferred.
+      - Backend code is either left dormant or removed in a dedicated cleanup decision.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - exports
+      - deferred
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T04
+    title: Defer or hide retention policy UI
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: low
+    mvp: false
+    description: De-emphasize retention policies until compliance retention is explicitly required.
+    definition_of_done:
+      - Retention UI is hidden or clearly marked as deferred/admin-only.
+      - No purge jobs or compliance workflows are added.
+      - Docs state retention is deferred.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - retention
+      - deferred
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T05
+    title: Simplify automation rule builder
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: medium
+    mvp: false
+    description: Replace advanced JSON automation editing with beginner-friendly ticket rule controls.
+    definition_of_done:
+      - Automation creation avoids raw JSON inputs in the main UI.
+      - Supported events and actions are intentionally small and ticket-focused.
+      - Existing dry-run/test behavior remains safe.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - automation
+      - ux
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T06
+    title: Defer or hide webhooks
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: low
+    mvp: false
+    description: Keep webhook integrations out of the primary medium-ticketing scope until integrations are explicitly prioritized.
+    definition_of_done:
+      - Webhook UI is hidden, removed, or documented as deferred.
+      - No new webhook events or delivery features are added.
+      - Existing integration tests are updated if UI is hidden or removed.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - webhooks
+      - deferred
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
+    changed_source: codex
+
+  - id: SCOPE-P2-T07
+    title: Simplify platform isolation language
+    type: task
+    parent_id: SCOPE-P2
+    status: planned
+    priority: low
+    mvp: false
+    description: Avoid implying real dedicated infrastructure isolation when the app only stores an isolation mode flag.
+    definition_of_done:
+      - Platform admin UI uses accurate language for tenant mode.
+      - Docs explain that true infrastructure isolation is out of scope.
+      - No new platform isolation functionality is added.
+    dependencies:
+      - SCOPE-P2
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - scope
+      - platform-admin
+      - isolation
+    created_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T14:52:11+08:00"
+    changed_at: "2026-05-03T14:52:11+08:00"
     changed_source: codex
 
   - id: REFACTOR-P1

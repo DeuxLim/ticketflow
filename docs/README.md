@@ -25,7 +25,7 @@ Out of scope:
 - SCIM provisioning.
 - SSO login through SAML or OIDC.
 
-Remaining enterprise-style features such as SLA policy UI, break-glass, exports, retention, automation, webhooks, and platform isolation are kept for now and should be reviewed separately before more scope is added.
+Remaining enterprise-style features such as SLA policy UI, break-glass, exports, retention, automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Follow-up simplification work is tracked under `SCOPE-P2`.
 
 ## Stack
 
@@ -43,6 +43,7 @@ Remaining enterprise-style features such as SLA policy UI, break-glass, exports,
 - `docs/changelog/progress-log.md`: implementation history.
 - `docs/agents/`: project guidance and agent-facing documentation.
 - `docs/developer/`: developer-friendly project guide and route reference.
+- `docs/scope/enterprise-feature-review.md`: decision record for remaining enterprise-style features.
 
 ## Local Setup
 

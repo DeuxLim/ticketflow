@@ -1,5 +1,28 @@
 # Progress Log
 
+## 2026-05-03 14:52 +08:00 - Completed Enterprise Feature Scope Review
+
+- Completed `SCOPE-D01` by classifying remaining enterprise-style features in `docs/scope/enterprise-feature-review.md`.
+- Decisions:
+  - simplify SLA policy UI,
+  - remove break-glass,
+  - defer tenant exports,
+  - defer retention,
+  - simplify advanced automation,
+  - defer webhooks,
+  - simplify platform isolation language.
+- Added `SCOPE-P2` with focused implementation tasks for the follow-up cleanup.
+- Updated `docs/roadmap.md`, `docs/README.md`, and `docs/developer/README.md` with the new decision record and next focus.
+
+Verification:
+- Read the decision record for completeness against the `SCOPE-D01` definition of done.
+- Validated `docs/project-state.yaml` parses successfully.
+- Ran `git diff --check`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2` to implement the enterprise-scope simplification decisions. Recommended first choices are `SCOPE-P2-T01` to simplify SLA language or `SCOPE-P2-T02` to remove break-glass.
+
 ## 2026-05-03 14:41 +08:00 - Added Developer Documentation
 
 - Added `docs/developer/README.md` as the main developer guide.
