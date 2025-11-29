@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 16:51 +08:00 - Simplified SLA Language
+
+- Completed `SCOPE-P2-T01`.
+- Reworded the frontend SLA surface as ticket timing targets.
+- Updated the settings dialog to explain first-reply and resolution targets as optional internal goals, not customer contracts.
+- Updated ticket detail timing labels and docs so SLA remains an internal storage/API concept rather than a user-facing enterprise feature.
+
+Verification:
+- Ran `npm test -- GovernanceSettingsSection.test.tsx --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2-T02` to remove break-glass from the product surface and codebase.
+
 ## 2026-05-03 14:52 +08:00 - Completed Enterprise Feature Scope Review
 
 - Completed `SCOPE-D01` by classifying remaining enterprise-style features in `docs/scope/enterprise-feature-review.md`.

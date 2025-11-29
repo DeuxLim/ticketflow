@@ -41,7 +41,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [isBreakGlassDialogOpen, setIsBreakGlassDialogOpen] = useState(false);
   const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
   const [isSlaDialogOpen, setIsSlaDialogOpen] = useState(false);
-  const [slaName, setSlaName] = useState('Default SLA');
+  const [slaName, setSlaName] = useState('Default timing target');
   const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
   const [slaFirstResponseMinutes, setSlaFirstResponseMinutes] = useState(30);
   const [slaResolutionMinutes, setSlaResolutionMinutes] = useState(240);
@@ -110,7 +110,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         is_active: true,
       }),
     onSuccess: () => {
-      setSlaName('Default SLA');
+      setSlaName('Default timing target');
       setSlaPriority('high');
       setSlaFirstResponseMinutes(30);
       setSlaResolutionMinutes(240);
@@ -207,20 +207,22 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             <div className="flex flex-col gap-3 rounded-md border p-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-medium">SLA policies</p>
-                  <p className="text-xs text-muted-foreground">Review response targets before creating another policy.</p>
+                  <p className="text-sm font-medium">Ticket timing targets</p>
+                  <p className="text-xs text-muted-foreground">
+                    Optional targets that show when a first reply or resolution is due.
+                  </p>
                 </div>
                 <Button size="sm" variant="outline" type="button" onClick={() => setIsSlaDialogOpen(true)}>
-                  Create SLA policy
+                  Add target
                 </Button>
               </div>
               <div className="flex flex-col gap-2 text-xs">
                 {slaPolicies.length === 0 ? (
-                  <p className="text-muted-foreground">No SLA policies configured.</p>
+                  <p className="text-muted-foreground">No timing targets configured.</p>
                 ) : (
                   slaPolicies.slice(0, 6).map((policy) => (
                     <p key={policy.id}>
-                      {policy.name} - {policy.priority} - first response {policy.first_response_minutes}m - resolution {policy.resolution_minutes}m
+                      {policy.name} - {policy.priority} - first reply target {policy.first_response_minutes}m - resolution target {policy.resolution_minutes}m
                     </p>
                   ))
                 )}

@@ -54,6 +54,7 @@ Recommended follow-up:
 - Keep the current basic SLA concept.
 - Move it closer to ticketing/reporting language if the Governance tab feels too enterprise-heavy.
 - Make sure the UI explains SLA simply as "target response and resolution times."
+- 2026-05-03 update: user-facing SLA wording now uses "ticket timing targets" and explains them as optional internal first-reply and resolution goals.
 
 ### Break-Glass
 

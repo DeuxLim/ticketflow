@@ -181,19 +181,19 @@ describe('GovernanceSettingsSection', () => {
     });
   });
 
-  it('creates an SLA policy', async () => {
+  it('creates a ticket timing target', async () => {
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create SLA policy' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add target' }));
     const dialog = within(screen.getByRole('dialog'));
-    fireEvent.change(dialog.getByLabelText('Policy name'), { target: { value: 'P1 SLA' } });
-    fireEvent.change(dialog.getByLabelText('First response (minutes)'), { target: { value: '20' } });
-    fireEvent.change(dialog.getByLabelText('Resolution (minutes)'), { target: { value: '180' } });
-    fireEvent.click(dialog.getByRole('button', { name: 'Create SLA policy' }));
+    fireEvent.change(dialog.getByLabelText('Target name'), { target: { value: 'High priority target' } });
+    fireEvent.change(dialog.getByLabelText('First reply target (minutes)'), { target: { value: '20' } });
+    fireEvent.change(dialog.getByLabelText('Resolution target (minutes)'), { target: { value: '180' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Add target' }));
 
     await waitFor(() => {
       expect(createSlaPolicy).toHaveBeenCalledWith('acme', {
-        name: 'P1 SLA',
+        name: 'High priority target',
         priority: 'high',
         first_response_minutes: 20,
         resolution_minutes: 180,
