@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-05-03 19:34 +08:00 - Removed Break-Glass
+
+- Completed `SCOPE-P2-T02`.
+- Removed break-glass backend routes, controller, model, and workspace relation.
+- Removed break-glass frontend API functions, types, governance UI, dialog wiring, and admin dashboard metric.
+- Updated fresh migrations so break-glass is no longer created, and added a cleanup migration for existing local databases.
+- Updated docs and tests to treat break-glass routes as removed.
+
+Verification:
+- Ran `php artisan test --filter=EnterpriseRemainingFoundationTest` from `backend/`.
+- Ran `npm test -- GovernanceSettingsSection.test.tsx settings-api.test.ts AdminDashboardPage.test.tsx --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2-T03` to defer or hide tenant exports from the main product surface.
+
 ## 2026-05-03 16:51 +08:00 - Simplified SLA Language
 
 - Completed `SCOPE-P2-T01`.

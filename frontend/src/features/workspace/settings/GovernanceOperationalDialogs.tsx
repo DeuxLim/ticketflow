@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -100,58 +100,6 @@ export function SlaPolicyDialog({
             type="submit"
           >
             {createSlaPolicyPending ? 'Adding target...' : 'Add target'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function BreakGlassRequestDialog({
-  breakGlassReason,
-  isOpen,
-  onOpenChange,
-  onRequestBreakGlass,
-  requestBreakGlassPending,
-  setBreakGlassReason,
-}: {
-  breakGlassReason: string;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onRequestBreakGlass: () => void;
-  requestBreakGlassPending: boolean;
-  setBreakGlassReason: (value: string) => void;
-}) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Request Break-Glass Access</DialogTitle>
-          <DialogDescription>
-            Explain why emergency elevated access is required. Requests remain pending until approved.
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          id="break-glass-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onRequestBreakGlass();
-          }}
-        >
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="break-glass-reason">Reason</FieldLabel>
-              <Input id="break-glass-reason" value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} />
-              <FieldDescription>Include the incident or ticket context for audit review.</FieldDescription>
-            </Field>
-          </FieldGroup>
-        </form>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button disabled={requestBreakGlassPending} form="break-glass-form" type="submit">
-            {requestBreakGlassPending ? 'Requesting...' : 'Request access'}
           </Button>
         </DialogFooter>
       </DialogContent>

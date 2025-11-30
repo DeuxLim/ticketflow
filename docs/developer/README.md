@@ -28,11 +28,11 @@ Out of scope:
 - email notifications
 - SCIM provisioning
 - SSO through SAML or OIDC
+- break-glass emergency access
 
 Some enterprise-style features still exist and were reviewed in `docs/scope/enterprise-feature-review.md`:
 
 - ticket timing target UI, still stored as SLA internally
-- break-glass access
 - tenant exports
 - retention policies
 - advanced automation
@@ -334,7 +334,6 @@ Enterprise-style features pending simplification or removal:
 - audit events
 - retention
 - exports
-- break-glass
 
 ## 9. Frontend Architecture
 
@@ -540,7 +539,6 @@ Workflow and enterprise-style models:
 - `AuditEvent`
 - `RetentionPolicy`
 - `TenantExport`
-- `BreakGlassRequest`
 - `TenantSecurityPolicy`
 
 ## 14. Seeding and Demo Data
@@ -807,7 +805,6 @@ The current app has more than the medium-ticketing core because earlier enterpri
 Before extending these areas, follow the `SCOPE-D01` decisions and implement the cleanup under `SCOPE-P2`:
 
 - ticket timing targets, still stored as SLA internally
-- break-glass
 - exports
 - retention
 - automation

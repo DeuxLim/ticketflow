@@ -5,15 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  approveBreakGlassRequest,
-  createBreakGlassRequest,
   createExport,
   createSlaPolicy,
   downloadExport,
   getTenantSecurityPolicy,
   getRetentionPolicy,
   listAuditEvents,
-  listBreakGlassRequests,
   listExports,
   listSlaPolicies,
   updateTenantSecurityPolicy,
@@ -29,7 +26,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const retentionQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'retention-policy'], queryFn: () => getRetentionPolicy(workspaceSlug) });
   const slaPoliciesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'sla-policies'], queryFn: () => listSlaPolicies(workspaceSlug) });
   const exportsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'exports'], queryFn: () => listExports(workspaceSlug) });
-  const breakGlassQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'break-glass'], queryFn: () => listBreakGlassRequests(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
   const securityPolicyQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'security-policy'], queryFn: () => getTenantSecurityPolicy(workspaceSlug) });
 
@@ -38,8 +34,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
   const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
   const [isRetentionDialogOpen, setIsRetentionDialogOpen] = useState(false);
-  const [isBreakGlassDialogOpen, setIsBreakGlassDialogOpen] = useState(false);
-  const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
   const [isSlaDialogOpen, setIsSlaDialogOpen] = useState(false);
   const [slaName, setSlaName] = useState('Default timing target');
   const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
@@ -87,19 +81,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'exports'] }),
   });
 
-  const requestBreakGlass = useMutation({
-    mutationFn: () => createBreakGlassRequest(workspaceSlug, breakGlassReason, 60),
-    onSuccess: () => {
-      setIsBreakGlassDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] });
-    },
-  });
-
-  const approveBreakGlass = useMutation({
-    mutationFn: (id: number) => approveBreakGlassRequest(workspaceSlug, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] }),
-  });
-
   const createSlaPolicyMutation = useMutation({
     mutationFn: () =>
       createSlaPolicy(workspaceSlug, {
@@ -144,7 +125,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
 
   const exports = exportsQuery.data?.data ?? [];
   const slaPolicies = slaPoliciesQuery.data?.data ?? [];
-  const breakGlass = breakGlassQuery.data?.data ?? [];
   const audits = auditQuery.data?.data ?? [];
 
   return (
@@ -233,41 +213,10 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
 
         <Card className="shadow-none">
           <CardHeader>
-            <CardTitle>Break-glass and audit</CardTitle>
-            <CardDescription>Request emergency elevated access and inspect privileged actions.</CardDescription>
+            <CardTitle>Audit</CardTitle>
+            <CardDescription>Inspect recent privileged actions in this workspace.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3 rounded-md border p-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium">Break-glass requests</p>
-                  <p className="text-xs text-muted-foreground">Request emergency access only for time-sensitive incidents.</p>
-                </div>
-                <Button size="sm" variant="outline" type="button" onClick={() => setIsBreakGlassDialogOpen(true)}>
-                  Request access
-                </Button>
-              </div>
-              <div className="flex flex-col gap-2 text-xs">
-                {breakGlass.length === 0 ? (
-                  <p className="text-muted-foreground">No emergency access requests.</p>
-                ) : (
-                  breakGlass.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                      <p>{item.status} - #{item.id} - {new Date(item.created_at).toLocaleString()}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={item.status !== 'pending' || approveBreakGlass.isPending}
-                        onClick={() => approveBreakGlass.mutate(item.id)}
-                      >
-                        {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
             <div className="rounded-md border p-3">
               <p className="text-sm font-medium">Recent privileged audit events</p>
               <div className="mt-2 flex flex-col gap-2 text-xs">
@@ -354,12 +303,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         setSlaResolutionMinutes={setSlaResolutionMinutes}
         onCreateSlaPolicy={() => createSlaPolicyMutation.mutate()}
         createSlaPolicyPending={createSlaPolicyMutation.isPending}
-        isBreakGlassDialogOpen={isBreakGlassDialogOpen}
-        onBreakGlassDialogOpenChange={setIsBreakGlassDialogOpen}
-        breakGlassReason={breakGlassReason}
-        setBreakGlassReason={setBreakGlassReason}
-        onRequestBreakGlass={() => requestBreakGlass.mutate()}
-        requestBreakGlassPending={requestBreakGlass.isPending}
       />
     </>
   );

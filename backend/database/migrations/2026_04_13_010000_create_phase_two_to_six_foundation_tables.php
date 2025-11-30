@@ -102,26 +102,10 @@ return new class extends Migration
             $table->index('download_token');
         });
 
-        Schema::create('break_glass_requests', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->foreignId('requested_by_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('status')->default('pending'); // pending | approved | rejected | expired
-            $table->text('reason');
-            $table->unsignedInteger('duration_minutes')->default(60);
-            $table->foreignId('approver_one_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('approver_two_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('approved_at')->nullable();
-            $table->timestamp('expires_at')->nullable();
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'status']);
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('break_glass_requests');
         Schema::dropIfExists('tenant_exports');
         Schema::dropIfExists('legal_holds');
         Schema::dropIfExists('retention_policies');

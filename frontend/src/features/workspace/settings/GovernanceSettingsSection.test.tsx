@@ -6,15 +6,12 @@ import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GovernanceSettingsSection } from './GovernanceSettingsSection';
 import {
-  approveBreakGlassRequest,
-  createBreakGlassRequest,
   createExport,
   createSlaPolicy,
   downloadExport,
   getRetentionPolicy,
   getTenantSecurityPolicy,
   listAuditEvents,
-  listBreakGlassRequests,
   listExports,
   listSlaPolicies,
   updateRetentionPolicy,
@@ -22,15 +19,12 @@ import {
 } from '@/features/workspace/api/settings-api';
 
 vi.mock('@/features/workspace/api/settings-api', () => ({
-  approveBreakGlassRequest: vi.fn(),
-  createBreakGlassRequest: vi.fn(),
   createExport: vi.fn(),
   createSlaPolicy: vi.fn(),
   downloadExport: vi.fn(),
   getRetentionPolicy: vi.fn(),
   getTenantSecurityPolicy: vi.fn(),
   listAuditEvents: vi.fn(),
-  listBreakGlassRequests: vi.fn(),
   listExports: vi.fn(),
   listSlaPolicies: vi.fn(),
   updateRetentionPolicy: vi.fn(),
@@ -80,7 +74,6 @@ describe('GovernanceSettingsSection', () => {
       data: { tickets_days: 365, comments_days: 365, attachments_days: 365, audit_days: 730 },
     } as never);
     vi.mocked(listExports).mockResolvedValue({ data: [] } as never);
-    vi.mocked(listBreakGlassRequests).mockResolvedValue({ data: [] } as never);
     vi.mocked(listSlaPolicies).mockResolvedValue({ data: [] } as never);
     vi.mocked(listAuditEvents).mockResolvedValue({ data: [] } as never);
     vi.mocked(getTenantSecurityPolicy).mockResolvedValue({
@@ -97,8 +90,6 @@ describe('GovernanceSettingsSection', () => {
     } as never);
     vi.mocked(updateRetentionPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(createExport).mockResolvedValue({ data: {} } as never);
-    vi.mocked(createBreakGlassRequest).mockResolvedValue({ data: {} } as never);
-    vi.mocked(approveBreakGlassRequest).mockResolvedValue({ data: {} } as never);
     vi.mocked(createSlaPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(downloadExport).mockResolvedValue(undefined);
   });
@@ -144,12 +135,9 @@ describe('GovernanceSettingsSection', () => {
     });
   });
 
-  it('calls break-glass approve and export download actions', async () => {
+  it('calls export download actions', async () => {
     vi.mocked(listExports).mockResolvedValue({
       data: [{ id: 5, status: 'completed', download_token: 'tok-123', created_at: '2026-04-17T00:00:00Z' }],
-    } as never);
-    vi.mocked(listBreakGlassRequests).mockResolvedValue({
-      data: [{ id: 8, status: 'pending', created_at: '2026-04-17T00:00:00Z' }],
     } as never);
 
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
@@ -160,24 +148,6 @@ describe('GovernanceSettingsSection', () => {
     fireEvent.click(getEnabledButtonByName('Download'));
     await waitFor(() => {
       expect(downloadExport).toHaveBeenCalledWith('acme', 5, 'tok-123');
-    });
-
-    fireEvent.click(getEnabledButtonByName('Approve'));
-    await waitFor(() => {
-      expect(approveBreakGlassRequest).toHaveBeenCalledWith('acme', 8);
-    });
-  });
-
-  it('requests break-glass access from a focused dialog', async () => {
-    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Request access' }));
-    const dialog = within(screen.getByRole('dialog'));
-    fireEvent.change(dialog.getByLabelText('Reason'), { target: { value: 'Investigating Sev1 outage.' } });
-    fireEvent.click(dialog.getByRole('button', { name: 'Request access' }));
-
-    await waitFor(() => {
-      expect(createBreakGlassRequest).toHaveBeenCalledWith('acme', 'Investigating Sev1 outage.', 60);
     });
   });
 

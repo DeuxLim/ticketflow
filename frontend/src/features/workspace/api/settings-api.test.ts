@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiDownload, apiRequest } from '@/services/api/client';
 import {
-  approveBreakGlassRequest,
   createSavedView,
   createSlaPolicy,
   createTicketCustomField,
@@ -105,11 +104,7 @@ describe('settings-api integrations and security contracts', () => {
       }),
     });
 
-    await approveBreakGlassRequest(workspaceSlug, 19);
-    expect(apiRequest).toHaveBeenNthCalledWith(3, '/workspaces/acme/break-glass/requests/19/approve', {
-      method: 'POST',
-      body: JSON.stringify({}),
-    });
+    expect(apiRequest).toHaveBeenCalledTimes(2);
   });
 
   it('calls saved views, sla policies, and export download endpoints', async () => {

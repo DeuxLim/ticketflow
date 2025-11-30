@@ -1,4 +1,4 @@
-import { BreakGlassRequestDialog, SlaPolicyDialog } from './GovernanceOperationalDialogs';
+import { SlaPolicyDialog } from './GovernanceOperationalDialogs';
 import { RetentionPolicyDialog, SecurityPolicyDialog } from './GovernancePolicyDialogs';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -47,13 +47,6 @@ type Props = {
   setSlaResolutionMinutes: (value: number) => void;
   onCreateSlaPolicy: () => void;
   createSlaPolicyPending: boolean;
-
-  isBreakGlassDialogOpen: boolean;
-  onBreakGlassDialogOpenChange: (open: boolean) => void;
-  breakGlassReason: string;
-  setBreakGlassReason: (value: string) => void;
-  onRequestBreakGlass: () => void;
-  requestBreakGlassPending: boolean;
 };
 
 export function GovernanceSettingsDialogs({
@@ -97,12 +90,6 @@ export function GovernanceSettingsDialogs({
   setSlaResolutionMinutes,
   onCreateSlaPolicy,
   createSlaPolicyPending,
-  isBreakGlassDialogOpen,
-  onBreakGlassDialogOpenChange,
-  breakGlassReason,
-  setBreakGlassReason,
-  onRequestBreakGlass,
-  requestBreakGlassPending,
 }: Props) {
   return (
     <>
@@ -153,15 +140,6 @@ export function GovernanceSettingsDialogs({
         slaName={slaName}
         slaPriority={slaPriority}
         slaResolutionMinutes={slaResolutionMinutes}
-      />
-
-      <BreakGlassRequestDialog
-        breakGlassReason={breakGlassReason}
-        isOpen={isBreakGlassDialogOpen}
-        onOpenChange={onBreakGlassDialogOpenChange}
-        onRequestBreakGlass={onRequestBreakGlass}
-        requestBreakGlassPending={requestBreakGlassPending}
-        setBreakGlassReason={setBreakGlassReason}
       />
     </>
   );

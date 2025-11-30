@@ -60,7 +60,6 @@ describe('AdminDashboardPage', () => {
             maintenance_workspaces_count: 0,
             dedicated_workspaces_count: 0,
             failed_automation_executions_count: 0,
-            pending_break_glass_count: 0,
           },
         } as never;
       }
@@ -163,7 +162,6 @@ describe('AdminDashboardPage', () => {
             maintenance_workspaces_count: 0,
             dedicated_workspaces_count: 0,
             failed_automation_executions_count: 0,
-            pending_break_glass_count: 0,
           },
         } as never;
       }

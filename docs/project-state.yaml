@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T16:51:34+08:00"
+updated_at: "2026-05-03T19:34:21+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -371,19 +371,20 @@ items:
     notes:
       - "2026-05-03: Created from `SCOPE-D01` decision review. Implementation should be done in focused child tasks instead of one large cleanup."
       - "2026-05-03: Completed `SCOPE-P2-T01`; user-facing SLA wording now presents the feature as optional ticket timing targets while backend storage remains unchanged."
+      - "2026-05-03: Completed `SCOPE-P2-T02`; break-glass routes, model, controller, UI/API wiring, admin metric, tests, docs, and fresh migration table creation were removed with a cleanup migration for existing databases."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Continue with `SCOPE-P2-T02` to remove break-glass from the product surface and codebase.
+      - Continue with `SCOPE-P2-T03` to defer or hide tenant exports from the main product surface.
     tags:
       - scope
       - enterprise
       - cleanup
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T16:51:34+08:00"
-    changed_at: "2026-05-03T16:51:34+08:00"
+    updated_at: "2026-05-03T19:34:21+08:00"
+    changed_at: "2026-05-03T19:34:21+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T01
@@ -419,7 +420,7 @@ items:
     title: Remove break-glass feature
     type: task
     parent_id: SCOPE-P2
-    status: planned
+    status: complete
     priority: medium
     mvp: false
     description: Remove the enterprise break-glass access flow from UI, API, models, migrations, tests, and docs.
@@ -429,7 +430,8 @@ items:
       - Admin/Agent/Viewer permissions remain the only intended access model.
     dependencies:
       - SCOPE-P2
-    notes: []
+    notes:
+      - "2026-05-03: Removed break-glass backend routes, controller, model, workspace relation, admin dashboard metric, frontend API/types/settings UI, and tests. Fresh installs no longer create `break_glass_requests`; existing local databases are cleaned by `2026_05_03_165500_drop_break_glass_requests_table.php`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -440,8 +442,8 @@ items:
       - break-glass
       - removal
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T19:34:21+08:00"
+    changed_at: "2026-05-03T19:34:21+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T03
