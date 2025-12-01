@@ -33,7 +33,7 @@ Out of scope:
 Some enterprise-style features still exist and were reviewed in `docs/scope/enterprise-feature-review.md`:
 
 - ticket timing target UI, still stored as SLA internally
-- tenant exports
+- tenant exports, deferred and hidden from the main UI
 - retention policies
 - advanced automation
 - webhooks
@@ -333,7 +333,7 @@ Enterprise-style features pending simplification or removal:
 - webhooks
 - audit events
 - retention
-- exports
+- exports, deferred and hidden from the main UI
 
 ## 9. Frontend Architecture
 
@@ -538,7 +538,7 @@ Workflow and enterprise-style models:
 - `WebhookDelivery`
 - `AuditEvent`
 - `RetentionPolicy`
-- `TenantExport`
+- `TenantExport`, backend-only while exports are deferred
 - `TenantSecurityPolicy`
 
 ## 14. Seeding and Demo Data
@@ -805,7 +805,7 @@ The current app has more than the medium-ticketing core because earlier enterpri
 Before extending these areas, follow the `SCOPE-D01` decisions and implement the cleanup under `SCOPE-P2`:
 
 - ticket timing targets, still stored as SLA internally
-- exports
+- exports, deferred and hidden from the main UI
 - retention
 - automation
 - webhooks

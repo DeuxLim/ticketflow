@@ -230,6 +230,8 @@ POST  /workspaces/{workspace}/exports
 GET   /workspaces/{workspace}/exports/{export}/download
 ```
 
+These export endpoints are backend-only for now. The main workspace UI hides tenant exports because compliance export workflows are deferred from the medium-ticketing scope.
+
 ## SLA, Workflow, Approvals, and Automation
 
 SLA:

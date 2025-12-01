@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T19:34:21+08:00"
+updated_at: "2026-05-03T19:36:31+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -372,19 +372,20 @@ items:
       - "2026-05-03: Created from `SCOPE-D01` decision review. Implementation should be done in focused child tasks instead of one large cleanup."
       - "2026-05-03: Completed `SCOPE-P2-T01`; user-facing SLA wording now presents the feature as optional ticket timing targets while backend storage remains unchanged."
       - "2026-05-03: Completed `SCOPE-P2-T02`; break-glass routes, model, controller, UI/API wiring, admin metric, tests, docs, and fresh migration table creation were removed with a cleanup migration for existing databases."
+      - "2026-05-03: Completed `SCOPE-P2-T03`; tenant export controls were hidden from the main Governance settings UI and documented as deferred while backend endpoints remain dormant."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Continue with `SCOPE-P2-T03` to defer or hide tenant exports from the main product surface.
+      - Continue with `SCOPE-P2-T04` to defer or hide retention policy UI.
     tags:
       - scope
       - enterprise
       - cleanup
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T19:34:21+08:00"
-    changed_at: "2026-05-03T19:34:21+08:00"
+    updated_at: "2026-05-03T19:36:31+08:00"
+    changed_at: "2026-05-03T19:36:31+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T01
@@ -450,7 +451,7 @@ items:
     title: Defer or hide tenant exports
     type: task
     parent_id: SCOPE-P2
-    status: planned
+    status: complete
     priority: low
     mvp: false
     description: Remove tenant exports from the visible medium-ticketing product surface until a real export requirement exists.
@@ -460,7 +461,8 @@ items:
       - Backend code is either left dormant or removed in a dedicated cleanup decision.
     dependencies:
       - SCOPE-P2
-    notes: []
+    notes:
+      - "2026-05-03: Removed tenant export query, mutation, download action, and visible controls from Governance settings. Docs now state exports are deferred and backend-only pending a later cleanup decision."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -471,8 +473,8 @@ items:
       - exports
       - deferred
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T19:36:31+08:00"
+    changed_at: "2026-05-03T19:36:31+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T04
