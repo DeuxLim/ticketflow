@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T19:36:31+08:00"
+updated_at: "2026-05-03T19:39:08+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -373,19 +373,20 @@ items:
       - "2026-05-03: Completed `SCOPE-P2-T01`; user-facing SLA wording now presents the feature as optional ticket timing targets while backend storage remains unchanged."
       - "2026-05-03: Completed `SCOPE-P2-T02`; break-glass routes, model, controller, UI/API wiring, admin metric, tests, docs, and fresh migration table creation were removed with a cleanup migration for existing databases."
       - "2026-05-03: Completed `SCOPE-P2-T03`; tenant export controls were hidden from the main Governance settings UI and documented as deferred while backend endpoints remain dormant."
+      - "2026-05-03: Completed `SCOPE-P2-T04`; retention editing was hidden from the main Governance settings UI and documented as deferred while backend endpoints remain dormant."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Continue with `SCOPE-P2-T04` to defer or hide retention policy UI.
+      - Continue with `SCOPE-P2-T05` to simplify automation rule creation away from raw JSON editing.
     tags:
       - scope
       - enterprise
       - cleanup
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T19:36:31+08:00"
-    changed_at: "2026-05-03T19:36:31+08:00"
+    updated_at: "2026-05-03T19:39:08+08:00"
+    changed_at: "2026-05-03T19:39:08+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T01
@@ -481,7 +482,7 @@ items:
     title: Defer or hide retention policy UI
     type: task
     parent_id: SCOPE-P2
-    status: planned
+    status: complete
     priority: low
     mvp: false
     description: De-emphasize retention policies until compliance retention is explicitly required.
@@ -491,7 +492,8 @@ items:
       - Docs state retention is deferred.
     dependencies:
       - SCOPE-P2
-    notes: []
+    notes:
+      - "2026-05-03: Removed retention query, mutation, metrics, edit action, and dialog from Governance settings. Docs now state retention is deferred and backend-only pending a later cleanup decision."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -502,8 +504,8 @@ items:
       - retention
       - deferred
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T19:39:08+08:00"
+    changed_at: "2026-05-03T19:39:08+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T05

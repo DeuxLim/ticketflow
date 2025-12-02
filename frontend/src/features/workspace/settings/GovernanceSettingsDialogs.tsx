@@ -1,24 +1,10 @@
 import { SlaPolicyDialog } from './GovernanceOperationalDialogs';
-import { RetentionPolicyDialog, SecurityPolicyDialog } from './GovernancePolicyDialogs';
+import { SecurityPolicyDialog } from './GovernancePolicyDialogs';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type TenantMode = 'shared' | 'dedicated';
 
 type Props = {
-  isRetentionDialogOpen: boolean;
-  onRetentionDialogOpenChange: (open: boolean) => void;
-  ticketsDays: number;
-  commentsDays: number;
-  attachmentsDays: number;
-  auditDays: number;
-  setTicketsDaysDraft: (value: number) => void;
-  setCommentsDaysDraft: (value: number) => void;
-  setAttachmentsDaysDraft: (value: number) => void;
-  setAuditDaysDraft: (value: number) => void;
-  onSaveRetention: () => void;
-  saveRetentionPending: boolean;
-  saveRetentionError: string | null;
-
   isSecurityPolicyDialogOpen: boolean;
   onSecurityPolicyDialogOpenChange: (open: boolean) => void;
   requireMfa: boolean;
@@ -50,19 +36,6 @@ type Props = {
 };
 
 export function GovernanceSettingsDialogs({
-  isRetentionDialogOpen,
-  onRetentionDialogOpenChange,
-  ticketsDays,
-  commentsDays,
-  attachmentsDays,
-  auditDays,
-  setTicketsDaysDraft,
-  setCommentsDaysDraft,
-  setAttachmentsDaysDraft,
-  setAuditDaysDraft,
-  onSaveRetention,
-  saveRetentionPending,
-  saveRetentionError,
   isSecurityPolicyDialogOpen,
   onSecurityPolicyDialogOpenChange,
   requireMfa,
@@ -93,22 +66,6 @@ export function GovernanceSettingsDialogs({
 }: Props) {
   return (
     <>
-      <RetentionPolicyDialog
-        auditDays={auditDays}
-        attachmentsDays={attachmentsDays}
-        commentsDays={commentsDays}
-        isOpen={isRetentionDialogOpen}
-        onOpenChange={onRetentionDialogOpenChange}
-        onSave={onSaveRetention}
-        saveError={saveRetentionError}
-        savePending={saveRetentionPending}
-        setAttachmentsDaysDraft={setAttachmentsDaysDraft}
-        setAuditDaysDraft={setAuditDaysDraft}
-        setCommentsDaysDraft={setCommentsDaysDraft}
-        setTicketsDaysDraft={setTicketsDaysDraft}
-        ticketsDays={ticketsDays}
-      />
-
       <SecurityPolicyDialog
         dataPlaneKey={dataPlaneKey}
         ipAllowlist={ipAllowlist}
