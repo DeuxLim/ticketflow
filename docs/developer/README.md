@@ -329,7 +329,7 @@ Enterprise-style features pending simplification or removal:
 
 - ticket timing targets, still stored as SLA policies internally
 - approvals
-- automation
+- automation, simplified to basic ticket rule controls
 - webhooks
 - audit events
 - retention, deferred and hidden from the main UI

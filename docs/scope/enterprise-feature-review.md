@@ -125,7 +125,7 @@ Decision: simplify.
 Current state:
 
 - Backend supports automation rules, dry-runs, toggles, executions, and workflow interaction.
-- Frontend exposes JSON fields for rule conditions and actions.
+- Frontend exposes simple ticket-focused controls for one optional condition and one action.
 - This is powerful but too technical for the intended user level.
 
 Keep only:
@@ -147,6 +147,7 @@ Recommended follow-up:
 - Replace JSON inputs with beginner-friendly controls.
 - Limit supported actions to simple ticket updates and in-app notifications.
 - Keep automation optional and low priority.
+- 2026-05-03 update: automation rule creation no longer exposes raw JSON in the main UI.
 
 ### Webhooks
 

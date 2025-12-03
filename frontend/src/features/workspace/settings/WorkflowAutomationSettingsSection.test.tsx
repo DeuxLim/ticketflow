@@ -125,8 +125,6 @@ describe('WorkflowAutomationSettingsSection', () => {
     fireEvent.change(dialog.getByLabelText('Rule name'), { target: { value: 'Notify on ticket' } });
     fireEvent.change(dialog.getByLabelText('Event type'), { target: { value: 'ticket.created' } });
     fireEvent.change(dialog.getByLabelText('Priority'), { target: { value: '50' } });
-    fireEvent.change(dialog.getByLabelText('Conditions JSON'), { target: { value: '[]' } });
-    fireEvent.change(dialog.getByLabelText('Actions JSON'), { target: { value: '[{"type":"notify"}]' } });
     fireEvent.click(dialog.getByRole('button', { name: 'Create rule' }));
 
     await waitFor(() => {
@@ -134,6 +132,8 @@ describe('WorkflowAutomationSettingsSection', () => {
         name: 'Notify on ticket',
         event_type: 'ticket.created',
         priority: 50,
+        conditions: [],
+        actions: [{ type: 'set_field', field: 'status', value: 'in_progress' }],
       }));
     });
   });

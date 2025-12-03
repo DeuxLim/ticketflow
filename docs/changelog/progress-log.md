@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 19:41 +08:00 - Simplified Automation Rule Creation
+
+- Completed `SCOPE-P2-T05`.
+- Replaced raw JSON condition/action fields with simple ticket-focused controls.
+- Kept dry-run/test behavior available for existing rules.
+- Updated docs to record that raw JSON automation building is out of the main UI.
+
+Verification:
+- Ran `npm test -- WorkflowAutomationSettingsSection.test.tsx settings-api.test.ts --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2-T06` to defer or hide webhooks.
+
 ## 2026-05-03 19:39 +08:00 - Hid Retention Policy UI
 
 - Completed `SCOPE-P2-T04`.
