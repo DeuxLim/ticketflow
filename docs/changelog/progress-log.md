@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 19:45 +08:00 - Hid Webhook Integrations
+
+- Completed `SCOPE-P2-T06`.
+- Replaced webhook endpoint and delivery management UI with a deferred integrations message.
+- Left backend webhook endpoints and API helpers dormant for a later cleanup decision.
+- Updated docs to state webhooks are deferred and hidden from the main UI.
+
+Verification:
+- Ran `npm test -- IntegrationsSettingsSection.test.tsx settings-api.test.ts --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2-T07` to simplify platform isolation language.
+
 ## 2026-05-03 19:41 +08:00 - Simplified Automation Rule Creation
 
 - Completed `SCOPE-P2-T05`.

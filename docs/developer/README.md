@@ -36,7 +36,7 @@ Some enterprise-style features still exist and were reviewed in `docs/scope/ente
 - tenant exports, deferred and hidden from the main UI
 - retention policies, deferred and hidden from the main UI
 - advanced automation
-- webhooks
+- webhooks, deferred and hidden from the main UI
 - platform isolation
 
 The implementation follow-up is tracked under `SCOPE-P2`.
@@ -330,7 +330,7 @@ Enterprise-style features pending simplification or removal:
 - ticket timing targets, still stored as SLA policies internally
 - approvals
 - automation, simplified to basic ticket rule controls
-- webhooks
+- webhooks, deferred and hidden from the main UI
 - audit events
 - retention, deferred and hidden from the main UI
 - exports, deferred and hidden from the main UI
@@ -448,7 +448,7 @@ Main route groups:
 - workflow and automation
 - reporting
 - saved views
-- webhooks
+- webhooks, deferred and hidden from the main UI
 - admin
 
 See `docs/developer/routes.md` for a route reference.

@@ -157,7 +157,7 @@ Current state:
 
 - Backend can create webhook endpoints.
 - Backend records deliveries and supports retry.
-- Frontend integrations settings can manage endpoints and inspect deliveries.
+- Frontend integrations settings no longer show webhook setup or delivery retry controls.
 
 Why defer:
 
@@ -169,6 +169,7 @@ Recommended follow-up:
 - Keep code untouched for now.
 - Do not expand webhook events or delivery features.
 - Consider hiding the Integrations tab unless integrations become part of the product goal.
+- 2026-05-03 update: webhook setup and delivery controls were hidden from the Integrations settings UI; backend endpoints remain dormant for a later cleanup decision.
 
 ### Platform Isolation
 

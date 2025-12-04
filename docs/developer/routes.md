@@ -298,6 +298,8 @@ GET  /workspaces/{workspace}/webhook-deliveries
 POST /workspaces/{workspace}/webhook-deliveries/{delivery}/retry
 ```
 
+These endpoints are backend-only for now. The main workspace UI hides webhook setup and delivery retry because integrations are deferred from the medium-ticketing scope.
+
 ## Platform Admin API
 
 Requires platform admin.

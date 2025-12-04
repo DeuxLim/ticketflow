@@ -27,7 +27,7 @@ Out of scope:
 - SSO login through SAML or OIDC.
 - Break-glass emergency access.
 
-Remaining enterprise-style features such as automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Tenant exports and retention policy controls are deferred and hidden from the main UI. Follow-up simplification work is tracked under `SCOPE-P2`.
+Remaining enterprise-style features such as platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Tenant exports, retention policy controls, and webhooks are deferred and hidden from the main UI. Follow-up simplification work is tracked under `SCOPE-P2`.
 
 ## Stack
 
