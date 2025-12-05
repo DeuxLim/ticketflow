@@ -27,7 +27,7 @@ export function TicketDetailsCommentDialog({
 }: TicketDetailsCommentDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add Comment</DialogTitle>
           <DialogDescription>Internal comments are visible to workspace team members only.</DialogDescription>

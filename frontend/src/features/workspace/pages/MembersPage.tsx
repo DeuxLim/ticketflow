@@ -199,7 +199,7 @@ export function MembersPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingMember ? `Edit role for ${formatMemberName(editingMember)}` : 'Edit member role'}</DialogTitle>
             <DialogDescription>Choose the single workspace role this member should keep after the change.</DialogDescription>

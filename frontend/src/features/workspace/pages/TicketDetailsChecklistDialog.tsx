@@ -36,7 +36,7 @@ export function TicketDetailsChecklistDialog({
 }: TicketDetailsChecklistDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Checklist</DialogTitle>
           <DialogDescription>Track the operator tasks that still block closure or handoff.</DialogDescription>

@@ -158,7 +158,7 @@ export function InvitationsPage() {
         }}
         open={isInviteOpen}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Send Invite</DialogTitle>
             <DialogDescription>Assign at least one workspace role on invitation.</DialogDescription>

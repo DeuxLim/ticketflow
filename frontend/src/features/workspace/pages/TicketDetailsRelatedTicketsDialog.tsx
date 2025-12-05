@@ -53,7 +53,7 @@ export function TicketDetailsRelatedTicketsDialog({
 }: TicketDetailsRelatedTicketsDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Related Tickets</DialogTitle>
           <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work from one focused panel.</DialogDescription>

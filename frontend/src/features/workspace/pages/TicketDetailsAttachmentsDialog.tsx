@@ -40,7 +40,7 @@ export function TicketDetailsAttachmentsDialog({
 }: TicketDetailsAttachmentsDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Attachments</DialogTitle>
           <DialogDescription>Upload or review files without pushing upload controls into the main ticket view.</DialogDescription>

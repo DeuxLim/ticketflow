@@ -277,7 +277,7 @@ export function CustomersPage() {
         }}
         open={Boolean(deleteTarget)}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Delete customer</DialogTitle>
             <DialogDescription>
