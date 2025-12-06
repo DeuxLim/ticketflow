@@ -166,7 +166,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
               <div className="grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
                 <PolicyMetric label="MFA required" value={requireMfa ? 'Yes' : 'No'} />
                 <PolicyMetric label="Session TTL" value={`${sessionTtl} minutes`} />
-                <PolicyMetric label="Tenant mode" value={tenantMode} />
+                <PolicyMetric label="Workspace mode" value={tenantMode} />
                 <PolicyMetric label="IP allowlist" value={ipAllowlist.trim() ? `${ipAllowlist.split('\n').filter(Boolean).length} entries` : 'No restrictions'} />
               </div>
             </div>

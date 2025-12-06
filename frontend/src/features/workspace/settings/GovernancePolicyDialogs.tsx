@@ -47,7 +47,7 @@ export function SecurityPolicyDialog({
         <DialogHeader>
           <DialogTitle>Edit Security Policy</DialogTitle>
           <DialogDescription>
-            Change workspace access requirements, tenant isolation mode, and trusted network restrictions.
+            Change workspace access requirements, workspace mode, and trusted network restrictions.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -70,7 +70,7 @@ export function SecurityPolicyDialog({
               <FieldDescription>Controls how long authenticated workspace sessions remain valid.</FieldDescription>
             </Field>
             <Field>
-              <FieldLabel>Tenant mode</FieldLabel>
+              <FieldLabel>Workspace mode</FieldLabel>
               <Select value={tenantMode} onValueChange={(value) => setTenantModeDraft((value as TenantMode) ?? 'shared')}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -82,9 +82,9 @@ export function SecurityPolicyDialog({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor="security-data-plane-key">Dedicated data plane key</FieldLabel>
+              <FieldLabel htmlFor="security-data-plane-key">Workspace mode key</FieldLabel>
               <Input id="security-data-plane-key" value={dataPlaneKey} onChange={(event) => setDataPlaneKeyDraft(event.target.value)} />
-              <FieldDescription>Leave blank unless this workspace has a dedicated data plane.</FieldDescription>
+              <FieldDescription>Optional label for local/admin tracking. This does not provision separate infrastructure.</FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="security-ip-allowlist">IP allowlist (one IP per line)</FieldLabel>

@@ -177,9 +177,9 @@ Decision: simplify.
 
 Current state:
 
-- Platform admin can switch workspace `tenant_mode` between `shared` and `dedicated`.
-- Platform admin can set a `dedicated_data_plane_key`.
-- Admin dashboard shows dedicated workspace counts.
+- Platform admin can mark workspace `tenant_mode` as `shared` or `dedicated`.
+- Platform admin can set a `dedicated_data_plane_key` as an admin label.
+- Admin dashboard shows workspaces marked dedicated.
 
 Why simplify:
 
@@ -191,6 +191,7 @@ Recommended follow-up:
 - Rename UI language to avoid implying real infrastructure isolation.
 - Keep only simple workspace status/admin controls unless true isolation is implemented.
 - Do not expand platform isolation features now.
+- 2026-05-03 update: platform/admin UI now describes this as workspace mode and admin labels rather than dedicated infrastructure isolation.
 
 ## Recommended Follow-Up Roadmap
 
