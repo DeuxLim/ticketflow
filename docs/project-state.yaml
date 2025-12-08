@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-05T19:35:43+08:00"
+updated_at: "2026-05-05T19:41:35+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -618,6 +618,7 @@ items:
       - SCOPE-P2
     notes:
       - "2026-05-05: Created as the next active focus after all tracked `SCOPE-P2` cleanup items were completed. Start with an audit before removing dormant backend code."
+      - "2026-05-05: Completed `RELEASE-P1-T01` by documenting the exact tenant export, retention policy, and webhook backend/frontend remnants in `docs/release/dormant-backend-surface-audit.md`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -634,14 +635,14 @@ items:
       - backend
     created_at: "2026-05-05T19:35:43+08:00"
     updated_at: "2026-05-05T19:35:43+08:00"
-    changed_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:41:35+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T01
     title: Audit dormant enterprise backend surfaces
     type: task
     parent_id: RELEASE-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Inventory the backend routes, controllers, models, migrations, tests, frontend API helpers, and docs for tenant exports, retention policies, and webhooks.
@@ -652,27 +653,27 @@ items:
       - The audit separates harmless hidden code from code that should be removed before release.
     dependencies:
       - RELEASE-P1
-    notes: []
+    notes:
+      - "2026-05-05: Audit completed in `docs/release/dormant-backend-surface-audit.md`; it lists active routes, controllers, models, migrations, tests, frontend API helpers/types, UI-hidden state, and docs for tenant exports, retention policies, and webhooks."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Search route definitions, controllers, models, migrations, factories, tests, API clients, and docs for export, retention, and webhook surfaces.
+    next_actions: []
     tags:
       - release
       - audit
       - backend
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:35:43+08:00"
-    changed_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:41:35+08:00"
+    changed_at: "2026-05-05T19:41:35+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T02
     title: Decide cleanup scope for dormant surfaces
     type: decision
     parent_id: RELEASE-P1
-    status: planned
+    status: in_progress
     priority: high
     mvp: true
     description: Decide whether tenant exports, retention policies, and webhooks should be removed, kept hidden, or deferred as backend-only code before release cleanup starts.
@@ -682,7 +683,8 @@ items:
       - Follow-up implementation tasks are adjusted to match the decisions.
     dependencies:
       - RELEASE-P1-T01
-    notes: []
+    notes:
+      - "2026-05-05: Started after `RELEASE-P1-T01` confirmed all three surfaces are hidden from UI but active at the API layer."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -694,8 +696,8 @@ items:
       - decision
       - scope
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:35:43+08:00"
-    changed_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:41:35+08:00"
+    changed_at: "2026-05-05T19:41:35+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T03

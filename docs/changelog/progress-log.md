@@ -2367,3 +2367,23 @@ Verification:
 ## Resume From Here
 
 Start `RELEASE-P1-T01`: audit dormant tenant export, retention policy, and webhook backend routes, controllers, models, migrations, tests, frontend API helpers, and docs before making cleanup changes.
+
+## 2026-05-05 19:41 +08:00 - Completed Dormant Backend Surface Audit
+
+- Added `docs/release/dormant-backend-surface-audit.md`.
+- Audited tenant export, retention policy, and webhook backend routes, controllers, models, migrations, tests, frontend API helpers/types, UI-hidden state, and docs.
+- Marked `RELEASE-P1-T01` complete and moved `RELEASE-P1-T02` to in progress.
+
+Verification:
+- Documentation/tracker update only; no product code was changed.
+
+Progress:
+- `RELEASE-P1`: 1/4 tasks complete, 25%.
+- Remaining tasks: 3.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+Continue `RELEASE-P1-T02`: record cleanup-scope decisions for tenant export, retention policy, and webhook backend surfaces before implementation.
