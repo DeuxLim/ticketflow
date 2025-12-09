@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`RELEASE-P1` is active. Continue with `RELEASE-P1-T02`, the cleanup-scope decision for tenant export, retention policy, and webhook backend surfaces.
+`RELEASE-P1` is active. Continue with `RELEASE-P1-T03`, the approved cleanup implementation for dormant tenant export, retention policy, and webhook surfaces.
 
 ## MVP Items
 
@@ -66,14 +66,14 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 - Status: `in_progress`
 - Priority: high
 - Scope: Prepare the simplified medium ticketing app for a cleaner release by auditing and resolving dormant backend surfaces left after enterprise-scope UI removal.
-- Current state: `RELEASE-P1-T01` is complete. The audit in `docs/release/dormant-backend-surface-audit.md` confirms tenant exports, retention policies, and webhooks are hidden from the main UI but still active at the API layer.
-- Next actions: complete `RELEASE-P1-T02` by recording remove, keep-hidden, or defer decisions for each dormant surface before cleanup code changes.
+- Current state: `RELEASE-P1-T01` and `RELEASE-P1-T02` are complete. The decision in `docs/release/dormant-backend-surface-decisions.md` is to remove dormant tenant export, retention policy, and webhook API/backend surfaces for the medium release.
+- Next actions: implement `RELEASE-P1-T03` by removing the approved dormant surfaces without reintroducing enterprise UI scope.
 
 #### Child Items
 
 - `RELEASE-P1-T01` Audit dormant enterprise backend surfaces - `complete`
-- `RELEASE-P1-T02` Decide cleanup scope for dormant surfaces - `in_progress`
-- `RELEASE-P1-T03` Implement approved dormant-surface cleanup - `planned`
+- `RELEASE-P1-T02` Decide cleanup scope for dormant surfaces - `complete`
+- `RELEASE-P1-T03` Implement approved dormant-surface cleanup - `in_progress`
 - `RELEASE-P1-T04` Verify release readiness and sync docs - `planned`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
@@ -258,4 +258,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue `RELEASE-P1-T02`: record cleanup-scope decisions for tenant export, retention policy, and webhook backend surfaces before implementation.
+Continue `RELEASE-P1-T03`: remove approved dormant tenant export, retention policy, and webhook API/backend surfaces.
