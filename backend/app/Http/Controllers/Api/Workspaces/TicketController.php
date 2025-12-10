@@ -21,7 +21,6 @@ use App\Services\Notifications\WorkspaceNotificationService;
 use App\Services\Sla\SlaEngine;
 use App\Services\Tickets\AssignmentStrategyService;
 use App\Services\Webhooks\AutomationEngine;
-use App\Services\Webhooks\IntegrationEventPublisher;
 use App\Support\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,7 +32,6 @@ class TicketController extends Controller
         private readonly SlaEngine $slaEngine,
         private readonly AssignmentStrategyService $assignmentStrategyService,
         private readonly AutomationEngine $automationEngine,
-        private readonly IntegrationEventPublisher $integrationEventPublisher,
         private readonly WorkspaceNotificationService $notificationService
     ) {}
 
@@ -169,13 +167,6 @@ class TicketController extends Controller
             return $ticket;
         });
 
-        $this->integrationEventPublisher->publish($workspace, 'ticket.created', [
-            'ticket_id' => $ticket->id,
-            'ticket_number' => $ticket->ticket_number,
-            'status' => $ticket->status,
-            'priority' => $ticket->priority,
-        ]);
-
         return response()->json([
             'data' => new TicketResource($ticket->load(['customer:id,name,email', 'creator:id,first_name,last_name,email', 'assignee:id,first_name,last_name,email'])),
         ], 201);
@@ -275,13 +266,6 @@ class TicketController extends Controller
                 'actor_user_id' => $request->user()?->id,
             ]);
         }
-
-        $this->integrationEventPublisher->publish($workspace, 'ticket.updated', [
-            'ticket_id' => $ticket->id,
-            'status' => $ticket->status,
-            'priority' => $ticket->priority,
-            'assigned_to_user_id' => $ticket->assigned_to_user_id,
-        ]);
 
         return response()->json([
             'data' => new TicketResource($ticket->fresh()->load(['customer:id,name,email', 'creator:id,first_name,last_name,email', 'assignee:id,first_name,last_name,email'])),
@@ -475,14 +459,6 @@ class TicketController extends Controller
                     );
                 }
 
-                $this->integrationEventPublisher->publish($workspace, 'ticket.updated', [
-                    'ticket_id' => $ticket->id,
-                    'status' => $ticket->status,
-                    'priority' => $ticket->priority,
-                    'assigned_to_user_id' => $ticket->assigned_to_user_id,
-                    'bulk' => true,
-                ]);
-
                 $updatedTickets[] = $ticket;
             }
         });
@@ -503,11 +479,6 @@ class TicketController extends Controller
         $ticket->delete();
 
         ActivityLogger::log($workspace->id, $request->user()?->id, 'ticket.deleted', null, [
-            'ticket_id' => $ticketId,
-            'ticket_number' => $ticketNumber,
-        ]);
-
-        $this->integrationEventPublisher->publish($workspace, 'ticket.deleted', [
             'ticket_id' => $ticketId,
             'ticket_number' => $ticketNumber,
         ]);

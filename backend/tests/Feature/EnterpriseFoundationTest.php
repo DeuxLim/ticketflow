@@ -2,13 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\IntegrationEvent;
 use App\Models\Ticket;
 use App\Models\User;
-use App\Models\WebhookDelivery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\Request as HttpRequest;
-use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -85,7 +81,7 @@ class EnterpriseFoundationTest extends TestCase
         ]);
     }
 
-    public function test_webhook_delivery_retry_signs_payload_and_marks_delivery_success(): void
+    public function test_deferred_webhook_routes_are_removed_from_release_scope(): void
     {
         $owner = User::factory()->create();
         Sanctum::actingAs($owner);
@@ -95,98 +91,10 @@ class EnterpriseFoundationTest extends TestCase
             'slug' => 'acme-enterprise',
         ])->json('data');
 
-        $secret = 'supersecret123';
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [
-            'name' => 'Events',
-            'url' => 'https://example.test/webhooks',
-            'secret' => $secret,
-            'events' => ['ticket.created'],
-        ])->assertCreated();
-
-        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
-            'name' => 'Jane Doe',
-            'email' => 'jane@example.com',
-        ])->json('data');
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
-            'customer_id' => $customer['id'],
-            'title' => 'Webhook test',
-            'description' => 'Testing signed deliveries',
-            'priority' => 'high',
-        ])->assertCreated();
-
-        $delivery = WebhookDelivery::query()->firstOrFail();
-        $event = IntegrationEvent::query()->findOrFail($delivery->integration_event_id);
-        $expectedSignature = hash_hmac('sha256', $event->payload_json, $secret);
-
-        Http::fake(function (HttpRequest $request) use ($expectedSignature) {
-            $this->assertSame($expectedSignature, $request->header('X-Ticketing-Signature')[0] ?? null);
-
-            return Http::response(['ok' => true], 200);
-        });
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/webhook-deliveries/{$delivery->id}/retry")
-            ->assertOk();
-
-        $this->assertDatabaseHas('webhook_deliveries', [
-            'id' => $delivery->id,
-            'status' => 'delivered',
-            'response_status' => 200,
-        ]);
-    }
-
-    public function test_integrations_endpoints_return_contracts_used_by_settings_ui(): void
-    {
-        $owner = User::factory()->create();
-        Sanctum::actingAs($owner);
-
-        $workspace = $this->postJson('/api/workspaces', [
-            'name' => 'Acme Enterprise',
-            'slug' => 'acme-enterprise',
-        ])->json('data');
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [
-            'name' => 'Ticket Events',
-            'url' => 'https://example.test/hooks',
-            'secret' => 'supersecret123',
-            'events' => ['ticket.created'],
-        ])->assertCreated()
-            ->assertJsonPath('data.name', 'Ticket Events')
-            ->assertJsonPath('data.events', 'ticket.created');
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [
-            'name' => '',
-            'url' => 'invalid-url',
-            'secret' => '123',
-            'events' => [],
-        ])->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'url', 'secret', 'events']);
-
-        $this->getJson("/api/workspaces/{$workspace['slug']}/webhooks")
-            ->assertOk()
-            ->assertJsonPath('data.0.name', 'Ticket Events')
-            ->assertJsonPath('data.0.is_active', true);
-
-        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
-            'name' => 'Jane Doe',
-            'email' => 'jane@example.com',
-        ])->json('data');
-
-        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
-            'customer_id' => $customer['id'],
-            'title' => 'Webhook Contract Test',
-            'description' => 'Generate integration event and delivery.',
-            'priority' => 'high',
-        ])->assertCreated();
-
-        $this->getJson("/api/workspaces/{$workspace['slug']}/webhook-deliveries")
-            ->assertOk()
-            ->assertJsonPath('meta.current_page', 1)
-            ->assertJsonPath('meta.last_page', 1)
-            ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('data.0.endpoint.name', 'Ticket Events')
-            ->assertJsonPath('data.0.event.event_type', 'ticket.created');
+        $this->getJson("/api/workspaces/{$workspace['slug']}/webhooks")->assertNotFound();
+        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [])->assertNotFound();
+        $this->getJson("/api/workspaces/{$workspace['slug']}/webhook-deliveries")->assertNotFound();
+        $this->postJson("/api/workspaces/{$workspace['slug']}/webhook-deliveries/1/retry")->assertNotFound();
     }
 
     public function test_security_governance_endpoints_return_contracts_used_by_settings_ui(): void

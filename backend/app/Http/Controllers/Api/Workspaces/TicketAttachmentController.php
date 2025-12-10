@@ -8,7 +8,6 @@ use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use App\Models\Workspace;
 use App\Services\Audit\AuditLogger;
-use App\Services\Webhooks\IntegrationEventPublisher;
 use App\Support\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -16,10 +15,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketAttachmentController extends Controller
 {
-    public function __construct(private readonly IntegrationEventPublisher $integrationEventPublisher)
-    {
-    }
-
     public function index(Workspace $workspace, Ticket $ticket): JsonResponse
     {
         $attachments = TicketAttachment::query()
@@ -92,13 +87,6 @@ class TicketAttachmentController extends Controller
             ],
             request: $request
         );
-
-        $this->integrationEventPublisher->publish($workspace, 'ticket.attachment_added', [
-            'ticket_id' => $ticket->id,
-            'attachment_id' => $attachment->id,
-            'name' => $attachment->original_name,
-            'size_bytes' => $attachment->size_bytes,
-        ]);
 
         return response()->json([
             'data' => [

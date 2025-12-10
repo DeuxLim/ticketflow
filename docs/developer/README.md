@@ -33,10 +33,10 @@ Out of scope:
 Some enterprise-style features still exist and were reviewed in `docs/scope/enterprise-feature-review.md`:
 
 - ticket timing target UI, still stored as SLA internally
-- tenant exports, deferred and hidden from the main UI
-- retention policies, deferred and hidden from the main UI
+- tenant exports
+- retention policies
 - advanced automation
-- webhooks, deferred and hidden from the main UI
+- webhooks
 - platform isolation; workspace mode is only a local/admin label
 
 The implementation follow-up is tracked under `SCOPE-P2`.
@@ -247,7 +247,7 @@ Service responsibility:
 
 - hold reusable domain logic
 - keep controllers smaller
-- centralize workflows like notifications, SLA reporting, webhooks, assignment, workspace setup
+- centralize workflows like notifications, SLA reporting, assignment, workspace setup
 
 Action responsibility:
 
@@ -330,10 +330,9 @@ Enterprise-style features pending simplification or removal:
 - ticket timing targets, still stored as SLA policies internally
 - approvals
 - automation, simplified to basic ticket rule controls
-- webhooks, deferred and hidden from the main UI
 - audit events
-- retention, deferred and hidden from the main UI
-- exports, deferred and hidden from the main UI
+- retention, removed from release scope
+- exports, removed from release scope
 
 ## 9. Frontend Architecture
 
@@ -448,7 +447,7 @@ Main route groups:
 - workflow and automation
 - reporting
 - saved views
-- webhooks, deferred and hidden from the main UI
+- webhooks, removed from release scope
 - admin
 
 See `docs/developer/routes.md` for a route reference.
@@ -534,11 +533,7 @@ Workflow and enterprise-style models:
 - `SlaBreachEvent`
 - `AutomationRule`
 - `AutomationExecution`
-- `WebhookEndpoint`
-- `WebhookDelivery`
 - `AuditEvent`
-- `RetentionPolicy`, backend-only while retention UI is deferred
-- `TenantExport`, backend-only while exports are deferred
 - `TenantSecurityPolicy`
 
 ## 14. Seeding and Demo Data
@@ -802,13 +797,13 @@ frontend/src/features/workspace/api/notificationsApi.ts
 
 The current app has more than the medium-ticketing core because earlier enterprise-style features still exist.
 
-Before extending these areas, follow the `SCOPE-D01` decisions and implement the cleanup under `SCOPE-P2`:
+Before extending these areas, follow the `SCOPE-D01` and `RELEASE-P1` decisions:
 
 - ticket timing targets, still stored as SLA internally
-- exports, deferred and hidden from the main UI
-- retention, deferred and hidden from the main UI
+- exports, removed from release scope
+- retention, removed from release scope
 - automation
-- webhooks
+- webhooks, removed from release scope
 - platform isolation; workspace mode is only a local/admin label
 
 The decision should be one of:
@@ -818,7 +813,7 @@ The decision should be one of:
 - defer
 - remove
 
-Do not add more enterprise scope until that review is done.
+Do not add more enterprise scope without adding a new tracker item first.
 
 ## 20. Quick Mental Model
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiDownload, apiRequest } from '@/services/api/client';
+import { apiRequest } from '@/services/api/client';
 import {
   createSavedView,
   createSlaPolicy,
@@ -10,21 +10,16 @@ import {
   createTicketType,
   createAutomationRule,
   createWorkflow,
-  createWebhookEndpoint,
   deleteSavedView,
-  downloadExport,
   getTenantSecurityPolicy,
   listSavedViews,
   listSlaPolicies,
   listWorkflows,
-  listWebhookDeliveries,
-  listWebhookEndpoints,
   updateTicketCustomField,
   updateTicketFormTemplate,
   updateTicketCategory,
   updateTicketTag,
   updateTicketType,
-  retryWebhookDelivery,
   simulateWorkflowTransition,
   testAutomationRule,
   updateAutomationRule,
@@ -34,48 +29,12 @@ import {
 
 vi.mock('@/services/api/client', () => ({
   apiRequest: vi.fn(),
-  apiDownload: vi.fn(),
 }));
 
 describe('settings-api integrations and security contracts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(apiRequest).mockResolvedValue({ data: {} } as never);
-    vi.mocked(apiDownload).mockResolvedValue(undefined);
-  });
-
-  it('calls integrations endpoints with expected methods and payloads', async () => {
-    const workspaceSlug = 'acme';
-
-    await listWebhookEndpoints(workspaceSlug);
-    expect(apiRequest).toHaveBeenNthCalledWith(1, '/workspaces/acme/webhooks');
-
-    await createWebhookEndpoint(workspaceSlug, {
-      name: 'Events',
-      url: 'https://example.test/webhooks',
-      secret: 'secret-123',
-      events: ['ticket.created'],
-      is_active: true,
-    });
-    expect(apiRequest).toHaveBeenNthCalledWith(2, '/workspaces/acme/webhooks', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: 'Events',
-        url: 'https://example.test/webhooks',
-        secret: 'secret-123',
-        events: ['ticket.created'],
-        is_active: true,
-      }),
-    });
-
-    await listWebhookDeliveries(workspaceSlug);
-    expect(apiRequest).toHaveBeenNthCalledWith(3, '/workspaces/acme/webhook-deliveries');
-
-    await retryWebhookDelivery(workspaceSlug, 42);
-    expect(apiRequest).toHaveBeenNthCalledWith(4, '/workspaces/acme/webhook-deliveries/42/retry', {
-      method: 'POST',
-      body: JSON.stringify({}),
-    });
   });
 
   it('calls security governance endpoints with expected methods and payloads', async () => {
@@ -107,7 +66,7 @@ describe('settings-api integrations and security contracts', () => {
     expect(apiRequest).toHaveBeenCalledTimes(2);
   });
 
-  it('calls saved views, sla policies, and export download endpoints', async () => {
+  it('calls saved views and sla policies endpoints', async () => {
     const workspaceSlug = 'acme';
 
     await listSavedViews(workspaceSlug);
@@ -153,8 +112,7 @@ describe('settings-api integrations and security contracts', () => {
       }),
     });
 
-    await downloadExport(workspaceSlug, 77, 'abc token');
-    expect(apiDownload).toHaveBeenCalledWith('/workspaces/acme/exports/77/download?token=abc%20token', 'tenant-export-77.json');
+    expect(apiRequest).toHaveBeenCalledTimes(5);
   });
 
   it('calls workflow and automation lifecycle endpoints with expected methods and payloads', async () => {

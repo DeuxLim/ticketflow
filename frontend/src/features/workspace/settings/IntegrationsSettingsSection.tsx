@@ -19,7 +19,7 @@ export function IntegrationsSettingsSection({ workspaceSlug }: IntegrationsSetti
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          The backend webhook endpoints are kept dormant for a later product decision, but webhook setup is hidden from this version of the app.
+          Webhook setup and delivery APIs were removed from this release. Add a new roadmap item before bringing integrations back.
         </p>
       </CardContent>
     </Card>

@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-05T19:43:08+08:00"
+updated_at: "2026-05-05T19:51:26+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -620,6 +620,7 @@ items:
       - "2026-05-05: Created as the next active focus after all tracked `SCOPE-P2` cleanup items were completed. Start with an audit before removing dormant backend code."
       - "2026-05-05: Completed `RELEASE-P1-T01` by documenting the exact tenant export, retention policy, and webhook backend/frontend remnants in `docs/release/dormant-backend-surface-audit.md`."
       - "2026-05-05: Completed `RELEASE-P1-T02`; decision is to remove dormant tenant export, retention policy, and webhook API/backend surfaces for the medium release, documented in `docs/release/dormant-backend-surface-decisions.md`."
+      - "2026-05-05: Completed `RELEASE-P1-T03` by removing dormant tenant export, retention policy, webhook endpoint/delivery, and integration-event API/backend/frontend support; focused backend/frontend verification passed."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -635,8 +636,8 @@ items:
       - scope
       - backend
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:43:08+08:00"
-    changed_at: "2026-05-05T19:43:08+08:00"
+    updated_at: "2026-05-05T19:51:26+08:00"
+    changed_at: "2026-05-05T19:51:26+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T01
@@ -705,7 +706,7 @@ items:
     title: Implement approved dormant-surface cleanup
     type: task
     parent_id: RELEASE-P1
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Apply the approved cleanup decisions for dormant tenant export, retention policy, and webhook surfaces without expanding product scope.
@@ -718,27 +719,27 @@ items:
       - RELEASE-P1-T02
     notes:
       - "2026-05-05: Started after `RELEASE-P1-T02` approved removing dormant tenant export, retention policy, and webhook API/backend surfaces."
+      - "2026-05-05: Removed routes/controllers/models/request/services for tenant exports, retention policies, webhook endpoints/deliveries, and integration events; removed frontend API helpers/types; updated docs and regression tests. Verified with backend `EnterpriseFoundationTest`, backend `EnterpriseRemainingFoundationTest`, and focused frontend settings tests."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Implement only the cleanup approved in `RELEASE-P1-T02`.
+    next_actions: []
     tags:
       - release
       - cleanup
       - backend
       - frontend
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:43:08+08:00"
-    changed_at: "2026-05-05T19:43:08+08:00"
+    updated_at: "2026-05-05T19:51:26+08:00"
+    changed_at: "2026-05-05T19:51:26+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T04
     title: Verify release readiness and sync docs
     type: task
     parent_id: RELEASE-P1
-    status: planned
+    status: in_progress
     priority: high
     mvp: true
     description: Run the final verification pass for release readiness and update documentation to match the simplified product scope.
@@ -749,7 +750,8 @@ items:
       - Roadmap and progress log are synchronized with completed release-readiness work.
     dependencies:
       - RELEASE-P1-T03
-    notes: []
+    notes:
+      - "2026-05-05: Started after `RELEASE-P1-T03` focused backend/frontend verification passed."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -761,8 +763,8 @@ items:
       - verification
       - docs
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:35:43+08:00"
-    changed_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:51:26+08:00"
+    changed_at: "2026-05-05T19:51:26+08:00"
     changed_source: codex
 
   - id: REFACTOR-P1
