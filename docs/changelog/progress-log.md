@@ -2432,3 +2432,29 @@ Commit/push:
 ## Resume From Here
 
 Continue `RELEASE-P1-T04`: run final backend/frontend verification, then close `RELEASE-P1`.
+
+## 2026-05-05 19:53 +08:00 - Closed Release Readiness Epic
+
+- Marked `RELEASE-P1-T04` complete.
+- Marked `RELEASE-P1` complete and cleared `current_focus`.
+- Synced roadmap and tracker closeout state after final verification.
+
+Verification:
+- `backend`: `./vendor/bin/pint --dirty --test` passed.
+- `backend`: `composer test`, 70 tests / 463 assertions passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 26 files / 91 tests passed.
+- `docs`: YAML validation passed.
+- `repo`: `git diff --check` passed.
+
+Progress:
+- `RELEASE-P1`: 4/4 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `RELEASE-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.
