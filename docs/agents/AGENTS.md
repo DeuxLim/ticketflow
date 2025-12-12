@@ -79,6 +79,12 @@ Run frontend commands from `frontend/`.
 - Avoid parallel file edits unless each subagent has clearly separated file ownership.
 - Consolidate subagent findings before making implementation decisions.
 
+## Git Workflow
+
+- After making code or documentation changes, commit and push them unless the user explicitly says not to.
+- Before committing, run the relevant checks when practical and mention any checks that were skipped.
+- Do not commit temporary debug edits, generated clutter, or unrelated local changes.
+
 ## Definition of Done
 
 - Run the smallest relevant verification commands for the files changed.
