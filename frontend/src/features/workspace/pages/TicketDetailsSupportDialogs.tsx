@@ -30,7 +30,7 @@ type Props = {
   onSubmitChecklist: (values: ChecklistForm) => void;
   onToggleChecklistItem: (itemId: number, checked: boolean) => void;
   onMoveChecklistItem: (itemId: number, direction: 'up' | 'down') => void;
-  onDeleteChecklistItem: (itemId: number) => void;
+  onDeleteChecklistItem: (item: TicketChecklistItem) => void;
   isChecklistMutating: boolean;
   checklistMutationError: unknown;
   isWatchersOpen: boolean;
@@ -57,7 +57,7 @@ type Props = {
   relatedTicketsCoverageHint: string | null;
   relatedTicketIdValue?: string;
   relatedTicketRelationshipValue?: string;
-  onDeleteRelatedTicket: (linkId: number) => void;
+  onDeleteRelatedTicket: (link: NonNullable<Ticket['related_tickets']>[number]) => void;
   isRelatedTicketPending: boolean;
   relatedTicketMutationError: unknown;
 };

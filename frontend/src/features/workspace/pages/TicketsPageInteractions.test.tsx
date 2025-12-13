@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -54,6 +54,7 @@ function mockAccess(canView = true, canManage = true) {
 
 describe('TicketsPage interactions', () => {
   beforeEach(() => {
+    cleanup();
     vi.clearAllMocks();
     mockAccess(true, true);
 
@@ -144,7 +145,7 @@ describe('TicketsPage interactions', () => {
     });
   });
 
-  it('shows inline assignee control in the ticket list for users who can manage tickets', async () => {
+  it('opens focused assignee control from the ticket list for users who can manage tickets', async () => {
     vi.mocked(apiRequest).mockImplementation(async (path: string) => {
       if (path.includes('/customers?per_page=200')) {
         return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
@@ -187,8 +188,18 @@ describe('TicketsPage interactions', () => {
     );
 
     await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Actions for TKT-000007' }).length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Pending').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Actions for TKT-000007' })[0]);
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Assign' })).not.toBeNull();
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Assign' }));
+
+    await waitFor(() => {
       expect(screen.getByLabelText('Assign TKT-000007')).not.toBeNull();
-      expect(screen.getByText('Pending')).not.toBeNull();
     });
   });
 
@@ -200,10 +211,10 @@ describe('TicketsPage interactions', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'network outage' } });
-    const controlsButton = screen
-      .getAllByRole('button', { name: /Views & Filters/i })
-      .find((button) => button.textContent?.includes('(1)'));
-    if (!controlsButton) throw new Error('Views & Filters trigger not found');
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets?search=network+outage&page=1');
+    });
+    const controlsButton = screen.getAllByRole('button', { name: /Views & Filters/i })[0];
     fireEvent.click(controlsButton);
     await waitFor(() => {
       expect(screen.getByLabelText('New view name')).not.toBeNull();
@@ -334,10 +345,14 @@ describe('TicketsPage interactions', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Edit' })).not.toBeNull();
+      expect(screen.getAllByRole('button', { name: 'Actions for TKT-000007' }).length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Actions for TKT-000007' })[0]);
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Edit' })).not.toBeNull();
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Edit' }));
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Save Changes' })).not.toBeNull();
     });

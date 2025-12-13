@@ -36,7 +36,13 @@ function renderWithProviders(ui: ReactElement) {
 
 describe('AdminDashboardPage', () => {
   const openWorkspaceEditor = async (buttonName: 'Manage limits' | 'Manage feature flags') => {
-    fireEvent.click(screen.getByRole('button', { name: buttonName }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Actions for Acme' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: buttonName })).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('menuitem', { name: buttonName }));
 
     await waitFor(() => {
       expect(screen.getByRole('dialog')).not.toBeNull();
@@ -242,6 +248,97 @@ describe('AdminDashboardPage', () => {
 
     await waitFor(() => {
       expect(flagsDialog.getByText('Feature flags update failed.')).not.toBeNull();
+    });
+  });
+
+  it('renders users in the responsive card layout', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path === '/admin/dashboard') {
+        return {
+          data: {
+            users_count: 1,
+            workspaces_count: 1,
+            memberships_count: 1,
+            tickets_count: 1,
+            suspended_workspaces_count: 0,
+            maintenance_workspaces_count: 0,
+            dedicated_workspaces_count: 0,
+            failed_automation_executions_count: 0,
+          },
+        } as never;
+      }
+
+      if (path.startsWith('/admin/users')) {
+        return {
+          data: [
+            {
+              id: 12,
+              first_name: 'Pat',
+              last_name: 'Platform',
+              username: 'pat',
+              email: 'pat@example.test',
+              is_platform_admin: true,
+              created_at: '2026-04-17T00:00:00Z',
+            },
+          ],
+          meta: { current_page: 1, last_page: 1, per_page: 20, total: 1 },
+        } as never;
+      }
+
+      if (path.startsWith('/admin/workspaces')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 20, total: 0 } } as never;
+      }
+
+      return { data: {} } as never;
+    });
+
+    renderWithProviders(<AdminDashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Control plane').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Users' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('article', { name: 'User Pat Platform' })).not.toBeNull();
+    });
+
+    expect(screen.getAllByText('pat@example.test').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Platform admin').length).toBeGreaterThan(0);
+  });
+
+  it('confirms before suspending a workspace', async () => {
+    renderWithProviders(<AdminDashboardPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Control plane').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Actions for Acme' })[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'Suspend' })).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Suspend' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Suspend workspace?' })).not.toBeNull();
+    });
+
+    expect(apiRequest).not.toHaveBeenCalledWith('/admin/workspaces/acme/suspend', expect.anything());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Suspend workspace' }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/admin/workspaces/acme/suspend', {
+        method: 'POST',
+        body: JSON.stringify({
+          reason: 'Suspended from platform control plane',
+          confirmed: true,
+        }),
+      });
     });
   });
 });

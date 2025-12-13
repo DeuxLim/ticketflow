@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/app';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ForbiddenState } from '@/components/forbidden-state';
@@ -64,15 +64,11 @@ export function WorkspaceSettingsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Badge variant="secondary">Admin configuration</Badge>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Workspace Settings</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Configure workspace identity, ticket dictionaries, forms, security, automation, and integrations.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Admin configuration"
+        title="Workspace Settings"
+        description="Configure workspace identity, ticket dictionaries, forms, security, automation, and integrations."
+      />
 
       <Tabs value={resolvedActiveTab} onValueChange={setActiveTab} className="flex flex-col gap-5">
         <TabsList variant="line" className="flex h-auto w-full flex-wrap justify-start gap-2">

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm, useWatch, type UseFormReturn } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { ConfirmDialog, EmptyState, PageHeader, RowActionMenu, StatusBadge } from '@/components/app';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ export function InvitationsPage() {
   const { workspaceSlug } = useParams();
   const queryClient = useQueryClient();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [invitationToCancel, setInvitationToCancel] = useState<WorkspaceInvitation | null>(null);
   const accessQuery = useWorkspaceAccess(workspaceSlug);
   const canManage = accessQuery.can('invitations.manage');
 
@@ -87,9 +89,12 @@ export function InvitationsPage() {
   const cancelInvitation = useMutation({
     mutationFn: (id: number) => cancelWorkspaceInvitation(workspaceSlug ?? '', id),
     onSuccess: () => {
+      setInvitationToCancel(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'invitations'] });
     },
   });
+
+  const invitations = invitationsQuery.data?.data ?? [];
 
   if (accessQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Checking access...</p>;
@@ -115,18 +120,12 @@ export function InvitationsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Badge variant="secondary">Invitations</Badge>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Invite Teammates</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Keep access rollout focused by inviting people with the right starting role instead of exposing membership controls on the page.
-          </p>
-        </div>
-        <Button onClick={() => setIsInviteOpen(true)} type="button">
-          Send Invite
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Invitations"
+        title="Invite Teammates"
+        description="Keep access rollout focused by inviting people with the right starting role instead of exposing membership controls on the page."
+        actions={<Button onClick={() => setIsInviteOpen(true)} type="button">Send Invite</Button>}
+      />
 
       <Card className="shadow-none">
         <CardHeader className="border-b">
@@ -138,47 +137,14 @@ export function InvitationsPage() {
             <p className="text-sm text-muted-foreground">Loading invitations...</p>
           ) : invitationsQuery.isError ? (
             <p className="text-sm text-destructive">{(invitationsQuery.error as Error).message}</p>
-          ) : (invitationsQuery.data?.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No invitations yet. Use "Send Invite" to bring in the next teammate.</p>
+          ) : invitations.length === 0 ? (
+            <EmptyState title="No invitations yet." description='Use "Send Invite" to bring in the next teammate.' />
           ) : (
-            <div className="overflow-x-auto">
-            <Table className="min-w-[720px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Roles</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(invitationsQuery.data?.data ?? []).map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell className="font-medium">{invite.email}</TableCell>
-                    <TableCell>{invite.roles.map((role) => role.name).join(', ')}</TableCell>
-                    <TableCell>
-                      <Badge variant={invite.status === 'pending' ? 'secondary' : 'outline'}>{invite.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {invite.status === 'pending' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => cancelInvitation.mutate(invite.id)}
-                          disabled={cancelInvitation.isPending}
-                          type="button"
-                        >
-                          Cancel invite
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
+            <InvitationsList
+              invitations={invitations}
+              isCancelling={cancelInvitation.isPending}
+              onCancel={setInvitationToCancel}
+            />
           )}
         </CardContent>
       </Card>
@@ -242,6 +208,127 @@ export function InvitationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(invitationToCancel)}
+        onOpenChange={(open) => {
+          if (!open) setInvitationToCancel(null);
+        }}
+        title="Cancel invitation?"
+        description={invitationToCancel ? `This will cancel the pending invite for ${invitationToCancel.email}.` : 'This pending invite will be cancelled.'}
+        confirmLabel="Cancel Invite"
+        isPending={cancelInvitation.isPending}
+        variant="destructive"
+        onConfirm={() => {
+          if (invitationToCancel) {
+            cancelInvitation.mutate(invitationToCancel.id);
+          }
+        }}
+      />
     </section>
+  );
+}
+
+type WorkspaceInvitation = Awaited<ReturnType<typeof listWorkspaceInvitations>>['data'][number];
+
+function InvitationsList({
+  invitations,
+  isCancelling,
+  onCancel,
+}: {
+  invitations: WorkspaceInvitation[];
+  isCancelling: boolean;
+  onCancel: (invitation: WorkspaceInvitation) => void;
+}) {
+  return (
+    <>
+      <div className="hidden overflow-x-auto md:block">
+        <Table className="min-w-[720px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Email</TableHead>
+              <TableHead>Roles</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invitations.map((invite) => (
+              <TableRow key={invite.id}>
+                <TableCell className="font-medium">{invite.email}</TableCell>
+                <TableCell>
+                  <InvitationRoleBadges invitation={invite} />
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={invite.status} label={invite.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end">
+                    <InvitationActions invitation={invite} isCancelling={isCancelling} onCancel={onCancel} />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="grid gap-3 md:hidden">
+        {invitations.map((invite) => (
+          <article key={invite.id} aria-label={`Invitation ${invite.email}`} className="rounded-lg border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{invite.email}</p>
+                <div className="mt-2">
+                  <StatusBadge status={invite.status} label={invite.status} />
+                </div>
+              </div>
+              <InvitationActions invitation={invite} isCancelling={isCancelling} onCancel={onCancel} />
+            </div>
+            <div className="mt-3">
+              <InvitationRoleBadges invitation={invite} />
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function InvitationRoleBadges({ invitation }: { invitation: WorkspaceInvitation }) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {invitation.roles.map((role) => (
+        <Badge key={role.id} variant="outline">{role.name}</Badge>
+      ))}
+    </div>
+  );
+}
+
+function InvitationActions({
+  invitation,
+  isCancelling,
+  onCancel,
+}: {
+  invitation: WorkspaceInvitation;
+  isCancelling: boolean;
+  onCancel: (invitation: WorkspaceInvitation) => void;
+}) {
+  if (invitation.status !== 'pending') {
+    return <span className="text-sm text-muted-foreground">No actions</span>;
+  }
+
+  return (
+    <RowActionMenu
+      label={`Actions for invitation ${invitation.email}`}
+      actions={[
+        {
+          label: 'Cancel invite',
+          onSelect: () => onCancel(invitation),
+          disabled: isCancelling,
+          destructive: true,
+        },
+      ]}
+    />
   );
 }

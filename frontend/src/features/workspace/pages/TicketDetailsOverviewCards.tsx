@@ -168,38 +168,26 @@ export function TicketToolsCard({
         <CardDescription>Open focused panels instead of stacking every operator task on the page.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
-        <div className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">Checklist</p>
-          <p className="text-xs text-muted-foreground">{checklistCount} task{checklistCount === 1 ? '' : 's'} tracked</p>
-        </div>
-        <div className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">Attachments</p>
-          <p className="text-xs text-muted-foreground">{ticketLevelAttachmentCount} ticket-level file{ticketLevelAttachmentCount === 1 ? '' : 's'}</p>
-        </div>
-        <div className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">Watchers</p>
-          <p className="text-xs text-muted-foreground">{watcherCount} follower{watcherCount === 1 ? '' : 's'}</p>
-        </div>
-        <div className="rounded-md border border-border p-3 text-sm">
-          <p className="font-medium">Related Tickets</p>
-          <p className="text-xs text-muted-foreground">{relatedTicketCount} linked ticket{relatedTicketCount === 1 ? '' : 's'}</p>
-        </div>
-        <div className="flex flex-col gap-2 pt-1">
-          <Button onClick={onOpenChecklist} size="sm" type="button" variant="outline">
-            Open Checklist
-          </Button>
-          <Button onClick={onOpenAttachments} size="sm" type="button" variant="outline">
-            Open Attachments
-          </Button>
-          <Button onClick={onOpenWatchers} size="sm" type="button" variant="outline">
-            Open Watchers
-          </Button>
-          <Button onClick={onOpenRelatedTickets} size="sm" type="button" variant="outline">
-            Open Related Tickets
-          </Button>
-        </div>
+        <ToolRow title="Checklist" detail={`${checklistCount} task${checklistCount === 1 ? '' : 's'} tracked`} actionLabel="Open Checklist" onOpen={onOpenChecklist} />
+        <ToolRow title="Attachments" detail={`${ticketLevelAttachmentCount} ticket-level file${ticketLevelAttachmentCount === 1 ? '' : 's'}`} actionLabel="Open Attachments" onOpen={onOpenAttachments} />
+        <ToolRow title="Watchers" detail={`${watcherCount} follower${watcherCount === 1 ? '' : 's'}`} actionLabel="Open Watchers" onOpen={onOpenWatchers} />
+        <ToolRow title="Related Tickets" detail={`${relatedTicketCount} linked ticket${relatedTicketCount === 1 ? '' : 's'}`} actionLabel="Open Related Tickets" onOpen={onOpenRelatedTickets} />
       </CardContent>
     </Card>
+  );
+}
+
+function ToolRow({ title, detail, actionLabel, onOpen }: { title: string; detail: string; actionLabel: string; onOpen: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm">
+      <div className="min-w-0">
+        <p className="font-medium">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{detail}</p>
+      </div>
+      <Button aria-label={actionLabel} onClick={onOpen} size="sm" type="button" variant="outline">
+        {actionLabel.replace('Open ', '')}
+      </Button>
+    </div>
   );
 }
 

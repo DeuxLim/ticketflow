@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-05T19:53:18+08:00"
+updated_at: "2026-05-08T06:58:02+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -3089,4 +3089,434 @@ items:
     created_at: "2026-04-14T07:01:26+08:00"
     updated_at: "2026-04-17T15:49:43+08:00"
     changed_at: "2026-04-17T15:49:43+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1
+    title: Ticketing SaaS UI Refresh
+    type: epic
+    parent_id: null
+    status: complete
+    priority: high
+    mvp: true
+    description: Refresh the React UI into a cleaner, more consistent support-desk SaaS experience while preserving routes, permissions, API contracts, business logic, and data flow.
+    definition_of_done:
+      - Shared app UI components exist for page headers, stat cards, status and priority badges, empty/error states, confirm dialogs, and row action menus.
+      - Dashboard, ticket queue, ticket detail, ticket forms, customers, members, invitations, settings, and admin tables use clearer hierarchy, spacing, states, and action placement.
+      - Secondary and destructive row actions move into accessible menus or dialogs where appropriate without changing mutation behavior.
+      - Ticket queue, customer, and admin table surfaces avoid mobile horizontal overflow with responsive card views.
+      - Native browser confirm flows are replaced with app-level confirmation dialogs.
+      - Frontend lint, build, test, diff-check, and cleanup checks pass.
+    dependencies:
+      - RELEASE-P1
+      - UX-OVERHAUL-P1
+    notes:
+      - "2026-05-06: Added shared UI helpers under `frontend/src/components/app/` and centralized visible status/priority badge treatment."
+      - "2026-05-06: Refreshed dashboard metrics, ticket queue rows/cards, ticket detail action hierarchy, ticket comments, ticket create/edit sheets, customer/member/invitation/settings pages, and admin tables."
+      - "2026-05-06: Replaced native `window.confirm` flows in the active frontend feature/app surface with `ConfirmDialog`."
+      - "2026-05-06: Verification passed: `npm run lint`, `npm run build`, `npm test` (26 files / 91 tests), `git diff --check`, and source cleanup grep for `window.confirm`, `console.log`, and `TODO`."
+      - "2026-05-06: Follow-up completed for member and invitation mobile card views plus invitation cancel confirmation; verification passed with focused tests, full frontend tests, lint, and build."
+      - "2026-05-06: Follow-up completed for admin users mobile card view; verification passed with focused admin test, full frontend tests, lint, build, YAML validation, and diff check."
+      - "2026-05-07: Follow-up completed for admin workspace action confirmations; verification passed with focused admin test, full frontend tests, lint, build, YAML validation, and diff check."
+      - "2026-05-08: Follow-up completed for ticket detail support delete confirmations; verification passed with focused ticket-details test, full frontend tests, lint, build, YAML validation, and diff check."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ui
+      - ux
+      - tickets
+      - saas
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-08T06:58:02+08:00"
+    changed_at: "2026-05-08T06:58:02+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T01
+    title: Add shared app UI primitives
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add focused reusable UI helpers for common SaaS layout, metrics, badges, states, confirmations, and row actions.
+    definition_of_done:
+      - "`PageHeader`, `StatCard`, `StatusBadge`, `PriorityBadge`, `EmptyState`, `ErrorState`, `ConfirmDialog`, and `RowActionMenu` exist under `frontend/src/components/app/`."
+      - Shared components use existing shadcn/Base UI primitives and do not add new libraries.
+      - Components expose simple props and remain behavior-free where parent pages own data fetching and mutations.
+    dependencies:
+      - RELEASE-P1
+    notes:
+      - "2026-05-06: Added shared components and an app component barrel export for consistent imports."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - components
+      - ui
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T02
+    title: Refresh dashboard and page hierarchy
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Make dashboard metrics, page headers, loading, empty, error, and permission states easier to scan.
+    definition_of_done:
+      - Dashboard metric cards use consistent `StatCard` styling and only existing API-backed metrics.
+      - Page-level headers use `PageHeader` where it improves hierarchy.
+      - Empty, error, and permission-restricted states use shared treatment.
+    dependencies:
+      - UX-REFRESH-P1-T01
+    notes:
+      - "2026-05-06: Refreshed workspace dashboard, customers, members, invitations, settings, and admin page headers/states."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - dashboard
+      - layout
+      - frontend
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T03
+    title: Reduce ticket queue action clutter
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Improve ticket queue scanning, action hierarchy, assignment flow, bulk-action visibility, and mobile behavior.
+    definition_of_done:
+      - Search stays visible near the ticket data and existing filters/saved views remain in the sheet.
+      - Bulk actions only appear when tickets are selected.
+      - Per-row edit/delete actions move into `RowActionMenu`.
+      - Assignment moves from a wide inline select into a focused assign dialog/action.
+      - Mobile ticket cards avoid table horizontal overflow.
+    dependencies:
+      - UX-REFRESH-P1-T01
+    notes:
+      - "2026-05-06: Refreshed `TicketsPage`, `TicketQueueTable`, and `TicketQueueControlsSheet` without changing ticket list API or mutation contracts."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tickets
+      - queue
+      - responsive
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T04
+    title: Refresh ticket detail actions and conversation UI
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Clarify ticket detail action hierarchy, preserve two-column desktop layout, and make comments, notes, support tools, and metadata easier to scan.
+    definition_of_done:
+      - Add Comment remains the primary visible action and Edit Ticket remains secondary.
+      - Status transitions, follow/unfollow, and delete move into grouped action controls.
+      - Comment edit/delete controls use compact action menus.
+      - Internal notes are visually distinct from public comments.
+      - Support panels keep existing dialogs/sheets while counts and actions are easier to scan.
+    dependencies:
+      - UX-REFRESH-P1-T01
+    notes:
+      - "2026-05-06: Refreshed `TicketDetailsPage`, header, comments, and overview cards while preserving existing mutations and permission checks."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tickets
+      - details
+      - comments
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T05
+    title: Improve ticket and customer form surfaces
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Reduce form clutter while preserving schemas, payloads, validation, and submit behavior.
+    definition_of_done:
+      - Ticket create/edit workflows use sheets with scrollable content and stable footer actions.
+      - Required ticket fields appear first and optional operational/custom fields move into native `details` sections.
+      - Submit buttons remain disabled during pending/submitting states.
+      - Customer form/table actions follow the same hierarchy and confirmation pattern.
+    dependencies:
+      - UX-REFRESH-P1-T01
+    notes:
+      - "2026-05-06: Updated ticket form dialogs/fields and customer create/edit/delete UI while preserving API payload shape."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - forms
+      - tickets
+      - customers
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T06
+    title: Align workspace and admin table actions
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Apply shared page headers, row action menus, states, badges, and responsive card views across secondary workspace and admin surfaces.
+    definition_of_done:
+      - Customers, members, invitations, settings, and admin pages use consistent page-level hierarchy.
+      - Secondary/destructive row actions move into compact menus where appropriate.
+      - Workspace and admin tables include mobile card views where previous min-width tables could overflow.
+      - Permission behavior remains unchanged.
+    dependencies:
+      - UX-REFRESH-P1-T01
+    notes:
+      - "2026-05-06: Updated customer, member, invitation, settings, and admin surfaces for consistent action placement and responsive behavior."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - workspace
+      - admin
+      - responsive
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T07
+    title: Verify UI refresh regressions
+    type: test
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Update affected frontend tests and run the closeout verification gate for the UI refresh.
+    definition_of_done:
+      - Affected dashboard, tickets, ticket detail, customers, and admin tests are updated.
+      - Frontend lint passes.
+      - Frontend production build passes.
+      - Frontend test suite passes.
+      - Repo whitespace check passes.
+      - Source cleanup grep confirms no active feature/app `window.confirm`, `console.log`, or `TODO` leftovers.
+    dependencies:
+      - UX-REFRESH-P1-T02
+      - UX-REFRESH-P1-T03
+      - UX-REFRESH-P1-T04
+      - UX-REFRESH-P1-T05
+      - UX-REFRESH-P1-T06
+    notes:
+      - "2026-05-06: Updated `WorkspaceDashboardPage.test.tsx`, `TicketsPageInteractions.test.tsx`, `TicketDetailsMutations.test.tsx`, `CustomersPage.test.tsx`, `AdminDashboardPage.test.tsx`, and related permission coverage."
+      - "2026-05-06: `npm run lint`, `npm run build`, `npm test` (26 files / 91 tests), `git diff --check`, and cleanup grep passed."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tests
+      - verification
+      - frontend
+    created_at: "2026-05-06T20:15:48+08:00"
+    updated_at: "2026-05-06T20:15:48+08:00"
+    changed_at: "2026-05-06T20:15:48+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T08
+    title: Add responsive members card view
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Replace the members page small-screen table-only experience with a mobile card view while preserving member data fetching and permission checks.
+    definition_of_done:
+      - Members page keeps the desktop table view.
+      - Members page renders a mobile card view with name, email, and role badges.
+      - Empty, loading, error, and forbidden states remain unchanged.
+      - Focused regression coverage confirms the responsive card output renders.
+    dependencies:
+      - UX-REFRESH-P1-T06
+    notes:
+      - "2026-05-06: Added `MembersList`, role badge reuse, mobile member cards, and `MembersPage.test.tsx` coverage."
+      - "2026-05-06: Verification passed with focused members/invitations tests, full frontend tests, lint, and build."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - members
+      - responsive
+      - frontend
+    created_at: "2026-05-06T21:32:27+08:00"
+    updated_at: "2026-05-06T21:32:27+08:00"
+    changed_at: "2026-05-06T21:32:27+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T09
+    title: Add responsive invitations card view and cancel confirmation
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Replace the invitations page small-screen table-only experience with a mobile card view and add a confirmation step before cancelling pending invitations.
+    definition_of_done:
+      - Invitations page keeps the desktop table view.
+      - Invitations page renders a mobile card view with email, status, role badges, and contextual actions.
+      - Pending invitation cancellation opens `ConfirmDialog` before calling the existing cancel mutation.
+      - Focused regression coverage confirms the responsive card output and cancel confirmation behavior.
+    dependencies:
+      - UX-REFRESH-P1-T06
+    notes:
+      - "2026-05-06: Added `InvitationsList`, role badge reuse, mobile invitation cards, confirm-before-cancel flow, and `InvitationsPage.test.tsx` coverage."
+      - "2026-05-06: Verification passed with focused members/invitations tests, full frontend tests, lint, and build."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - invitations
+      - responsive
+      - frontend
+    created_at: "2026-05-06T21:32:27+08:00"
+    updated_at: "2026-05-06T21:32:27+08:00"
+    changed_at: "2026-05-06T21:32:27+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T10
+    title: Add responsive admin users card view
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Replace the admin users small-screen table-only experience with a mobile card view while preserving admin data fetching, tabs, and workspace controls.
+    definition_of_done:
+      - Admin users tab keeps the desktop table view.
+      - Admin users tab renders a mobile card view with name, email, role, username, and created date.
+      - Workspace admin table/card behavior remains unchanged.
+      - Focused regression coverage confirms the responsive user card output renders.
+    dependencies:
+      - UX-REFRESH-P1-T06
+    notes:
+      - "2026-05-06: Added `UsersList`, user role badge reuse, mobile admin user cards, and `AdminDashboardPage.test.tsx` coverage."
+      - "2026-05-06: Verification passed with focused admin dashboard test, full frontend tests, lint, build, YAML validation, and diff check."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - admin
+      - users
+      - responsive
+      - frontend
+    created_at: "2026-05-06T21:38:11+08:00"
+    updated_at: "2026-05-06T21:38:11+08:00"
+    changed_at: "2026-05-06T21:38:11+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T11
+    title: Add admin workspace action confirmations
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Move admin workspace status changes behind a confirmation dialog while preserving existing mutation endpoints and payloads.
+    definition_of_done:
+      - Suspend, reactivate, maintenance, and workspace-mode actions open a confirmation dialog before mutation.
+      - Existing admin workspace mutation endpoints and payloads remain unchanged.
+      - Confirmation dialog can show mutation error feedback.
+      - Focused regression coverage confirms suspend does not call the API until confirmed.
+    dependencies:
+      - UX-REFRESH-P1-T06
+    notes:
+      - "2026-05-07: Added workspace action confirmation state in `AdminDashboardPage`, extended `ConfirmDialog` with optional error feedback, and added admin dashboard regression coverage."
+      - "2026-05-07: Verification passed with focused admin dashboard test, full frontend tests, lint, build, YAML validation, and diff check."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - admin
+      - actions
+      - confirmation
+      - frontend
+    created_at: "2026-05-07T15:46:35+08:00"
+    updated_at: "2026-05-07T15:46:35+08:00"
+    changed_at: "2026-05-07T15:46:35+08:00"
+    changed_source: codex
+
+  - id: UX-REFRESH-P1-T12
+    title: Add ticket support delete confirmations
+    type: feature
+    parent_id: UX-REFRESH-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Move ticket detail support deletions for checklist items and related-ticket links behind confirmation dialogs while preserving existing mutation endpoints.
+    definition_of_done:
+      - Checklist item delete opens a confirmation dialog before mutation.
+      - Related-ticket unlink opens a confirmation dialog before mutation.
+      - Existing ticket detail support mutation endpoints and payloads remain unchanged.
+      - Focused regression coverage confirms checklist delete waits for confirmation and related-ticket removal still surfaces mutation errors.
+    dependencies:
+      - UX-REFRESH-P1-T04
+    notes:
+      - "2026-05-08: Added checklist and related-ticket delete targets in `TicketDetailsPage`, updated support dialog delete callbacks, and added ticket-details regression coverage."
+      - "2026-05-08: Verification passed with focused ticket-details test, full frontend tests, lint, build, YAML validation, and diff check."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - tickets
+      - details
+      - confirmation
+      - frontend
+    created_at: "2026-05-08T06:58:02+08:00"
+    updated_at: "2026-05-08T06:58:02+08:00"
+    changed_at: "2026-05-08T06:58:02+08:00"
     changed_source: codex

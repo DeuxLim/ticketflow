@@ -16,7 +16,7 @@ type TicketDetailsChecklistDialogProps = {
   onSubmit: (values: ChecklistForm) => void;
   onToggleItem: (itemId: number, checked: boolean) => void;
   onMoveItem: (itemId: number, direction: 'up' | 'down') => void;
-  onDeleteItem: (itemId: number) => void;
+  onDeleteItem: (item: TicketChecklistItem) => void;
   isMutating: boolean;
   mutationError: unknown;
 };
@@ -75,7 +75,7 @@ export function TicketDetailsChecklistDialog({
                     >
                       Down
                     </Button>
-                    <Button disabled={isMutating} onClick={() => onDeleteItem(item.id)} size="sm" type="button" variant="outline">
+                    <Button disabled={isMutating} onClick={() => onDeleteItem(item)} size="sm" type="button" variant="outline">
                       Delete
                     </Button>
                   </>

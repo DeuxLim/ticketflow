@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { PriorityBadge, RowActionMenu, StatusBadge } from '@/components/app';
 import { Button } from '@/components/ui/button';
 import { ticketStatusLabel } from '@/features/workspace/pages/ticketForm';
 import type { Ticket, TicketWatcher } from '@/types/api';
@@ -41,56 +41,50 @@ export function TicketDetailsHeader({
   return (
     <header className="rounded-xl border bg-card p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="outline">{ticket.ticket_number}</Badge>
-        <Badge variant="secondary">{ticketStatusLabel(ticket.status)}</Badge>
-        <Badge variant="outline">{ticket.priority}</Badge>
+        <StatusBadge status="closed" label={ticket.ticket_number} />
+        <StatusBadge status={ticket.status} label={ticketStatusLabel(ticket.status)} />
+        <PriorityBadge priority={ticket.priority} />
       </div>
 
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{ticket.title}</h1>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight md:text-3xl">{ticket.title}</h1>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{ticket.description}</p>
-      <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-        Keep the thread readable by leaving summary and activity in view, then open focused panels when you need to edit metadata or manage supporting work.
-      </p>
 
       {quickActionMessage && <p className="text-xs text-muted-foreground">{quickActionMessage}</p>}
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {nextStatuses(ticket.status).map((next) => (
-          <Button
-            key={next}
-            disabled={!canManage || isTransitioning}
-            onClick={() => onTransition(next)}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Move to {ticketStatusLabel(next)}
-          </Button>
-        ))}
+      <div className="mt-5 flex flex-wrap items-center gap-2">
         <Button disabled={!canComment} onClick={onOpenComment} size="sm" type="button">
           Add Comment
-        </Button>
-        <Button
-          disabled={!canComment || isWatcherMutating || isLoadingCurrentUser}
-          onClick={() => {
-            if (selfWatcher) {
-              onUnfollowTicket(selfWatcher.id);
-            } else {
-              onFollowTicket();
-            }
-          }}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          {selfWatcher ? 'Unfollow' : 'Follow'}
         </Button>
         <Button disabled={!canManage} onClick={onOpenEdit} size="sm" type="button" variant="outline">
           Edit Ticket
         </Button>
-        <Button disabled={!canManage || isDeletingTicket} onClick={onDeleteTicket} size="sm" type="button" variant="outline">
-          {isDeletingTicket ? 'Deleting...' : 'Delete Ticket'}
-        </Button>
+        <RowActionMenu
+          label={`More actions for ${ticket.ticket_number}`}
+          actions={[
+            ...nextStatuses(ticket.status).map((next) => ({
+              label: `Move to ${ticketStatusLabel(next)}`,
+              onSelect: () => onTransition(next),
+              disabled: !canManage || isTransitioning,
+            })),
+            {
+              label: selfWatcher ? 'Unfollow' : 'Follow',
+              onSelect: () => {
+                if (selfWatcher) {
+                  onUnfollowTicket(selfWatcher.id);
+                } else {
+                  onFollowTicket();
+                }
+              },
+              disabled: !canComment || isWatcherMutating || isLoadingCurrentUser,
+            },
+            {
+              label: isDeletingTicket ? 'Deleting...' : 'Delete Ticket',
+              onSelect: onDeleteTicket,
+              disabled: !canManage || isDeletingTicket,
+              destructive: true,
+            },
+          ]}
+        />
       </div>
     </header>
   );

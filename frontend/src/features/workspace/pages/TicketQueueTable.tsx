@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
+import { EmptyState, PriorityBadge, RowActionMenu, StatusBadge } from '@/components/app';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { MemberOption } from '@/features/workspace/api/ticketPageApi';
 import { ticketStatusLabel } from '@/features/workspace/pages/ticketForm';
 import type { ApiPaginationMeta, Ticket } from '@/types/api';
 
@@ -19,13 +17,12 @@ type TicketQueueTableProps = {
   selectedTicketIds: number[];
   selectedVisibleTicketIds: number[];
   onSelectedTicketIdsChange: (ticketIds: number[]) => void;
-  members: MemberOption[];
   canManage: boolean;
   deletePending: boolean;
   assignmentPendingTicketId: number | null;
   onEdit: (ticket: Ticket) => void;
   onDelete: (ticket: Ticket) => void;
-  onAssign: (ticket: Ticket, assigneeId: number | null) => void;
+  onOpenAssign: (ticket: Ticket) => void;
 };
 
 export function TicketQueueTable({
@@ -40,13 +37,12 @@ export function TicketQueueTable({
   selectedTicketIds,
   selectedVisibleTicketIds,
   onSelectedTicketIdsChange,
-  members,
   canManage,
   deletePending,
   assignmentPendingTicketId,
   onEdit,
   onDelete,
-  onAssign,
+  onOpenAssign,
 }: TicketQueueTableProps) {
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading tickets...</p>;
@@ -58,20 +54,18 @@ export function TicketQueueTable({
 
   if (tickets.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-6">
-        <p className="text-sm font-medium">{hasActiveFilters ? 'No tickets match these filters.' : 'No tickets yet.'}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {hasActiveFilters
-            ? 'Reset search or filters to return to the full queue.'
-            : 'Create the first ticket to start tracking support work.'}
-        </p>
-      </div>
+      <EmptyState
+        title={hasActiveFilters ? 'No tickets match these filters.' : 'No tickets yet.'}
+        description={hasActiveFilters
+          ? 'Reset search or filters to return to the full queue.'
+          : 'Create the first ticket to start tracking support work.'}
+      />
     );
   }
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto md:block">
         <Table className="min-w-[860px]">
           <TableHeader>
             <TableRow>
@@ -125,66 +119,89 @@ export function TicketQueueTable({
                 </TableCell>
                 <TableCell>{ticket.customer?.name ?? '—'}</TableCell>
                 <TableCell>
-                  {canManage ? (
-                    <Select
-                      disabled={assignmentPendingTicketId === ticket.id}
-                      onValueChange={(value) => onAssign(ticket, value === 'none' ? null : Number(value))}
-                      value={ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : 'none'}
-                    >
-                      <SelectTrigger aria-label={`Assign ${ticket.ticket_number}`} className="h-8 min-w-[180px]">
-                        <SelectValue placeholder="Unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="none">Unassigned</SelectItem>
-                          {ticket.assignee && !members.some((member) => member.user.id === ticket.assignee?.id) && (
-                            <SelectItem value={String(ticket.assignee.id)}>
-                              {ticket.assignee.first_name} {ticket.assignee.last_name}
-                            </SelectItem>
-                          )}
-                          {members.map((member) => (
-                            <SelectItem key={member.user.id} value={String(member.user.id)}>
-                              {member.user.first_name} {member.user.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span>{ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'}</span>
-                  )}
+                  <span className="text-sm">{assigneeName(ticket)}</span>
+                  {assignmentPendingTicketId === ticket.id ? <p className="text-xs text-muted-foreground">Updating...</p> : null}
                 </TableCell>
-                <TableCell><Badge variant="outline">{ticketStatusLabel(ticket.status)}</Badge></TableCell>
-                <TableCell><Badge variant="secondary">{ticket.priority}</Badge></TableCell>
+                <TableCell><StatusBadge status={ticket.status} label={ticketStatusLabel(ticket.status)} /></TableCell>
+                <TableCell><PriorityBadge priority={ticket.priority} /></TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {ticket.updated_at ? new Date(ticket.updated_at).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      disabled={!canManage}
-                      onClick={() => onEdit(ticket)}
-                      size="sm"
-                      variant="outline"
-                      type="button"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      disabled={!canManage || deletePending}
-                      onClick={() => onDelete(ticket)}
-                      size="sm"
-                      variant="outline"
-                      type="button"
-                    >
-                      Delete
-                    </Button>
+                  <div className="flex justify-end">
+                    <RowActionMenu
+                      label={`Actions for ${ticket.ticket_number}`}
+                      actions={[
+                        { label: 'Assign', onSelect: () => onOpenAssign(ticket), disabled: !canManage },
+                        { label: 'Edit', onSelect: () => onEdit(ticket), disabled: !canManage },
+                        { label: 'Delete', onSelect: () => onDelete(ticket), disabled: !canManage || deletePending, destructive: true },
+                      ]}
+                    />
                   </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="grid gap-3 md:hidden">
+        {tickets.map((ticket) => (
+          <article key={ticket.id} className="rounded-lg border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${ticket.id}`}>
+                  {ticket.ticket_number}
+                </Link>
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{ticket.title}</p>
+              </div>
+              <RowActionMenu
+                label={`Actions for ${ticket.ticket_number}`}
+                actions={[
+                  { label: 'Assign', onSelect: () => onOpenAssign(ticket), disabled: !canManage },
+                  { label: 'Edit', onSelect: () => onEdit(ticket), disabled: !canManage },
+                  { label: 'Delete', onSelect: () => onDelete(ticket), disabled: !canManage || deletePending, destructive: true },
+                ]}
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <StatusBadge status={ticket.status} label={ticketStatusLabel(ticket.status)} />
+              <PriorityBadge priority={ticket.priority} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Customer</dt>
+                <dd className="mt-1 truncate font-medium">{ticket.customer?.name ?? '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Assignee</dt>
+                <dd className="mt-1 truncate font-medium">{assigneeName(ticket)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Updated</dt>
+                <dd className="mt-1 font-medium">{ticket.updated_at ? new Date(ticket.updated_at).toLocaleDateString() : '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Selected</dt>
+                <dd className="mt-1">
+                  <input
+                    aria-label={`Select ticket ${ticket.ticket_number}`}
+                    checked={selectedTicketIds.includes(ticket.id)}
+                    onChange={(event) => {
+                      if (event.target.checked) {
+                        onSelectedTicketIdsChange([...selectedTicketIds, ticket.id]);
+                        return;
+                      }
+
+                      onSelectedTicketIdsChange(selectedTicketIds.filter((id) => id !== ticket.id));
+                    }}
+                    type="checkbox"
+                  />
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
       </div>
 
       {pagination && pagination.last_page > 1 && (
@@ -214,4 +231,8 @@ export function TicketQueueTable({
       )}
     </>
   );
+}
+
+function assigneeName(ticket: Ticket): string {
+  return ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned';
 }

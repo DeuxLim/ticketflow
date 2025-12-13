@@ -1,6 +1,6 @@
 import type { UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import type {
   Customer,
   TicketCategoryConfig,
@@ -64,12 +64,13 @@ export function CreateTicketDialog({
   templates,
 }: CreateTicketDialogProps) {
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Create Ticket</DialogTitle>
-          <DialogDescription>Create a ticket with status, priority, and assignee details.</DialogDescription>
-        </DialogHeader>
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle>Create Ticket</SheetTitle>
+          <SheetDescription>Create a ticket with status, priority, and assignee details.</SheetDescription>
+        </SheetHeader>
+        <div className="px-4">
         <TicketFormFields
           activeCategories={activeCategories}
           activeCustomFields={activeCustomFields}
@@ -85,14 +86,15 @@ export function CreateTicketDialog({
           onSubmit={onSubmit}
         />
         {errorMessage ? <p className="text-xs text-destructive">{errorMessage}</p> : null}
-        <DialogFooter>
+        </div>
+        <SheetFooter className="border-t">
           <Button onClick={() => onOpenChange(false)} type="button" variant="outline">Cancel</Button>
           <Button disabled={form.formState.isSubmitting || isPending} form="create-ticket-form" type="submit">
             {isPending ? 'Creating...' : 'Create Ticket'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -116,12 +118,13 @@ export function EditTicketDialog({
   templates,
 }: EditTicketDialogProps) {
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Edit Ticket</DialogTitle>
-          <DialogDescription>Update customer, assignee, status, priority, and details.</DialogDescription>
-        </DialogHeader>
+    <Sheet onOpenChange={onOpenChange} open={open}>
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+        <SheetHeader>
+          <SheetTitle>Edit Ticket</SheetTitle>
+          <SheetDescription>Update customer, assignee, status, priority, and details.</SheetDescription>
+        </SheetHeader>
+        <div className="px-4">
         <TicketFormFields
           activeCategories={activeCategories}
           activeCustomFields={activeCustomFields}
@@ -137,13 +140,14 @@ export function EditTicketDialog({
           onSubmit={onSubmit}
         />
         {errorMessage ? <p className="text-xs text-destructive">{errorMessage}</p> : null}
-        <DialogFooter>
+        </div>
+        <SheetFooter className="border-t">
           <Button onClick={onCancel} type="button" variant="outline">Cancel</Button>
           <Button disabled={submitDisabled} form="edit-ticket-form" type="submit">
             {isPending ? 'Saving...' : 'Save Changes'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

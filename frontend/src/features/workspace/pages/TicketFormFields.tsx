@@ -65,6 +65,10 @@ export function TicketFormFields({
   return (
     <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup className="grid gap-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <p className="text-sm font-medium">Required details</p>
+          <p className="text-xs text-muted-foreground">Capture the customer, title, and description first.</p>
+        </div>
         <Field data-invalid={Boolean(form.formState.errors.customer_id)}>
           <FieldLabel htmlFor={`${formId}-customer`}>Customer</FieldLabel>
           <Select
@@ -87,6 +91,21 @@ export function TicketFormFields({
           <FieldError errors={[form.formState.errors.customer_id]} />
         </Field>
 
+        <Field data-invalid={Boolean(form.formState.errors.title)}>
+          <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
+          <Input id={`${formId}-title`} aria-invalid={Boolean(form.formState.errors.title)} {...form.register('title')} />
+          <FieldError errors={[form.formState.errors.title]} />
+        </Field>
+
+        <Field data-invalid={Boolean(form.formState.errors.description)} className="md:col-span-2">
+          <FieldLabel htmlFor={`${formId}-description`}>Description</FieldLabel>
+          <Textarea id={`${formId}-description`} aria-invalid={Boolean(form.formState.errors.description)} {...form.register('description')} />
+          <FieldError errors={[form.formState.errors.description]} />
+        </Field>
+
+        <details open className="rounded-lg border bg-muted/10 p-4 md:col-span-2">
+          <summary className="cursor-pointer text-sm font-medium">Routing and workflow</summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
         <Field>
           <FieldLabel htmlFor={`${formId}-template`}>Form Template</FieldLabel>
           <Select
@@ -127,12 +146,6 @@ export function TicketFormFields({
           </Select>
         </Field>
 
-        <Field data-invalid={Boolean(form.formState.errors.title)}>
-          <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
-          <Input id={`${formId}-title`} aria-invalid={Boolean(form.formState.errors.title)} {...form.register('title')} />
-          <FieldError errors={[form.formState.errors.title]} />
-        </Field>
-
         <Field>
           <FieldLabel htmlFor={`${formId}-status`}>Status</FieldLabel>
           <Select
@@ -145,6 +158,24 @@ export function TicketFormFields({
                 {ticketStatusValues.map((status) => (
                   <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
                 ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor={`${formId}-priority`}>Priority</FieldLabel>
+          <Select
+            onValueChange={(value) => form.setValue('priority', value as TicketForm['priority'])}
+            value={form.watch('priority')}
+          >
+            <SelectTrigger id={`${formId}-priority`}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -191,45 +222,12 @@ export function TicketFormFields({
             </SelectContent>
           </Select>
         </Field>
+          </div>
+        </details>
 
-        <Field data-invalid={Boolean(form.formState.errors.description)} className="md:col-span-2">
-          <FieldLabel htmlFor={`${formId}-description`}>Description</FieldLabel>
-          <Textarea id={`${formId}-description`} aria-invalid={Boolean(form.formState.errors.description)} {...form.register('description')} />
-          <FieldError errors={[form.formState.errors.description]} />
-        </Field>
-
-        <Field className="md:col-span-2">
-          <FieldLabel htmlFor={`${formId}-priority`}>Priority</FieldLabel>
-          <Select
-            onValueChange={(value) => form.setValue('priority', value as TicketForm['priority'])}
-            value={form.watch('priority')}
-          >
-            <SelectTrigger id={`${formId}-priority`}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field className="md:col-span-2">
-          <FieldLabel htmlFor={`${formId}-tags`}>Tags (comma separated)</FieldLabel>
-          <Input id={`${formId}-tags`} list={`${formId}-tag-options`} placeholder="network, vpn" {...form.register('tags')} />
-          {activeTags.length > 0 && (
-            <>
-              <datalist id={`${formId}-tag-options`}>
-                {activeTags.map((tag) => (
-                  <option key={tag.id} value={tag.name} />
-                ))}
-              </datalist>
-              <p className="text-xs text-muted-foreground">Available tags: {activeTags.map((tag) => tag.name).join(', ')}</p>
-            </>
-          )}
-        </Field>
+        <details open className="rounded-lg border bg-muted/10 p-4 md:col-span-2">
+          <summary className="cursor-pointer text-sm font-medium">Optional metadata</summary>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
 
         {activeCustomFields.length > 0 && (
           <div className="space-y-3 md:col-span-2">
@@ -313,6 +311,22 @@ export function TicketFormFields({
             </div>
           </div>
         )}
+        <Field className="md:col-span-2">
+          <FieldLabel htmlFor={`${formId}-tags`}>Tags (comma separated)</FieldLabel>
+          <Input id={`${formId}-tags`} list={`${formId}-tag-options`} placeholder="network, vpn" {...form.register('tags')} />
+          {activeTags.length > 0 && (
+            <>
+              <datalist id={`${formId}-tag-options`}>
+                {activeTags.map((tag) => (
+                  <option key={tag.id} value={tag.name} />
+                ))}
+              </datalist>
+              <p className="text-xs text-muted-foreground">Available tags: {activeTags.map((tag) => tag.name).join(', ')}</p>
+            </>
+          )}
+        </Field>
+          </div>
+        </details>
       </FieldGroup>
     </form>
   );

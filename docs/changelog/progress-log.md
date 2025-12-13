@@ -2458,3 +2458,129 @@ Commit/push:
 ## Resume From Here
 
 All `RELEASE-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.
+
+## 2026-05-06 20:15 +08:00 - Tracked Ticketing SaaS UI Refresh
+
+- Added `UX-REFRESH-P1` as a completed roadmap epic for the implemented UI refresh.
+- Split the UI refresh into seven trackable child tasks covering shared UI primitives, dashboard/page hierarchy, ticket queue, ticket detail, forms, workspace/admin tables, and verification.
+- Kept `current_focus` clear because the implementation and verification pass are already complete.
+- Synced `docs/project-state.yaml` first, then mirrored the summary into `docs/roadmap.md`.
+
+Verification:
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 26 files / 91 tests passed.
+- `repo`: `git diff --check` passed.
+- `frontend`: cleanup grep found no active feature/app `window.confirm`, `console.log`, or `TODO` leftovers.
+
+Progress:
+- `UX-REFRESH-P1`: 7/7 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `UX-REFRESH-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.
+
+## 2026-05-06 21:32 +08:00 - Completed Next Two UI Refresh Follow-ups
+
+- Added `UX-REFRESH-P1-T08` for responsive members card views.
+- Added `UX-REFRESH-P1-T09` for responsive invitations card views and confirm-before-cancel behavior.
+- Kept existing members and invitations API calls, permissions, route behavior, and mutation flow unchanged.
+- Added focused page tests for the two follow-up screens.
+
+Verification:
+- `frontend`: `npm test -- MembersPage.test.tsx InvitationsPage.test.tsx`, 2 files / 3 tests passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 28 files / 94 tests passed.
+
+Progress:
+- `UX-REFRESH-P1`: 9/9 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `UX-REFRESH-P1` tasks are complete, including the two follow-up responsive table fixes. Pick the next roadmap focus before starting new implementation.
+
+## 2026-05-06 21:38 +08:00 - Completed Admin Users Responsive Follow-up
+
+- Added `UX-REFRESH-P1-T10` for the admin users responsive card view.
+- Replaced the users tab small-screen table-only experience with a mobile card layout while keeping the desktop table.
+- Kept admin dashboard routes, API calls, workspace controls, and mutation behavior unchanged.
+- Added regression coverage for the admin users responsive card output.
+
+Verification:
+- `frontend`: `npm test -- AdminDashboardPage.test.tsx`, 1 file / 4 tests passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 28 files / 95 tests passed.
+- `frontend`: remaining unconditional feature-table overflow scan passed.
+- `docs`: YAML validation passed.
+- `repo`: `git diff --check` passed.
+
+Progress:
+- `UX-REFRESH-P1`: 10/10 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `UX-REFRESH-P1` tasks are complete, including the admin users responsive follow-up. Pick the next roadmap focus before starting new implementation.
+
+## 2026-05-07 15:46 +08:00 - Completed Admin Workspace Action Confirmations
+
+- Added `UX-REFRESH-P1-T11` for admin workspace action confirmations.
+- Moved suspend, reactivate, maintenance, and workspace-mode changes behind `ConfirmDialog`.
+- Preserved existing admin workspace endpoints, payloads, mutation invalidation, and row action menu placement.
+- Extended `ConfirmDialog` with optional inline error feedback for failed confirmation mutations.
+- Added regression coverage that suspend does not call the API until the confirmation action is clicked.
+
+Verification:
+- `frontend`: `npm test -- AdminDashboardPage.test.tsx`, 1 file / 5 tests passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 28 files / 96 tests passed.
+
+Progress:
+- `UX-REFRESH-P1`: 11/11 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `UX-REFRESH-P1` tasks are complete, including admin workspace action confirmations. Pick the next roadmap focus before starting new implementation.
+
+## 2026-05-08 06:58 +08:00 - Completed Ticket Support Delete Confirmations
+
+- Added `UX-REFRESH-P1-T12` for ticket detail support delete confirmations.
+- Moved checklist item deletion behind `ConfirmDialog`.
+- Moved related-ticket link removal behind `ConfirmDialog`.
+- Preserved existing ticket detail support endpoints, mutation hooks, invalidation behavior, and dialog placement.
+- Added regression coverage for checklist delete confirmation and related-ticket removal confirmation/error behavior.
+
+Verification:
+- `frontend`: `npm test -- TicketDetailsMutations.test.tsx`, 1 file / 12 tests passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+- `frontend`: `npm test`, 28 files / 97 tests passed.
+
+Progress:
+- `UX-REFRESH-P1`: 12/12 tasks complete, 100%.
+- Remaining tasks: 0.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+All `UX-REFRESH-P1` tasks are complete, including ticket detail support delete confirmations. Pick the next roadmap focus before starting new implementation.

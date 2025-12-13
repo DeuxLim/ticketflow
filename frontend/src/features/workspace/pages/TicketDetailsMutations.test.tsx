@@ -91,6 +91,13 @@ describe('TicketDetailsPage mutations', () => {
     cleanup();
   });
 
+  async function openTicketActions() {
+    fireEvent.click(screen.getByRole('button', { name: /More actions for TKT-000123/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('menu')).not.toBeNull();
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockAccess(true, true, true);
@@ -210,10 +217,12 @@ describe('TicketDetailsPage mutations', () => {
     await waitFor(() => {
       expect(screen.getByText('Status changed')).not.toBeNull();
       expect(screen.getByText('Open to Pending')).not.toBeNull();
-      expect(screen.getByRole('button', { name: 'Move to In Progress' })).not.toBeNull();
-      expect(screen.getByRole('button', { name: 'Move to Resolved' })).not.toBeNull();
-      expect(screen.getByRole('button', { name: 'Move to Closed' })).not.toBeNull();
     });
+
+    await openTicketActions();
+    expect(screen.getByRole('menuitem', { name: 'Move to In Progress' })).not.toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Move to Resolved' })).not.toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Move to Closed' })).not.toBeNull();
   });
 
   it('falls back to direct status update when transition endpoint returns 422', async () => {
@@ -265,7 +274,8 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Move to in progress/i }));
+    await openTicketActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: /Move to in progress/i }));
 
     await waitFor(() => {
       expect(
@@ -327,7 +337,8 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /Move to in progress/i }));
+    await openTicketActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: /Move to in progress/i }));
 
     await waitFor(() => {
       expect(screen.getByText('Approval request submitted.')).not.toBeNull();
@@ -554,7 +565,8 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Follow' }));
+    await openTicketActions();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Follow' }));
     fireEvent.click(screen.getByRole('button', { name: 'Open Watchers' }));
 
     await waitFor(() => {
@@ -617,6 +629,76 @@ describe('TicketDetailsPage mutations', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Could not add checklist item.')).not.toBeNull();
+    });
+  });
+
+  it('confirms before deleting a checklist item', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        return {
+          data: {
+            ...buildTicket('open'),
+            checklist_items: [
+              { id: 77, title: 'Confirm carrier outage', is_completed: false, sort_order: 0 },
+            ],
+          },
+        } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123/checklist-items/77' && init?.method === 'DELETE') {
+        return { data: {} } as never;
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Checklist' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Delete checklist item' })).not.toBeNull();
+    });
+
+    expect(apiRequest).not.toHaveBeenCalledWith('/workspaces/acme/tickets/123/checklist-items/77', expect.anything());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete item' }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets/123/checklist-items/77', { method: 'DELETE' });
     });
   });
 
@@ -686,6 +768,12 @@ describe('TicketDetailsPage mutations', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Remove related ticket' })).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove link' }));
 
     await waitFor(() => {
       expect(screen.getByText('Unable to remove related ticket.')).not.toBeNull();

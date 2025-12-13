@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-No active focus. `RELEASE-P1` is complete.
+No active focus. `UX-REFRESH-P1` is complete.
 
 ## MVP Items
 
@@ -188,6 +188,30 @@ No active focus. `RELEASE-P1` is complete.
 - `UX-OVERHAUL-P1-W1-T03` Reduce Tickets page inline control noise - `complete`
 - `UX-OVERHAUL-P1-W1-T04` Tighten Members page orientation - `complete`
 
+### `UX-REFRESH-P1` Ticketing SaaS UI Refresh
+
+- Status: `complete`
+- Priority: high
+- Scope: Refresh the React UI into a cleaner, more consistent support-desk SaaS experience while preserving routes, permissions, API contracts, business logic, and data flow.
+- Current state: complete after adding shared app UI primitives; refreshing dashboard, ticket queue, ticket detail, ticket forms, customers, members, invitations, settings, and admin tables; replacing native confirm flows; moving secondary/destructive row actions into compact menus/dialogs; adding responsive card views where tables could overflow on mobile; completing follow-up mobile card views for members, invitations, and admin users; adding confirmations for admin workspace status actions; and adding confirmations for ticket detail support deletes.
+- Verification: `frontend` lint, build, and test suite passed; latest full frontend test suite passed with 28 files / 97 tests; `git diff --check` passed; cleanup grep confirmed no active feature/app `window.confirm`, `console.log`, or `TODO` leftovers.
+- Next actions: none for this item. Pick the next roadmap focus before starting new implementation.
+
+#### Child Items
+
+- `UX-REFRESH-P1-T01` Add shared app UI primitives - `complete`
+- `UX-REFRESH-P1-T02` Refresh dashboard and page hierarchy - `complete`
+- `UX-REFRESH-P1-T03` Reduce ticket queue action clutter - `complete`
+- `UX-REFRESH-P1-T04` Refresh ticket detail actions and conversation UI - `complete`
+- `UX-REFRESH-P1-T05` Improve ticket and customer form surfaces - `complete`
+- `UX-REFRESH-P1-T06` Align workspace and admin table actions - `complete`
+- `UX-REFRESH-P1-T07` Verify UI refresh regressions - `complete`
+- `UX-REFRESH-P1-T08` Add responsive members card view - `complete`
+- `UX-REFRESH-P1-T09` Add responsive invitations card view and cancel confirmation - `complete`
+- `UX-REFRESH-P1-T10` Add responsive admin users card view - `complete`
+- `UX-REFRESH-P1-T11` Add admin workspace action confirmations - `complete`
+- `UX-REFRESH-P1-T12` Add ticket support delete confirmations - `complete`
+
 ### `PERF-P1` Frontend Performance and Asset Reliability Hardening
 
 - Status: `complete`
@@ -258,4 +282,4 @@ No active focus. `RELEASE-P1` is complete.
 
 ## Resume From Here
 
-All `RELEASE-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.
+All `UX-REFRESH-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.

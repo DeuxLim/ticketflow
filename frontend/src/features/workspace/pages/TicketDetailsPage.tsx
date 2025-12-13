@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ConfirmDialog } from '@/components/app';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
@@ -49,7 +50,7 @@ import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/use
 import { useTicketDetailsDerivedState } from '@/features/workspace/pages/useTicketDetailsDerivedState';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { TicketComment } from '@/types/api';
+import type { TicketChecklistItem, TicketComment, TicketRelatedTicket } from '@/types/api';
 
 type AuthUser = {
   id: number;
@@ -73,6 +74,11 @@ export function TicketDetailsPage() {
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentBody, setEditingCommentBody] = useState('');
+  const [isDeleteTicketOpen, setIsDeleteTicketOpen] = useState(false);
+  const [deleteCommentTargetId, setDeleteCommentTargetId] = useState<number | null>(null);
+  const [deleteAttachmentTarget, setDeleteAttachmentTarget] = useState<{ id: number; originalName: string } | null>(null);
+  const [deleteChecklistTarget, setDeleteChecklistTarget] = useState<TicketChecklistItem | null>(null);
+  const [deleteRelatedTicketTarget, setDeleteRelatedTicketTarget] = useState<TicketRelatedTicket | null>(null);
   const accessQuery = useWorkspaceAccess(workspaceSlug);
   const canView = accessQuery.can('tickets.view');
   const canComment = accessQuery.can('tickets.comment');
@@ -436,10 +442,7 @@ export function TicketDetailsPage() {
           setEditTemplateId(defaultTemplateId);
           setIsEditOpen(true);
         }}
-        onDeleteTicket={() => {
-          const ok = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
-          if (ok) deleteTicket.mutate();
-        }}
+        onDeleteTicket={() => setIsDeleteTicketOpen(true)}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -473,12 +476,7 @@ export function TicketDetailsPage() {
               setEditingCommentId(null);
               setEditingCommentBody('');
             }}
-            onDeleteComment={(commentId) => {
-              const ok = window.confirm('Delete this comment?');
-              if (ok) {
-                deleteComment.mutate(commentId);
-              }
-            }}
+            onDeleteComment={setDeleteCommentTargetId}
             onDownloadAttachment={(attachmentId, originalName) =>
               apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}/download`, originalName)
             }
@@ -534,7 +532,7 @@ export function TicketDetailsPage() {
         onSubmitChecklist={(values) => addChecklistItem.mutate(values)}
         onToggleChecklistItem={(itemId, checked) => updateChecklistItem.mutate({ itemId, values: { is_completed: checked } })}
         onMoveChecklistItem={moveChecklistItem}
-        onDeleteChecklistItem={(itemId) => deleteChecklistItem.mutate(itemId)}
+        onDeleteChecklistItem={setDeleteChecklistTarget}
         isChecklistMutating={
           addChecklistItem.isPending ||
           updateChecklistItem.isPending ||
@@ -560,12 +558,7 @@ export function TicketDetailsPage() {
         uploadAttachmentError={uploadAttachment.isError ? (uploadAttachment.error as Error).message : null}
         ticketLevelAttachments={ticketLevelAttachments}
         onDownloadAttachment={(attachmentId, originalName) => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}/download`, originalName)}
-        onDeleteAttachment={(attachmentId, originalName) => {
-          const ok = window.confirm(`Delete ${originalName}?`);
-          if (ok) {
-            deleteAttachment.mutate(attachmentId);
-          }
-        }}
+        onDeleteAttachment={(attachmentId, originalName) => setDeleteAttachmentTarget({ id: attachmentId, originalName })}
         isDeletingAttachment={deleteAttachment.isPending}
         isRelatedOpen={isRelatedOpen}
         onRelatedOpenChange={(open) => {
@@ -581,7 +574,7 @@ export function TicketDetailsPage() {
         relatedTicketsCoverageHint={relatedTicketsCoverageHint}
         relatedTicketIdValue={relatedTicketIdValue}
         relatedTicketRelationshipValue={relatedTicketRelationshipValue}
-        onDeleteRelatedTicket={(linkId) => deleteRelatedTicket.mutate(linkId)}
+        onDeleteRelatedTicket={setDeleteRelatedTicketTarget}
         isRelatedTicketPending={addRelatedTicket.isPending || deleteRelatedTicket.isPending}
         relatedTicketMutationError={relatedTicketMutationError}
       />
@@ -618,6 +611,93 @@ export function TicketDetailsPage() {
         hasLegacyEditQueueValue={hasLegacyEditQueueValue}
         activeTagConfigs={activeTagConfigs}
         scopedCustomFieldConfigs={scopedCustomFieldConfigs}
+      />
+
+      <ConfirmDialog
+        open={isDeleteTicketOpen}
+        onOpenChange={setIsDeleteTicketOpen}
+        title="Delete ticket"
+        description={`Delete ${ticket.ticket_number}? This cannot be undone.`}
+        confirmLabel="Delete ticket"
+        variant="destructive"
+        isPending={deleteTicket.isPending}
+        onConfirm={() => deleteTicket.mutate()}
+      />
+
+      <ConfirmDialog
+        open={deleteCommentTargetId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCommentTargetId(null);
+        }}
+        title="Delete comment"
+        description="Delete this comment? This cannot be undone."
+        confirmLabel="Delete comment"
+        variant="destructive"
+        isPending={deleteComment.isPending}
+        onConfirm={() => {
+          if (deleteCommentTargetId !== null) {
+            deleteComment.mutate(deleteCommentTargetId, {
+              onSuccess: () => setDeleteCommentTargetId(null),
+            });
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteAttachmentTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteAttachmentTarget(null);
+        }}
+        title="Delete attachment"
+        description={`Delete ${deleteAttachmentTarget?.originalName ?? 'this attachment'}? This cannot be undone.`}
+        confirmLabel="Delete attachment"
+        variant="destructive"
+        isPending={deleteAttachment.isPending}
+        onConfirm={() => {
+          if (deleteAttachmentTarget) {
+            deleteAttachment.mutate(deleteAttachmentTarget.id, {
+              onSuccess: () => setDeleteAttachmentTarget(null),
+            });
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteChecklistTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteChecklistTarget(null);
+        }}
+        title="Delete checklist item"
+        description={`Delete ${deleteChecklistTarget?.title ?? 'this checklist item'}? This cannot be undone.`}
+        confirmLabel="Delete item"
+        variant="destructive"
+        isPending={deleteChecklistItem.isPending}
+        onConfirm={() => {
+          if (deleteChecklistTarget) {
+            deleteChecklistItem.mutate(deleteChecklistTarget.id, {
+              onSuccess: () => setDeleteChecklistTarget(null),
+            });
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteRelatedTicketTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteRelatedTicketTarget(null);
+        }}
+        title="Remove related ticket"
+        description={`Remove ${deleteRelatedTicketTarget?.ticket?.ticket_number ?? 'this related ticket'} from this ticket?`}
+        confirmLabel="Remove link"
+        variant="destructive"
+        isPending={deleteRelatedTicket.isPending}
+        onConfirm={() => {
+          if (deleteRelatedTicketTarget) {
+            deleteRelatedTicket.mutate(deleteRelatedTicketTarget.id, {
+              onSuccess: () => setDeleteRelatedTicketTarget(null),
+            });
+          }
+        }}
       />
     </section>
   );
