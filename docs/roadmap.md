@@ -4,9 +4,23 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-No active focus. `UX-REFRESH-P1` is complete.
+No active focus. `MEMBERS-P1` is complete.
 
 ## MVP Items
+
+### `MEMBERS-P1` Workspace Member Management
+
+- Status: `complete`
+- Priority: high
+- Scope: Add real role-edit and member-removal flows to the workspace Members surface with backend-enforced permissions and strict access guardrails.
+- Current state: complete after adding member role-options/update/remove APIs under `members.manage`, blocking self-management and last-admin regressions, wiring edit/remove actions into the Members roster for desktop and mobile, and passing focused backend/frontend verification.
+- Next actions: none. Pick the next roadmap focus before starting new implementation.
+
+#### Child Items
+
+- `MEMBERS-P1-T01` Add backend member update/remove APIs and permission guardrails - `complete`
+- `MEMBERS-P1-T02` Add members-page edit/remove UI and API wiring - `complete`
+- `MEMBERS-P1-T03` Add regression coverage and sync tracker/docs - `complete`
 
 ### `SCOPE-P1` Remove SCIM and SSO from product scope
 

@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-08T06:58:02+08:00"
+updated_at: "2026-05-08T15:41:38+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -8,6 +8,136 @@ source_files:
   progress_log: docs/changelog/progress-log.md
 current_focus: []
 items:
+  - id: MEMBERS-P1
+    title: Workspace Member Management
+    type: epic
+    parent_id: null
+    status: complete
+    priority: high
+    mvp: true
+    description: Add real role-edit and member-removal flows to the workspace Members surface with backend-enforced permissions and strict access guardrails.
+    definition_of_done:
+      - Backend member-management endpoints support role updates, removals, same-workspace role validation, and strict self/last-admin guardrails.
+      - Frontend Members page exposes edit-role and remove-member actions on desktop and mobile with clear protected-member messaging.
+      - Focused backend/frontend verification passes and the canonical tracker/docs are synchronized.
+    dependencies:
+      - MEDIUM-P1-T06
+    notes:
+      - "2026-05-08: Added `GET /members/role-options`, `PATCH /members/{membership}`, and `DELETE /members/{membership}` behind `members.manage` while keeping `/roles` under `roles.manage`."
+      - "2026-05-08: Members UI now supports role updates and removals, hides self-management actions, and blocks last-admin changes in both backend rules and roster messaging."
+      - "2026-05-08: Verified with focused Laravel/Vitest coverage plus frontend lint/build."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - members
+      - roles
+      - permissions
+      - workspace
+    created_at: "2026-05-08T15:41:38+08:00"
+    updated_at: "2026-05-08T15:41:38+08:00"
+    changed_at: "2026-05-08T15:41:38+08:00"
+    changed_source: codex
+
+  - id: MEMBERS-P1-T01
+    title: Add backend member update/remove APIs and permission guardrails
+    type: feature
+    parent_id: MEMBERS-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add backend APIs for workspace member role updates, member removal, and member-role options while enforcing workspace permissions and strict safety rules.
+    definition_of_done:
+      - "`GET /members/role-options`, `PATCH /members/{membership}`, and `DELETE /members/{membership}` exist under `members.manage`."
+      - Request validation rejects cross-workspace roles and enforces the single-role UI contract.
+      - Self-role changes, self-removal, last-admin demotion, and last-admin removal are rejected.
+      - Focused backend feature tests cover allowed access, denial, validation, and cross-workspace targeting.
+    dependencies:
+      - MEDIUM-P1-T06
+    notes:
+      - "2026-05-08: Implemented member role-options, update, and destroy controller actions with activity logging and workspace-bound membership checks."
+      - "2026-05-08: Added focused `WorkspaceMembersTest` coverage for permission denial, role validation, self-protection, and last-admin guardrails."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - members
+      - backend
+      - permissions
+    created_at: "2026-05-08T15:41:38+08:00"
+    updated_at: "2026-05-08T15:41:38+08:00"
+    changed_at: "2026-05-08T15:41:38+08:00"
+    changed_source: codex
+
+  - id: MEMBERS-P1-T02
+    title: Add members-page edit/remove UI and API wiring
+    type: feature
+    parent_id: MEMBERS-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Turn the workspace Members route into the real member-management surface with role editing, member removal, and protected-member messaging.
+    definition_of_done:
+      - Members page exposes row/card actions for role editing and member removal.
+      - Role editing uses member-specific role options from the new members API surface.
+      - Self-management actions are hidden or replaced with clear guidance.
+      - Last-admin protection is surfaced clearly in the roster UI.
+      - Related member queries invalidate correctly after mutation.
+    dependencies:
+      - MEMBERS-P1-T01
+    notes:
+      - "2026-05-08: Extended `membersApi` with role-options, update, and delete helpers."
+      - "2026-05-08: Members page now loads the signed-in user, opens edit/remove dialogs, and shows direct management actions on both desktop and mobile layouts."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - members
+      - frontend
+      - ui
+    created_at: "2026-05-08T15:41:38+08:00"
+    updated_at: "2026-05-08T15:41:38+08:00"
+    changed_at: "2026-05-08T15:41:38+08:00"
+    changed_source: codex
+
+  - id: MEMBERS-P1-T03
+    title: Add regression coverage and sync tracker/docs
+    type: test
+    parent_id: MEMBERS-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Cover the new member-management behavior with focused tests and synchronize the canonical project tracker after implementation.
+    definition_of_done:
+      - Focused Laravel and Vitest coverage pass for the new members surface.
+      - Frontend lint and build pass after the member-management changes.
+      - "`docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md` reflect the completed work."
+    dependencies:
+      - MEMBERS-P1-T01
+      - MEMBERS-P1-T02
+    notes:
+      - "2026-05-08: Added frontend members API tests and Members page interaction coverage for role edits, removals, and protected-member messaging."
+      - "2026-05-08: Synced the canonical roadmap and progress log after verification."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - members
+      - tests
+      - docs
+    created_at: "2026-05-08T15:41:38+08:00"
+    updated_at: "2026-05-08T15:41:38+08:00"
+    changed_at: "2026-05-08T15:41:38+08:00"
+    changed_source: codex
+
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
     type: epic

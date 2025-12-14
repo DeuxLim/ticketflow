@@ -1,5 +1,49 @@
 # Progress Log
 
+## 2026-05-08 15:41 +08:00 - Added Backend Workspace Member Management APIs
+
+- Completed `MEMBERS-P1-T01`.
+- Added `GET /members/role-options`, `PATCH /members/{membership}`, and `DELETE /members/{membership}` under `members.manage`.
+- Enforced strict guardrails for self-role changes, self-removal, last-admin demotion, last-admin removal, and cross-workspace role targeting.
+- Added focused backend feature coverage for allowed access, denial, validation, and workspace-bound membership targeting.
+
+Verification:
+- Ran `php artisan test --filter=WorkspaceMembersTest` from `backend/`.
+
+## Resume From Here
+
+Continue with `MEMBERS-P1-T02` to add members-page edit/remove UI and API wiring.
+
+## 2026-05-08 15:41 +08:00 - Added Members Page Role/Edit and Remove Flows
+
+- Completed `MEMBERS-P1-T02`.
+- Extended `membersApi` with member role-options, role update, and member removal helpers.
+- Turned the Members route into the real management surface with edit-role and remove-member actions on desktop and mobile.
+- Hid self-management actions and surfaced protected-member messaging for the last Admin.
+
+Verification:
+- Ran `npm test -- --run src/features/workspace/api/membersApi.test.ts src/features/workspace/pages/MembersPage.test.tsx` from `frontend/`.
+
+## Resume From Here
+
+Continue with `MEMBERS-P1-T03` to finish verification and synchronize the tracker/docs.
+
+## 2026-05-08 15:41 +08:00 - Closed Workspace Member Management and Synced Tracker
+
+- Completed `MEMBERS-P1-T03` and parent epic `MEMBERS-P1`.
+- Synchronized `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md` for the new workspace member-management slice.
+- Kept `members.manage` as the authority for joined-member management while leaving `/roles` under `roles.manage`.
+
+Verification:
+- Ran `php artisan test --filter=WorkspaceMembersTest` from `backend/`.
+- Ran `npm test -- --run src/features/workspace/api/membersApi.test.ts src/features/workspace/pages/MembersPage.test.tsx` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+All tracked `MEMBERS-P1` items are complete. Pick the next roadmap focus before starting new implementation.
+
 ## 2026-05-03 19:47 +08:00 - Simplified Platform Mode Language
 
 - Completed `SCOPE-P2-T07`.
