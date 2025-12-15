@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -21,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const {
     register,
     handleSubmit,
@@ -40,6 +42,7 @@ export function LoginPage() {
       });
 
       setAuthToken(payload.data.token);
+      queryClient.setQueryData(['auth', 'me'], { data: payload.data.user });
 
       let destination = fromPath !== '/' ? fromPath : payload.data.user.is_platform_admin ? '/admin' : '/';
 

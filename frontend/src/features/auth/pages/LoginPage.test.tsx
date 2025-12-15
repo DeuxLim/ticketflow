@@ -190,4 +190,54 @@ describe('LoginPage', () => {
       expect(screen.getByText('Invalid email or password.')).not.toBeNull();
     });
   });
+
+  it('overrides stale auth-me cache so platform admin login still opens admin', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path === '/auth/login') {
+        return {
+          data: {
+            token: 'admin-token',
+            user: {
+              id: 1,
+              email: 'admin@ticketing.local',
+              is_platform_admin: true,
+            },
+          },
+        } as never;
+      }
+
+      throw new Error(`Unexpected path: ${path}`);
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false, staleTime: 60_000 },
+        mutations: { retry: false },
+      },
+    });
+    queryClient.setQueryData(['auth', 'me'], {
+      data: { id: 2, email: 'user@ticketing.local', is_platform_admin: false },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/auth/login']}>
+          <Routes>
+            <Route path="/auth/login" element={<LoginPage />} />
+            <Route path="/admin" element={<p>Admin opened</p>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'admin@ticketing.local' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'Admin@12345' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(['auth', 'me'])).toEqual({
+        data: { id: 1, email: 'admin@ticketing.local', is_platform_admin: true },
+      });
+    });
+  });
 });
