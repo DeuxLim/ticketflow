@@ -16,7 +16,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
+        <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex size-8 items-center justify-center rounded-lg border bg-card">
               <ShieldCheck className="size-4" />
@@ -30,7 +30,7 @@ export function LandingPage() {
             <a className="transition-colors hover:text-foreground" href="#security">Security</a>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Link className={buttonVariants({ variant: 'ghost', size: 'sm' })} to="/auth/login">
               Log in
             </Link>
@@ -43,15 +43,15 @@ export function LandingPage() {
 
       <main>
         <section className="relative overflow-hidden border-b">
-          <div className="mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-12 px-6 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
+          <div className="mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[0.9fr_1.1fr] lg:py-20">
             <div className="max-w-2xl">
               <Badge variant="secondary" className="rounded-full">
                 Multi-tenant support
               </Badge>
-              <h1 className="mt-6 max-w-3xl text-balance text-5xl font-semibold leading-[1.02] tracking-tight md:text-7xl">
+              <h1 className="mt-5 max-w-3xl text-balance text-4xl font-semibold leading-[1.02] tracking-tight sm:text-5xl md:text-7xl">
                 Support operations, quietly organized.
               </h1>
-              <p className="mt-6 max-w-xl text-pretty text-base leading-7 text-muted-foreground md:text-lg">
+              <p className="mt-4 max-w-xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:text-lg">
                 A calm workspace for tickets, customers, permissions, and tenant controls.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -68,7 +68,7 @@ export function LandingPage() {
             <div className="relative" id="workspace">
               <Card className="mx-auto w-full max-w-3xl bg-card/90 shadow-none">
                 <CardHeader className="border-b">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <CardTitle>Northwind Support</CardTitle>
                       <CardDescription>Workspace queue</CardDescription>
@@ -78,7 +78,7 @@ export function LandingPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="grid md:grid-cols-[220px_1fr]">
-                    <div className="flex flex-col gap-4 border-b p-5 md:border-b-0 md:border-r">
+                    <div className="grid grid-cols-3 gap-4 border-b p-5 md:flex md:flex-col md:border-b-0 md:border-r">
                       <Metric label="Open" value="18" />
                       <Metric label="In progress" value="9" />
                       <Metric label="Resolved" value="44" />
@@ -135,12 +135,12 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function TicketPreview({ title, meta }: { title: string; meta: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 p-5">
+    <div className="flex items-start justify-between gap-4 p-5">
       <div className="min-w-0">
         <p className="truncate font-medium">{title}</p>
         <p className="mt-1 text-sm text-muted-foreground">{meta}</p>
       </div>
-      <Badge variant="outline">Open</Badge>
+      <Badge className="shrink-0" variant="outline">Open</Badge>
     </div>
   );
 }

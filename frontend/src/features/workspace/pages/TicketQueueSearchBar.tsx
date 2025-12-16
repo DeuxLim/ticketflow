@@ -23,8 +23,8 @@ export function TicketQueueSearchBar({
   onResetControls,
 }: TicketQueueSearchBarProps) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <Field className="min-w-[240px] flex-1">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <Field className="min-w-0 flex-1">
         <FieldLabel htmlFor="ticket-search">Search</FieldLabel>
         <Input
           id="ticket-search"

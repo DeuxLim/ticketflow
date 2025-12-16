@@ -52,7 +52,7 @@ export function AdminWorkspaceEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -105,6 +105,7 @@ export function AdminWorkspaceEditorDialog({
                   />
                 )}
                 <Button
+                  className="md:justify-self-start"
                   disabled={rows.length <= 1 || disabled}
                   size="sm"
                   type="button"

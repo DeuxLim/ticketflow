@@ -50,7 +50,7 @@ export function AdminDashboardTabs({
 }: Props) {
   return (
     <Tabs defaultValue="workspaces" className="flex flex-col gap-4">
-      <TabsList className="grid w-full max-w-md grid-cols-2">
+      <TabsList className="grid w-full grid-cols-2 sm:max-w-md">
         <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
       </TabsList>
@@ -180,6 +180,12 @@ export function AdminDashboardTabs({
                       <StatusBadge status={workspace.lifecycle_status} label={workspace.lifecycle_status} />
                     </div>
                     <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="col-span-2">
+                        <dt className="text-xs text-muted-foreground">Owner</dt>
+                        <dd className="mt-1 truncate font-medium">
+                          {workspace.owner ? `${workspace.owner.first_name} ${workspace.owner.last_name}` : 'Not assigned'}
+                        </dd>
+                      </div>
                       <div>
                         <dt className="text-xs text-muted-foreground">Members</dt>
                         <dd className="mt-1 font-medium">{workspace.memberships_count}</dd>
@@ -187,6 +193,10 @@ export function AdminDashboardTabs({
                       <div>
                         <dt className="text-xs text-muted-foreground">Tickets</dt>
                         <dd className="mt-1 font-medium">{workspace.tickets_count}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Created</dt>
+                        <dd className="mt-1 font-medium">{new Date(workspace.created_at).toLocaleDateString()}</dd>
                       </div>
                     </dl>
                   </article>

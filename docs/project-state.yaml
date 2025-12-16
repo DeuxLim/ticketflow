@@ -1,13 +1,147 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-08T15:41:38+08:00"
+updated_at: "2026-05-08T16:16:00+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus: []
+current_focus:
+  - MOBILE-RESP-P1
 items:
+  - id: MOBILE-RESP-P1
+    title: App-Wide Mobile Responsiveness Hardening
+    type: epic
+    parent_id: null
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Harden every routed frontend surface and its key dialogs/sheets for mobile while preserving the current wide-screen layout hierarchy and desktop density.
+    definition_of_done:
+      - Shared shells, page headers, and sheet/dialog footers keep primary actions reachable on phone widths without breaking desktop layouts.
+      - Dense workspace/admin/public/auth surfaces collapse cleanly on mobile without introducing route, permission, API, or behavior regressions.
+      - Static frontend verification passes and browser-level viewport checks confirm no primary mobile overflow or hidden action regressions.
+      - Canonical tracker/docs reflect the implementation state and remaining verification gap.
+    dependencies:
+      - UX-REFRESH-P1
+    notes:
+      - "2026-05-08: Implemented a responsive hardening pass across shared headers, dialog/sheet footers, auth/public entry surfaces, ticket queue search/pagination, ticket details, onboarding, and admin mobile summaries."
+      - "2026-05-08: `frontend` lint, build, and `git diff --check` passed after the responsive pass."
+      - "2026-05-08: Full browser viewport verification is still pending because headless Chromium launch was blocked by the local macOS sandbox (`MachPortRendezvousServer` permission failure)."
+    incomplete_reason: Browser-level viewport verification remains open even though the implementation and static checks are complete.
+    blocked_reason: Local browser automation is blocked by the current environment's macOS sandbox restrictions.
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Re-run live viewport verification on the main public, workspace, and admin routes once browser automation or manual interactive browser access is available.
+      - If browser verification finds any remaining phone-width overflow or clipped actions, capture them as follow-up child tasks under this epic.
+    tags:
+      - frontend
+      - mobile
+      - responsive
+      - ui
+    created_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T16:16:00+08:00"
+    changed_at: "2026-05-08T16:16:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P1-T01
+    title: Harden shared shell and entry surfaces for small screens
+    type: feature
+    parent_id: MOBILE-RESP-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Make the shared app shells, page action rows, and public/auth entry surfaces compress cleanly on mobile without changing desktop behavior.
+    definition_of_done:
+      - Shared page headers stack actions cleanly on narrow widths.
+      - Workspace and admin shell headers keep workspace switcher, notifications, and logout reachable on mobile.
+      - Auth and landing screens reduce cramped spacing and CTA collisions on phone widths.
+    dependencies: []
+    notes:
+      - "2026-05-08: Updated `PageHeader`, `WorkspaceLayout`, `AdminLayout`, `AuthLayout`, and `LandingPage` for cleaner mobile wrapping and spacing."
+      - "2026-05-08: Shared dialog/sheet footers now default to full-width stacked actions on mobile."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - mobile
+      - shell
+      - auth
+    created_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T16:16:00+08:00"
+    changed_at: "2026-05-08T16:16:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P1-T02
+    title: Harden dense ticket and admin surfaces for mobile layouts
+    type: feature
+    parent_id: MOBILE-RESP-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Improve the most crowded workspace and admin views so mobile users can operate them without horizontal pressure or hidden actions.
+    definition_of_done:
+      - Ticket queue search, pagination, and action surfaces work on small screens.
+      - Ticket detail actions and side panels collapse later and remain reachable on mobile.
+      - Admin dashboard mobile cards expose key workspace metadata without forcing the desktop table.
+    dependencies:
+      - MOBILE-RESP-P1-T01
+    notes:
+      - "2026-05-08: Updated `TicketQueueSearchBar`, `TicketQueueTable`, `TicketDetailsHeader`, `TicketDetailsOverviewCards`, `TicketDetailsPage`, and `AdminDashboardTabs`."
+      - "2026-05-08: Added mobile overflow protection for the admin workspace editor dialog and tightened onboarding spacing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - mobile
+      - tickets
+      - admin
+    created_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T16:16:00+08:00"
+    changed_at: "2026-05-08T16:16:00+08:00"
+    changed_source: codex
+
+  - id: MOBILE-RESP-P1-T03
+    title: Verify responsive pass and close tracker gap
+    type: test
+    parent_id: MOBILE-RESP-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Finish verification for the responsive hardening pass with static checks and browser-level route validation.
+    definition_of_done:
+      - "`frontend` lint and build pass after the responsive changes."
+      - "Browser or manual interactive checks cover the core public, workspace, and admin routes at phone and desktop widths."
+      - "The tracker is updated to reflect the final verified state."
+    dependencies:
+      - MOBILE-RESP-P1-T01
+      - MOBILE-RESP-P1-T02
+    notes:
+      - "2026-05-08: `npm run lint`, `npm run build`, and `git diff --check` passed."
+      - "2026-05-08: Tried to run authenticated viewport checks after starting the local stack, but Playwright Chromium launch failed in this environment with a macOS sandbox permission error."
+    incomplete_reason: Static verification is complete, but browser-level responsive validation is still pending.
+    blocked_reason: Local headless Chromium cannot launch successfully in the current sandboxed environment.
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Re-run the planned mobile and desktop route checks when browser execution is available.
+    tags:
+      - frontend
+      - tests
+      - mobile
+      - verification
+    created_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T16:16:00+08:00"
+    changed_at: "2026-05-08T16:16:00+08:00"
+    changed_source: codex
+
   - id: MEMBERS-P1
     title: Workspace Member Management
     type: epic

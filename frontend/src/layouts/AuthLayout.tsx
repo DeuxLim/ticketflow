@@ -8,20 +8,20 @@ export function AuthLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
         <section className="max-w-xl">
           <Badge variant="secondary" className="rounded-full">
             Ticketing Cloud
           </Badge>
-          <h1 className="mt-6 text-balance text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
+          <h1 className="mt-5 text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl md:text-6xl">
             Sign in to a quieter support workspace.
           </h1>
-          <p className="mt-5 max-w-md text-pretty text-base leading-7 text-muted-foreground">
+          <p className="mt-4 max-w-md text-pretty text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
             Tickets, customers, roles, and workspace settings stay organized in one clean surface.
           </p>
-          <Separator className="my-8 max-w-sm" />
+          <Separator className="my-6 max-w-sm sm:my-8" />
           <Card className="max-w-md bg-card/70 shadow-none">
-            <CardContent className="flex flex-col gap-5 p-5">
+            <CardContent className="flex flex-col gap-5 p-4 sm:p-5">
               {showDemoCredentials ? (
                 <>
                   <div className="flex flex-col gap-1">

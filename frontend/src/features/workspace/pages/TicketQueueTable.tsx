@@ -205,7 +205,7 @@ export function TicketQueueTable({
       </div>
 
       {pagination && pagination.last_page > 1 && (
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
           <p className="mr-auto text-xs text-muted-foreground">
             Page {pagination.current_page} of {pagination.last_page} • {pagination.total} total
           </p>

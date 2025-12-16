@@ -445,7 +445,7 @@ export function TicketDetailsPage() {
         onDeleteTicket={() => setIsDeleteTicketOpen(true)}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-6">
           <TicketDetailsSummaryCard
             ticket={ticket}

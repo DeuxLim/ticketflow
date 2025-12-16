@@ -92,7 +92,7 @@ export function WorkspaceOnboardingPage() {
   }
 
   return (
-    <section className="mx-auto mt-12 w-full max-w-xl">
+    <section className="mx-auto mt-8 w-full max-w-xl">
       <Card className="shadow-none">
         <CardHeader>
           <Badge variant="secondary" className="w-fit">Onboarding</Badge>

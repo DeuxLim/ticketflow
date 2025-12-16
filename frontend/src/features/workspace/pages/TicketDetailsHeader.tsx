@@ -39,7 +39,7 @@ export function TicketDetailsHeader({
   onDeleteTicket,
 }: TicketDetailsHeaderProps) {
   return (
-    <header className="rounded-xl border bg-card p-5">
+    <header className="rounded-xl border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status="closed" label={ticket.ticket_number} />
         <StatusBadge status={ticket.status} label={ticketStatusLabel(ticket.status)} />
@@ -51,7 +51,7 @@ export function TicketDetailsHeader({
 
       {quickActionMessage && <p className="text-xs text-muted-foreground">{quickActionMessage}</p>}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center [&>*]:w-full sm:[&>*]:w-auto">
         <Button disabled={!canComment} onClick={onOpenComment} size="sm" type="button">
           Add Comment
         </Button>

@@ -126,14 +126,14 @@ export function WorkspaceLayout() {
       </Sidebar>
 
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/85 px-4 backdrop-blur-xl">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b bg-background/85 px-3 py-3 backdrop-blur-xl sm:px-4">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-4" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{activeWorkspace?.name ?? 'Workspace'}</p>
             <p className="hidden text-xs text-muted-foreground sm:block">Support operations</p>
           </div>
-          <div className="ml-auto hidden w-[220px] sm:block">
+          <div className="order-4 w-full sm:order-none sm:ml-auto sm:w-[220px]">
             <Select
               value={workspaceSlug}
               onValueChange={(nextSlug) => {
@@ -155,12 +155,12 @@ export function WorkspaceLayout() {
             </Select>
           </div>
           <WorkspaceNotificationsMenu workspaceSlug={workspaceSlug} />
-          <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
+          <Button className="shrink-0" variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
             {isLoggingOut ? 'Logging out…' : 'Log out'}
           </Button>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-4 py-5 md:px-8 md:py-7">
+        <main className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-4 md:px-8 md:py-7">
           <Outlet />
         </main>
       </SidebarInset>

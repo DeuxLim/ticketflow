@@ -179,12 +179,12 @@ export function TicketToolsCard({
 
 function ToolRow({ title, detail, actionLabel, onOpen }: { title: string; detail: string; actionLabel: string; onOpen: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm">
+    <div className="flex flex-col gap-3 rounded-md border border-border p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="font-medium">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{detail}</p>
       </div>
-      <Button aria-label={actionLabel} onClick={onOpen} size="sm" type="button" variant="outline">
+      <Button aria-label={actionLabel} className="w-full sm:w-auto" onClick={onOpen} size="sm" type="button" variant="outline">
         {actionLabel.replace('Open ', '')}
       </Button>
     </div>

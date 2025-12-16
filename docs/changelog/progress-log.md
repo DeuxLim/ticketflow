@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-05-08 16:16 +08:00 - Added Tracker for App-Wide Mobile Responsiveness Hardening
+
+- Added `MOBILE-RESP-P1` to the canonical tracker for the completed responsive implementation pass plus the remaining live verification gap.
+- Added `MOBILE-RESP-P1-T01` for shared shell, entry-surface, and footer/action-row hardening.
+- Added `MOBILE-RESP-P1-T02` for dense ticket/admin/mobile layout hardening.
+- Added `MOBILE-RESP-P1-T03` for responsive verification closeout.
+- Marked the first two child items complete because the code changes are already implemented.
+- Left the epic and verification task incomplete because browser-level viewport checks were blocked by the local macOS sandbox during Playwright Chromium launch.
+
+Verification:
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+- Ran `git diff --check`.
+
+## Resume From Here
+
+Continue with `MOBILE-RESP-P1-T03` to finish live mobile/desktop viewport verification once browser execution is available.
+
 ## 2026-05-08 15:41 +08:00 - Added Backend Workspace Member Management APIs
 
 - Completed `MEMBERS-P1-T01`.
