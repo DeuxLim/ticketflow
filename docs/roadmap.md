@@ -4,24 +4,24 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`MOBILE-RESP-P1` is active.
+No active focus is set.
 
 ## MVP Items
 
 ### `MOBILE-RESP-P1` App-Wide Mobile Responsiveness Hardening
 
-- Status: `incomplete`
+- Status: `complete`
 - Priority: high
 - Scope: Harden every routed frontend surface and its key dialogs/sheets for mobile while preserving the current wide-screen layout hierarchy and desktop density.
-- Current state: implementation is mostly complete after updating shared page headers, workspace/admin/auth shells, public landing spacing, shared dialog/sheet footers, ticket queue search/pagination, ticket details, onboarding, and admin mobile summaries. Static verification passed.
-- Next actions: finish browser-level viewport verification on the main public, workspace, and admin routes once browser execution is available, then either close the epic or add narrowly scoped follow-up fixes if real mobile regressions are found.
-- Blockers: local headless Chromium launch is blocked in this environment by a macOS sandbox permission failure, so live browser responsive checks are still pending.
+- Current state: complete after the responsive implementation pass and live Safari verification at phone and desktop widths across the public landing page, auth login, workspace overview, customers, tickets, ticket details, members, invitations, settings, and the admin dashboard.
+- Next actions: none. Pick the next roadmap focus before starting new implementation.
+- Blockers: none.
 
 #### Child Items
 
 - `MOBILE-RESP-P1-T01` Harden shared shell and entry surfaces for small screens - `complete`
 - `MOBILE-RESP-P1-T02` Harden dense ticket and admin surfaces for mobile layouts - `complete`
-- `MOBILE-RESP-P1-T03` Verify responsive pass and close tracker gap - `incomplete`
+- `MOBILE-RESP-P1-T03` Verify responsive pass and close tracker gap - `complete`
 
 ### `MEMBERS-P1` Workspace Member Management
 

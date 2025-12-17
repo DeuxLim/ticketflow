@@ -1,19 +1,18 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-08T16:16:00+08:00"
+updated_at: "2026-05-08T18:22:30+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus:
-  - MOBILE-RESP-P1
+current_focus: []
 items:
   - id: MOBILE-RESP-P1
     title: App-Wide Mobile Responsiveness Hardening
     type: epic
     parent_id: null
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Harden every routed frontend surface and its key dialogs/sheets for mobile while preserving the current wide-screen layout hierarchy and desktop density.
@@ -21,28 +20,26 @@ items:
       - Shared shells, page headers, and sheet/dialog footers keep primary actions reachable on phone widths without breaking desktop layouts.
       - Dense workspace/admin/public/auth surfaces collapse cleanly on mobile without introducing route, permission, API, or behavior regressions.
       - Static frontend verification passes and browser-level viewport checks confirm no primary mobile overflow or hidden action regressions.
-      - Canonical tracker/docs reflect the implementation state and remaining verification gap.
+      - Canonical tracker/docs reflect the final verified state.
     dependencies:
       - UX-REFRESH-P1
     notes:
       - "2026-05-08: Implemented a responsive hardening pass across shared headers, dialog/sheet footers, auth/public entry surfaces, ticket queue search/pagination, ticket details, onboarding, and admin mobile summaries."
       - "2026-05-08: `frontend` lint, build, and `git diff --check` passed after the responsive pass."
-      - "2026-05-08: Full browser viewport verification is still pending because headless Chromium launch was blocked by the local macOS sandbox (`MachPortRendezvousServer` permission failure)."
-    incomplete_reason: Browser-level viewport verification remains open even though the implementation and static checks are complete.
-    blocked_reason: Local browser automation is blocked by the current environment's macOS sandbox restrictions.
+      - "2026-05-08: Completed live Safari responsive checks at `390x844` and `1280x844` across the public landing page, auth login, workspace overview, customers, tickets, ticket details, members, invitations, settings, and the admin dashboard."
+    incomplete_reason: null
+    blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Re-run live viewport verification on the main public, workspace, and admin routes once browser automation or manual interactive browser access is available.
-      - If browser verification finds any remaining phone-width overflow or clipped actions, capture them as follow-up child tasks under this epic.
+    next_actions: []
     tags:
       - frontend
       - mobile
       - responsive
       - ui
     created_at: "2026-05-08T16:16:00+08:00"
-    updated_at: "2026-05-08T16:16:00+08:00"
-    changed_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T18:22:30+08:00"
+    changed_at: "2026-05-08T18:22:30+08:00"
     changed_source: codex
 
   - id: MOBILE-RESP-P1-T01
@@ -112,7 +109,7 @@ items:
     title: Verify responsive pass and close tracker gap
     type: test
     parent_id: MOBILE-RESP-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Finish verification for the responsive hardening pass with static checks and browser-level route validation.
@@ -125,21 +122,21 @@ items:
       - MOBILE-RESP-P1-T02
     notes:
       - "2026-05-08: `npm run lint`, `npm run build`, and `git diff --check` passed."
-      - "2026-05-08: Tried to run authenticated viewport checks after starting the local stack, but Playwright Chromium launch failed in this environment with a macOS sandbox permission error."
-    incomplete_reason: Static verification is complete, but browser-level responsive validation is still pending.
-    blocked_reason: Local headless Chromium cannot launch successfully in the current sandboxed environment.
+      - "2026-05-08: Completed authenticated manual Safari checks in Responsive Design Mode at `390x844` and a desktop regression pass at `1280x844`."
+      - "2026-05-08: Verified public landing, auth login, workspace overview, customers, tickets, ticket details, members, invitations, settings, and the admin dashboard without horizontal overflow, clipped primary actions, or desktop layout regressions."
+    incomplete_reason: null
+    blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Re-run the planned mobile and desktop route checks when browser execution is available.
+    next_actions: []
     tags:
       - frontend
       - tests
       - mobile
       - verification
     created_at: "2026-05-08T16:16:00+08:00"
-    updated_at: "2026-05-08T16:16:00+08:00"
-    changed_at: "2026-05-08T16:16:00+08:00"
+    updated_at: "2026-05-08T18:22:30+08:00"
+    changed_at: "2026-05-08T18:22:30+08:00"
     changed_source: codex
 
   - id: MEMBERS-P1
