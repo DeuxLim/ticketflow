@@ -82,6 +82,7 @@ Run frontend commands from `frontend/`.
 ## Git Workflow
 
 - After making code or documentation changes, commit and push them unless the user explicitly says not to.
+- For this repo, work directly on `master` by default. Do not create feature branches, draft branches, or pull requests unless the user explicitly asks for a separate branch.
 - Before committing, run the relevant checks when practical and mention any checks that were skipped.
 - Do not commit temporary debug edits, generated clutter, or unrelated local changes.
 
