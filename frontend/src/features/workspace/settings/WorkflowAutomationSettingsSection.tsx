@@ -226,7 +226,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                     )}
                   </div>
                 </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                <div className="mt-3 grid gap-2 md:grid-cols-[1fr_auto_auto]">
                   <Input value={nameDraft} onChange={(event) => setWorkflowUpdateNameDrafts((previous) => ({ ...previous, [workflow.id]: event.target.value }))} />
                   <label className="flex items-center gap-2 text-xs">
                     <Checkbox
@@ -238,6 +238,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                   <Button
                     size="sm"
                     variant="outline"
+                    className="w-full md:w-auto"
                     onClick={() => updateWorkflowMutation.mutate({ workflowId: workflow.id, name: nameDraft.trim() || workflow.name, isActive: activeDraft })}
                   >
                     Save
@@ -361,7 +362,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                     </Button>
                   </div>
 
-                  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
+                  <div className="mt-3 grid gap-2 md:grid-cols-[1fr_120px_auto]">
                     <Input value={nameDraft} onChange={(event) => setAutomationNameDrafts((previous) => ({ ...previous, [rule.id]: event.target.value }))} />
                     <Input
                       type="number"
@@ -371,13 +372,14 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full md:w-auto"
                       onClick={() => updateRuleMutation.mutate({ ruleId: rule.id, name: nameDraft.trim() || rule.name, priority: priorityDraft })}
                     >
                       Save
                     </Button>
                   </div>
 
-                  <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
                     <Input
                       placeholder="Ticket ID for dry-run"
                       type="number"
@@ -387,6 +389,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full md:w-auto"
                       disabled={Number(testTicketIdDraft) <= 0}
                       onClick={() => dryRunRuleMutation.mutate({ ruleId: rule.id, ticketId: Number(testTicketIdDraft) })}
                     >
