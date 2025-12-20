@@ -36,8 +36,17 @@ use App\Http\Controllers\Api\Workspaces\WorkspaceRoleController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/health', function () {
+    return response()->json([
+        'name' => config('app.name'),
+        'status' => 'ok',
+    ]);
+});
+
+Route::post('/auth/register', [AuthController::class, 'register'])
+    ->middleware('throttle:auth-register');
+Route::post('/auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:auth-login');
 
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);

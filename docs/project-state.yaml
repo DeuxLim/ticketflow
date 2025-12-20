@@ -1,13 +1,152 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-08T18:22:30+08:00"
+updated_at: "2026-05-09T16:32:31+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus: []
+current_focus:
+  - DEPLOY-P1
 items:
+  - id: DEPLOY-P1
+    title: Free-Platform Deployment Preparation
+    type: epic
+    parent_id: null
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Prepare the Ticketing app for a secure low-cost deployment using Vercel for the frontend and free-tier backend/database services.
+    definition_of_done:
+      - Production-oriented auth, CORS, health, and frontend hosting requirements are hardened in the codebase.
+      - Backend and frontend production environment templates exist for the chosen free-platform shape.
+      - A repo-local deployment runbook documents the exact free-platform rollout and smoke checks.
+      - The actual hosted deployment is completed and smoke-verified, or any remaining execution gap is clearly tracked.
+    dependencies:
+      - RELEASE-P1
+      - MOBILE-RESP-P1
+    notes:
+      - "2026-05-09: Began deployment prep for the free-platform target: Vercel frontend, free backend host, and free hosted Postgres."
+      - "2026-05-09: Added auth route throttling, disabled public registration by default, added explicit CORS configuration, added `/api/health`, added production env templates, and added Vercel SPA rewrite/security headers."
+      - "2026-05-09: Added `docs/deployment/free-platforms.md` documenting the current free-platform plan: Vercel Hobby + Render free web service + Neon free Postgres."
+    incomplete_reason: The codebase is prepared for deployment, but the actual hosted services are not configured and smoke-verified yet.
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Create the free-tier hosting services and connect the repository.
+      - Set production environment variables on the backend and frontend hosts.
+      - Run the post-deploy smoke checklist against the live URLs and capture any issues.
+    tags:
+      - deployment
+      - production
+      - security
+      - vercel
+    created_at: "2026-05-09T16:32:31+08:00"
+    updated_at: "2026-05-09T16:32:31+08:00"
+    changed_at: "2026-05-09T16:32:31+08:00"
+    changed_source: codex
+
+  - id: DEPLOY-P1-T01
+    title: Harden auth, origin, and hosting behavior for deployment
+    type: feature
+    parent_id: DEPLOY-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Lock down the backend and frontend so the app can move to separate production origins without exposing obvious auth or routing weaknesses.
+    definition_of_done:
+      - Login and registration endpoints are rate-limited.
+      - Public self-registration is disabled by default.
+      - Backend CORS is explicitly origin-scoped.
+      - Frontend Vercel hosting preserves SPA deep links and adds baseline browser security headers.
+      - A lightweight backend health endpoint exists for host checks.
+    dependencies: []
+    notes:
+      - "2026-05-09: Added `auth-login` and `auth-register` rate limiters plus route throttling."
+      - "2026-05-09: Disabled public registration by default, added explicit `config/cors.php`, added `/api/health`, and added `frontend/vercel.json` for SPA rewrites and baseline security headers."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - deployment
+      - security
+      - auth
+      - frontend
+    created_at: "2026-05-09T16:32:31+08:00"
+    updated_at: "2026-05-09T16:32:31+08:00"
+    changed_at: "2026-05-09T16:32:31+08:00"
+    changed_source: codex
+
+  - id: DEPLOY-P1-T02
+    title: Add free-platform environment templates and deployment runbook
+    type: docs
+    parent_id: DEPLOY-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Document the exact free-platform deployment shape and add production environment templates for backend and frontend setup.
+    definition_of_done:
+      - Backend production env example exists for the chosen free-platform target.
+      - Frontend production env example exists for Vercel.
+      - The docs include a concrete free-platform deployment runbook with rollout and smoke-check steps.
+    dependencies:
+      - DEPLOY-P1-T01
+    notes:
+      - "2026-05-09: Added `backend/.env.production.example` for a Postgres-backed production-style deployment."
+      - "2026-05-09: Added `frontend/.env.production.example` and `docs/deployment/free-platforms.md` with the Vercel/Render/Neon runbook."
+      - "2026-05-09: Updated docs index entries so the deployment runbook is discoverable from `docs/README.md`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - deployment
+      - docs
+      - vercel
+      - render
+    created_at: "2026-05-09T16:32:31+08:00"
+    updated_at: "2026-05-09T16:32:31+08:00"
+    changed_at: "2026-05-09T16:32:31+08:00"
+    changed_source: codex
+
+  - id: DEPLOY-P1-T03
+    title: Execute free-platform deployment and live smoke verification
+    type: test
+    parent_id: DEPLOY-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Configure the actual free-tier services, deploy the frontend/backend, and verify the hosted app works end to end.
+    definition_of_done:
+      - The frontend is live on Vercel with the correct API base URL.
+      - The backend is live on the chosen free host with Postgres migrations applied.
+      - Live smoke checks pass for login, workspace navigation, ticket details, members, settings, admin, and direct deep links.
+    dependencies:
+      - DEPLOY-P1-T01
+      - DEPLOY-P1-T02
+    notes:
+      - "2026-05-09: Still pending; hosting accounts, environment variables, and live smoke checks have not been completed yet."
+    incomplete_reason: The project is prepared for deployment, but the live free-tier services have not been created and verified yet.
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Create the Vercel, backend host, and database services.
+      - Configure secrets and production URLs.
+      - Run the live post-deploy smoke checklist and capture any defects.
+    tags:
+      - deployment
+      - smoke-tests
+      - vercel
+    created_at: "2026-05-09T16:32:31+08:00"
+    updated_at: "2026-05-09T16:32:31+08:00"
+    changed_at: "2026-05-09T16:32:31+08:00"
+    changed_source: codex
+
   - id: MOBILE-RESP-P1
     title: App-Wide Mobile Responsiveness Hardening
     type: epic

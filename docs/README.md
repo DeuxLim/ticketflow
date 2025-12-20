@@ -40,6 +40,7 @@ Platform isolation is not part of the current app. Workspace mode fields are loc
 - `backend/`: Laravel API, migrations, seeders, routes, controllers, models, and feature tests.
 - `frontend/`: React app, workspace UI, API clients, types, and frontend tests.
 - `docs/SEED_CREDENTIALS.md`: demo accounts and role summary.
+- `docs/deployment/free-platforms.md`: Vercel + free-platform deployment runbook.
 - `docs/project-state.yaml`: canonical roadmap and project state.
 - `docs/roadmap.md`: readable roadmap projection.
 - `docs/changelog/progress-log.md`: implementation history.

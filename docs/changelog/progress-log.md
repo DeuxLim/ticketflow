@@ -1,5 +1,27 @@
 # Progress Log
 
+## 2026-05-09 16:32 +08:00 - Started Free-Platform Deployment Preparation
+
+- Added `DEPLOY-P1` as the active deployment-prep epic for the Vercel + free-platform rollout.
+- Completed `DEPLOY-P1-T01` by hardening auth and hosting behavior:
+  - disabled public self-registration by default
+  - added login and registration throttling
+  - added explicit backend CORS configuration
+  - added `/api/health`
+  - added `frontend/vercel.json` for SPA rewrites and baseline browser security headers
+- Completed `DEPLOY-P1-T02` by adding:
+  - `backend/.env.production.example`
+  - `frontend/.env.production.example`
+  - `docs/deployment/free-platforms.md`
+  - docs index link in `docs/README.md`
+- Left `DEPLOY-P1-T03` incomplete because the live free-tier services have not been created or smoke-verified yet.
+
+Verification:
+- Ran `php artisan test --filter=DeploymentReadinessTest` from `backend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+- Ran `git diff --check`.
+
 ## 2026-05-08 18:22 +08:00 - Closed Mobile Responsiveness Verification
 
 - Completed `MOBILE-RESP-P1-T03`.

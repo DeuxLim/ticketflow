@@ -114,4 +114,21 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Ticketing Auth Hardening
+    |--------------------------------------------------------------------------
+    |
+    | Public self-registration is disabled by default because this product is
+    | currently positioned as an internal support tool. Login and registration
+    | routes also use independent rate limits to reduce brute-force attempts.
+    |
+    */
+
+    'allow_public_registration' => env('AUTH_ALLOW_PUBLIC_REGISTRATION', false),
+
+    'login_rate_limit_per_minute' => (int) env('AUTH_LOGIN_RATE_LIMIT_PER_MINUTE', 5),
+
+    'register_rate_limit_per_minute' => (int) env('AUTH_REGISTER_RATE_LIMIT_PER_MINUTE', 3),
+
 ];

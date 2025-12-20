@@ -23,6 +23,20 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        RateLimiter::for('auth-login', function (Request $request): Limit {
+            $email = strtolower((string) $request->input('email', 'guest'));
+
+            return Limit::perMinute(config('auth.login_rate_limit_per_minute', 5))
+                ->by("auth-login:{$email}:{$request->ip()}");
+        });
+
+        RateLimiter::for('auth-register', function (Request $request): Limit {
+            $email = strtolower((string) $request->input('email', 'guest'));
+
+            return Limit::perMinute(config('auth.register_rate_limit_per_minute', 3))
+                ->by("auth-register:{$email}:{$request->ip()}");
+        });
+
         RateLimiter::for('tenant-api', function (Request $request): Limit {
             $workspace = $request->route('workspace');
             $workspaceKey = $workspace instanceof Workspace ? $workspace->id : 'none';

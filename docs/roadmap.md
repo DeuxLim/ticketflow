@@ -4,9 +4,24 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-No active focus is set.
+`DEPLOY-P1` is active.
 
 ## MVP Items
+
+### `DEPLOY-P1` Free-Platform Deployment Preparation
+
+- Status: `incomplete`
+- Priority: high
+- Scope: Prepare the Ticketing app for a secure low-cost deployment using Vercel for the frontend and free-tier backend/database services.
+- Current state: partially complete after hardening auth and cross-origin behavior, adding a backend health endpoint, adding Vercel SPA rewrites/security headers, and adding backend/frontend production env templates plus a free-platform deployment runbook.
+- Next actions: create the actual free-tier services, configure production environment variables, deploy the frontend/backend, and run live smoke checks against the hosted URLs.
+- Blockers: none in-repo; live deployment still depends on creating the hosting accounts/services.
+
+#### Child Items
+
+- `DEPLOY-P1-T01` Harden auth, origin, and hosting behavior for deployment - `complete`
+- `DEPLOY-P1-T02` Add free-platform environment templates and deployment runbook - `complete`
+- `DEPLOY-P1-T03` Execute free-platform deployment and live smoke verification - `incomplete`
 
 ### `MOBILE-RESP-P1` App-Wide Mobile Responsiveness Hardening
 

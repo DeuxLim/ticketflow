@@ -16,6 +16,12 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
+        if (! config('auth.allow_public_registration')) {
+            return response()->json([
+                'message' => 'Not found.',
+            ], 404);
+        }
+
         $user = User::query()->create($request->validated());
 
         return response()->json([
