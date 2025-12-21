@@ -33,27 +33,27 @@ This setup is acceptable for demos, portfolio use, and low-traffic personal test
 
 Create a free Render web service connected to this repository.
 
+Because this repo is a monorepo with the Vite frontend at the root and Laravel in `backend/`, the most reliable free-host setup is to deploy the backend as a Docker web service from `backend/`.
+
 Recommended settings:
 
 - Root directory: `backend`
-- Environment: `PHP`
-- Build command:
-
-```bash
-composer install --no-dev --optimize-autoloader && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --force
-```
-
-- Start command:
-
-```bash
-php artisan serve --host=0.0.0.0 --port=$PORT
-```
+- Environment: `Docker`
+- Dockerfile path: `./Dockerfile`
 
 - Health check path:
 
 ```text
 /api/health
 ```
+
+The Docker image already:
+
+- installs PHP 8.2 with `pdo_pgsql`, `mbstring`, and `bcmath`
+- runs `composer install --no-dev --optimize-autoloader`
+- clears Laravel cached config/routes/views
+- runs `php artisan migrate --force` before starting the app
+- starts Laravel on `0.0.0.0:$PORT`
 
 Minimum backend environment values:
 
