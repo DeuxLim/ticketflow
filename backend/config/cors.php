@@ -10,6 +10,15 @@ $configuredOrigins = array_values(array_filter(array_map(
     explode(',', (string) env('CORS_ALLOWED_ORIGINS', implode(',', $defaultOrigins)))
 )));
 
+$defaultOriginPatterns = [
+    '^https://ticketflow-frontend(?:-[a-z0-9-]+)*\.vercel\.app$',
+];
+
+$configuredOriginPatterns = array_values(array_filter(array_map(
+    static fn (string $pattern): string => trim($pattern),
+    explode(',', (string) env('CORS_ALLOWED_ORIGIN_PATTERNS', implode(',', $defaultOriginPatterns)))
+)));
+
 return [
 
     /*
@@ -29,7 +38,7 @@ return [
 
     'allowed_origins' => $configuredOrigins,
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => $configuredOriginPatterns,
 
     'allowed_headers' => ['*'],
 
