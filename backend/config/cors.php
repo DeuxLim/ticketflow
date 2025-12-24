@@ -11,7 +11,7 @@ $configuredOrigins = array_values(array_filter(array_map(
 )));
 
 $defaultOriginPatterns = [
-    '^https://ticketflow-frontend(?:-[a-z0-9-]+)*\.vercel\.app$',
+    '#^https://ticketflow-frontend(?:-[a-z0-9-]+)*\.vercel\.app$#',
 ];
 
 $configuredOriginPatterns = array_values(array_filter(array_map(
