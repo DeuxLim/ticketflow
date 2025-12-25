@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-05-09 21:40 +08:00 - Closed Free-Platform Deployment Preparation
+
+- Completed `DEPLOY-P1-T03`.
+- Marked `DEPLOY-P1` complete and cleared the active focus because the free-platform rollout is now live and smoke-verified.
+- Deployed the frontend to `https://ticketflow-frontend-flax.vercel.app`.
+- Deployed the backend to `https://ticketflow-api-rut0.onrender.com`.
+- Wired the hosted backend to Neon Postgres and confirmed the production health endpoint returns successfully.
+- Fixed hosted CORS handling for Vercel alias domains so the deployed frontend can authenticate against the deployed backend.
+- Created the initial platform-admin account for `limdeux27@gmail.com` directly in the hosted database because the production environment does not seed demo users.
+- Verified the hosted login flow and loaded the live `/admin` dashboard in Safari.
+
+Verification:
+- Ran live API checks against `https://ticketflow-api-rut0.onrender.com/api/health`, `POST /api/auth/login`, and `GET /api/auth/me`.
+- Ran live Safari verification against `https://ticketflow-frontend-flax.vercel.app/auth/login` and `https://ticketflow-frontend-flax.vercel.app/admin`.
+
 ## 2026-05-09 16:32 +08:00 - Started Free-Platform Deployment Preparation
 
 - Added `DEPLOY-P1` as the active deployment-prep epic for the Vercel + free-platform rollout.

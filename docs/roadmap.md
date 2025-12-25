@@ -4,24 +4,24 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`DEPLOY-P1` is active.
+No active focus is set.
 
 ## MVP Items
 
 ### `DEPLOY-P1` Free-Platform Deployment Preparation
 
-- Status: `incomplete`
+- Status: `complete`
 - Priority: high
 - Scope: Prepare the Ticketing app for a secure low-cost deployment using Vercel for the frontend and free-tier backend/database services.
-- Current state: partially complete after hardening auth and cross-origin behavior, adding a backend health endpoint, adding Vercel SPA rewrites/security headers, and adding backend/frontend production env templates plus a free-platform deployment runbook.
-- Next actions: create the actual free-tier services, configure production environment variables, deploy the frontend/backend, and run live smoke checks against the hosted URLs.
-- Blockers: none in-repo; live deployment still depends on creating the hosting accounts/services.
+- Current state: complete after deploying the frontend to `https://ticketflow-frontend-flax.vercel.app`, deploying the backend to `https://ticketflow-api-rut0.onrender.com`, wiring Neon Postgres, fixing Vercel alias CORS behavior, creating the initial platform-admin account for `limdeux27@gmail.com`, and live-verifying the hosted admin dashboard in Safari.
+- Next actions: none. Rotate the temporary initial-admin password inside the app or by direct admin tooling before broader sharing.
+- Blockers: none.
 
 #### Child Items
 
 - `DEPLOY-P1-T01` Harden auth, origin, and hosting behavior for deployment - `complete`
 - `DEPLOY-P1-T02` Add free-platform environment templates and deployment runbook - `complete`
-- `DEPLOY-P1-T03` Execute free-platform deployment and live smoke verification - `incomplete`
+- `DEPLOY-P1-T03` Execute free-platform deployment and live smoke verification - `complete`
 
 ### `MOBILE-RESP-P1` App-Wide Mobile Responsiveness Hardening
 

@@ -8,6 +8,14 @@ This runbook is the current lowest-cost deployment shape for Ticketing:
 
 This setup is acceptable for demos, portfolio use, and low-traffic personal testing. It is not a strong production setup for a real team because free services can sleep, throttle, or change limits.
 
+## Current Live Deployment
+
+- Frontend: `https://ticketflow-frontend-flax.vercel.app`
+- Backend health: `https://ticketflow-api-rut0.onrender.com/api/health`
+- Backend base URL: `https://ticketflow-api-rut0.onrender.com/api`
+
+The current live environment uses a manually bootstrapped initial platform-admin account instead of demo seed data. Rotate the temporary bootstrap password before sharing the deployment widely.
+
 ## Architecture
 
 - The frontend is a static Vite build deployed from `frontend/`.
