@@ -50,3 +50,6 @@ backend/storage/logs/
 !.vscode/extensions.json
 .vercel
 .env*.local
+
+# Private deployment records
+docs/deployment/private/
