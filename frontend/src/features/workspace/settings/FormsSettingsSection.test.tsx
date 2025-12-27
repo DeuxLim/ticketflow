@@ -12,9 +12,9 @@ import {
   listTicketTypes,
   updateTicketCustomField,
   updateTicketFormTemplate,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
-vi.mock('./settings-api', () => ({
+vi.mock('@/features/workspace/api/settings-api', () => ({
   createTicketCustomField: vi.fn(),
   createTicketFormTemplate: vi.fn(),
   listTicketCustomFields: vi.fn(),

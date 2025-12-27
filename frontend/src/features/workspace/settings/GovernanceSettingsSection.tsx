@@ -24,7 +24,7 @@ import {
   startOidcSso,
   updateTenantSecurityPolicy,
   updateRetentionPolicy,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
 type GovernanceSettingsSectionProps = {
   workspaceSlug: string;

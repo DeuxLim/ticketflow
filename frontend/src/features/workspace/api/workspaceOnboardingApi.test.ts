@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRequest } from '@/services/api/client';
-import { createWorkspace, listUserWorkspaces } from './workspaceOnboardingApi';
+import { createWorkspace, listUserWorkspaces } from '@/features/workspace/api/workspaceOnboardingApi';
 
 vi.mock('@/services/api/client', () => ({
   apiRequest: vi.fn(),

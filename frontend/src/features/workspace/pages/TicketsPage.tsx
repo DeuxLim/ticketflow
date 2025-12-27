@@ -18,7 +18,7 @@ import {
   listTicketCustomersForSelectors,
   listWorkspaceTickets,
   updateWorkspaceTicketById,
-} from '@/features/workspace/pages/ticketPageApi';
+} from '@/features/workspace/api/ticketPageApi';
 import {
   createSavedView,
   deleteSavedView,
@@ -28,7 +28,7 @@ import {
   listTicketFormTemplates,
   listTicketQueues,
   listTicketTags,
-} from '@/features/workspace/settings/settings-api';
+} from '@/features/workspace/api/settings-api';
 import { TicketFormFields } from '@/features/workspace/pages/TicketFormFields';
 import { TicketQueueControlsSheet } from '@/features/workspace/pages/TicketQueueControlsSheet';
 import { TicketQueueSearchBar } from '@/features/workspace/pages/TicketQueueSearchBar';

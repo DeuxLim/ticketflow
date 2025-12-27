@@ -5,9 +5,9 @@ import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkspaceOnboardingPage } from './WorkspaceOnboardingPage';
-import { createWorkspace, listUserWorkspaces } from './workspaceOnboardingApi';
+import { createWorkspace, listUserWorkspaces } from '@/features/workspace/api/workspaceOnboardingApi';
 
-vi.mock('./workspaceOnboardingApi', () => ({
+vi.mock('@/features/workspace/api/workspaceOnboardingApi', () => ({
   createWorkspace: vi.fn(),
   listUserWorkspaces: vi.fn(),
 }));

@@ -21,7 +21,7 @@ import {
   deleteWorkspaceCustomer,
   listWorkspaceCustomers,
   updateWorkspaceCustomer,
-} from '@/features/workspace/pages/customerApi';
+} from '@/features/workspace/api/customerApi';
 import { ApiError } from '@/services/api/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Customer } from '@/types/api';

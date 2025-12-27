@@ -10,7 +10,7 @@ import {
   getDashboardReportingOverview,
   listDashboardCustomers,
   listDashboardRecentTickets,
-} from '@/features/workspace/pages/workspaceDashboardApi';
+} from '@/features/workspace/api/workspaceDashboardApi';
 import { ApiError } from '@/services/api/client';
 
 export function WorkspaceDashboardPage() {

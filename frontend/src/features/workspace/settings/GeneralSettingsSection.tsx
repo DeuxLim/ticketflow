@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getGeneralSettings, updateGeneralSettings } from './settings-api';
+import { getGeneralSettings, updateGeneralSettings } from '@/features/workspace/api/settings-api';
 
 type GeneralSettingsSectionProps = {
   workspaceSlug: string;
