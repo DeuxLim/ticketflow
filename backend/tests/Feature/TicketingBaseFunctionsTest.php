@@ -166,7 +166,15 @@ class TicketingBaseFunctionsTest extends TestCase
         $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
             'name' => 'Jane Filter',
             'email' => 'jane.filter@example.com',
+            'phone' => '+639171112222',
             'company' => 'Filter Corp',
+            'job_title' => 'Support Buyer',
+            'website' => 'https://filter.example',
+            'external_reference' => 'FILTER-001',
+            'support_tier' => 'enterprise',
+            'status' => 'active',
+            'address' => 'Hidden Filter Address',
+            'internal_notes' => 'Hidden Filter Note',
         ])->assertCreated();
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
@@ -179,6 +187,20 @@ class TicketingBaseFunctionsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.name', 'Jane Filter');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?search=FILTER-001")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Jane Filter');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?search=enterprise")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Jane Filter');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?search=Hidden")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 0);
     }
 
     public function test_owner_can_bulk_update_tickets(): void

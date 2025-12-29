@@ -1,13 +1,12 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-27T20:13:21+08:00"
+updated_at: "2026-04-28T21:21:42+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus:
-  - MAINT-P2
+current_focus: []
 items:
   - id: MAINT-P1
     title: Frontend Maintainability Decomposition
@@ -218,7 +217,7 @@ items:
     title: Settings Surface Maintainability Decomposition
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: medium
     mvp: true
     description: Continue decomposing oversized workspace settings surfaces so future policy, workflow, and form changes do not accumulate in monolithic route sections.
@@ -231,21 +230,22 @@ items:
     notes:
       - "2026-04-27: Initialized after `MAINT-P1` closed and a follow-up scan showed the remaining oversized settings surfaces were `WorkflowAutomationSettingsSection.tsx`, `TicketingSettingsSection.tsx`, and `FormsSettingsSection.tsx`."
       - "2026-04-27: Completed `MAINT-P2-T01` by extracting the workflow and automation creation dialogs into `WorkflowAutomationDialogs.tsx`, reducing `WorkflowAutomationSettingsSection.tsx` from 564 lines to 457 lines."
-    incomplete_reason: "Workflow automation decomposition has started. Remaining work is the ticketing/forms settings slices plus epic closeout verification."
+      - "2026-04-28: Completed `MAINT-P2-T02` by extracting the ticketing dictionary overview, dialogs, inline create forms, and generic dictionary editor into `TicketingDictionaryDialogs.tsx`, reducing `TicketingSettingsSection.tsx` from 522 lines to 312 lines."
+      - "2026-04-28: Completed `MAINT-P2-T03` by extracting custom-field and form-template overview/dialog rendering into `FormsSettingsDialogs.tsx`, reducing `FormsSettingsSection.tsx` from 450 lines to 272 lines."
+      - "2026-04-28: Completed `MAINT-P2-T04` closeout verification with full frontend tests, lint, build, YAML validation, and whitespace checks."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`.
-      - Continue with `MAINT-P2-T03`, then run `MAINT-P2-T04` closeout verification.
+    next_actions: []
     tags:
       - refactor
       - maintainability
       - settings
       - frontend
     created_at: "2026-04-27T07:27:00+08:00"
-    updated_at: "2026-04-27T07:27:00+08:00"
-    changed_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-28T18:59:23+08:00"
+    changed_at: "2026-04-28T18:59:23+08:00"
     changed_source: codex
 
   - id: MAINT-P2-T01
@@ -283,7 +283,7 @@ items:
     title: Decompose ticketing settings editors
     type: task
     parent_id: MAINT-P2
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Split the remaining high-churn editor surfaces in `TicketingSettingsSection.tsx` into focused modules.
@@ -293,28 +293,29 @@ items:
       - Relevant frontend verification passes after the extraction.
     dependencies:
       - MAINT-P2-T01
-    notes: []
+    notes:
+      - "2026-04-28: Added `TicketingDictionaryDialogs.tsx` to own dictionary counts, summary cards, management dialogs, inline create forms, and the reusable dictionary editor while keeping query and mutation orchestration in `TicketingSettingsSection.tsx`."
+      - "2026-04-28: Reduced `TicketingSettingsSection.tsx` from 522 lines to 312 lines and verified with the targeted ticketing settings test, frontend lint, and frontend build."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Identify the largest self-contained editor or dialog surface inside `TicketingSettingsSection.tsx`.
+    next_actions: []
     tags:
       - refactor
       - ticketing
       - settings
       - frontend
     created_at: "2026-04-27T07:27:00+08:00"
-    updated_at: "2026-04-27T07:27:00+08:00"
-    changed_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-28T18:38:04+08:00"
+    changed_at: "2026-04-28T18:38:04+08:00"
     changed_source: codex
 
   - id: MAINT-P2-T03
     title: Decompose forms settings surfaces
     type: task
     parent_id: MAINT-P2
-    status: planned
+    status: complete
     priority: low
     mvp: true
     description: Reduce the remaining monolithic render blocks in `FormsSettingsSection.tsx` after the higher-churn settings surfaces are handled.
@@ -324,28 +325,29 @@ items:
       - Relevant frontend verification passes after the extraction.
     dependencies:
       - MAINT-P2-T02
-    notes: []
+    notes:
+      - "2026-04-28: Added `FormsSettingsDialogs.tsx` to own custom-field and form-template summaries, tables, management dialogs, create forms, and edit controls while keeping query and mutation orchestration in `FormsSettingsSection.tsx`."
+      - "2026-04-28: Reduced `FormsSettingsSection.tsx` from 450 lines to 272 lines and verified with the targeted forms settings test, frontend lint, and frontend build."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Reassess `FormsSettingsSection.tsx` after the ticketing settings extraction lands.
+    next_actions: []
     tags:
       - refactor
       - forms
       - settings
       - frontend
     created_at: "2026-04-27T07:27:00+08:00"
-    updated_at: "2026-04-27T07:27:00+08:00"
-    changed_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-28T18:59:23+08:00"
+    changed_at: "2026-04-28T18:59:23+08:00"
     changed_source: codex
 
   - id: MAINT-P2-T04
     title: Run verification and close out settings maintainability epic
     type: task
     parent_id: MAINT-P2
-    status: planned
+    status: complete
     priority: low
     mvp: true
     description: Re-run the relevant frontend verification suite and close the settings maintainability epic when the remaining decomposition tasks are complete.
@@ -356,28 +358,28 @@ items:
     dependencies:
       - MAINT-P2-T02
       - MAINT-P2-T03
-    notes: []
+    notes:
+      - "2026-04-28: Verified the settings maintainability refactor with `frontend` `npm test`, `npm run lint`, `npm run build`, root YAML validation, and `git diff --check`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Re-run the relevant frontend verification suite after the remaining settings decomposition slices land.
+    next_actions: []
     tags:
       - verification
       - refactor
       - frontend
       - settings
     created_at: "2026-04-27T07:27:00+08:00"
-    updated_at: "2026-04-27T07:27:00+08:00"
-    changed_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-28T18:59:23+08:00"
+    changed_at: "2026-04-28T18:59:23+08:00"
     changed_source: codex
 
   - id: CUST-P1
     title: Customer Profile Enrichment
     type: epic
     parent_id: null
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Expand customer records beyond the current basic contact fields so support teams can see the operational context they need without leaving the workspace.
@@ -394,27 +396,30 @@ items:
       - "2026-04-27: Scope is intentionally helpdesk-focused, not a full CRM. The main missing context buckets are customer identity, operational preferences, account context, and internal support notes."
       - "2026-04-27: Recommended fields for planning and implementation are `job_title`, `website`, `timezone`, `preferred_contact_method`, `preferred_language`, `address`, `external_reference`, `support_tier`, `status`, and `internal_notes`."
       - "2026-04-27: Nice-to-have follow-ups such as multiple contacts, billing records, or full account hierarchies should stay out of this epic unless the first pass proves they are required."
+      - "2026-04-28: Completed `CUST-P1-T01` after inspecting the current customer model, request validation, resource, controller search behavior, customers page, customer API helper, and ticket selector usage."
+      - "2026-04-28: Completed `CUST-P1-T02` by adding persistence, validation, resource output, approved search behavior, frontend API typing, and backend regression coverage for the locked customer profile fields."
+      - "2026-04-28: Completed `CUST-P1-T03` by expanding the customer directory UI with grouped profile fields, compact list indicators, a focused profile details dialog, and frontend regression coverage while keeping ticket selectors lightweight."
+      - "2026-04-28: Completed `CUST-P1-T04` closeout verification with backend and frontend test, lint, build, YAML, and whitespace checks."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Finish `MAINT-P2`, then start `CUST-P1-T01` to lock the exact customer-profile field set and UI boundaries.
+    next_actions: []
     tags:
       - customers
       - product
       - support-ops
       - mvp
     created_at: "2026-04-27T20:13:21+08:00"
-    updated_at: "2026-04-27T20:13:21+08:00"
-    changed_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-28T21:21:42+08:00"
+    changed_at: "2026-04-28T21:21:42+08:00"
     changed_source: codex
 
   - id: CUST-P1-T01
     title: Define enriched customer profile schema and boundaries
     type: task
     parent_id: CUST-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Lock the first-pass customer fields, decide which are workspace-visible versus internal-only, and keep the scope focused on support operations instead of CRM sprawl.
@@ -425,27 +430,34 @@ items:
       - The approved scope is reflected in the canonical roadmap state.
     dependencies:
       - CUST-P1
-    notes: []
+    notes:
+      - "2026-04-28: Current backend contract confirmed as minimal: `customers` supports `name`, `email`, `phone`, and `company`; resource returns those fields plus timestamps; search currently covers `name`, `email`, and `company`."
+      - "2026-04-28: Current frontend contract confirmed as minimal: `Customer` type, `customerApi`, and `CustomersPage` forms/table only expose `name`, `email`, `phone`, and `company`; ticket selectors and ticket embeds only need lightweight customer identity."
+      - "2026-04-28: Approved first-pass field set: `job_title`, `website`, `timezone`, `preferred_contact_method`, `preferred_language`, `address`, `external_reference`, `support_tier`, `status`, and `internal_notes`."
+      - "2026-04-28: Field grouping: Identity = `name`, `email`, `phone`, `job_title`; Account = `company`, `website`, `address`, `external_reference`; Preferences = `timezone`, `preferred_contact_method`, `preferred_language`; Support = `support_tier`, `status`, `internal_notes`."
+      - "2026-04-28: Internal-only field for this pass is `internal_notes`; all other new fields are workspace-visible operational profile fields. None are public/customer-facing because the app currently has no customer portal surface."
+      - "2026-04-28: Search should expand from `name`, `email`, and `company` to include `phone`, `job_title`, `website`, `external_reference`, `support_tier`, and `status`; exclude `address` and `internal_notes` from default search to avoid noisy or sensitive matches."
+      - "2026-04-28: Listing should stay scan-friendly: keep core identity columns and add compact support/account indicators such as support tier, status, and preferred contact method. Full address, notes, language, timezone, and website belong in create/edit/detail surfaces rather than every table row."
+      - "2026-04-28: Ticket selectors and embedded ticket customer summaries should remain lightweight (`id`, `name`, `email`) unless a future ticket workflow explicitly needs richer profile context."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Validate the proposed field set against the current customer list, ticket assignment flows, and support workflows.
+    next_actions: []
     tags:
       - customers
       - schema
       - planning
     created_at: "2026-04-27T20:13:21+08:00"
-    updated_at: "2026-04-27T20:13:21+08:00"
-    changed_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-28T20:19:13+08:00"
+    changed_at: "2026-04-28T20:19:13+08:00"
     changed_source: codex
 
   - id: CUST-P1-T02
     title: Extend backend customer model and API contract
     type: task
     parent_id: CUST-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Add the approved customer profile fields to persistence, validation, API resources, and search behavior while preserving tenant and permission boundaries.
@@ -456,28 +468,33 @@ items:
       - Backend regression tests cover validation and workspace boundary behavior for the expanded profile.
     dependencies:
       - CUST-P1-T01
-    notes: []
+    notes:
+      - "2026-04-28: Implement against the locked `CUST-P1-T01` field set and search/list boundaries."
+      - "2026-04-28: Added migration `2026_04_28_201913_add_profile_fields_to_customers_table.php` for the locked profile fields plus indexes for `external_reference`, workspace `status`, and workspace `support_tier` lookups."
+      - "2026-04-28: Updated `Customer` fillable fields, store/update request validation, and `CustomerResource` output for the expanded profile contract."
+      - "2026-04-28: Expanded customer search to include `phone`, `job_title`, `website`, `external_reference`, `support_tier`, and `status` while keeping `address` and `internal_notes` excluded from default search."
+      - "2026-04-28: Updated frontend `Customer` API type so the resource contract stays aligned before the UI expansion."
+      - "2026-04-28: Added backend regression coverage for create/update output, invalid website/timezone validation, searchable profile fields, and non-searchable address/internal notes."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Extend the migration/model/request/resource stack after the first-pass field set is finalized.
+    next_actions: []
     tags:
       - customers
       - backend
       - api
       - tests
     created_at: "2026-04-27T20:13:21+08:00"
-    updated_at: "2026-04-27T20:13:21+08:00"
-    changed_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-28T20:33:37+08:00"
+    changed_at: "2026-04-28T20:33:37+08:00"
     changed_source: codex
 
   - id: CUST-P1-T03
     title: Expand customer workspace UI and ticket touchpoints
     type: task
     parent_id: CUST-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Update the customer directory and related ticket surfaces so operators can capture and review richer customer context without cluttering fast ticket work.
@@ -488,28 +505,32 @@ items:
       - Frontend regression coverage exists for the expanded customer profile behavior.
     dependencies:
       - CUST-P1-T02
-    notes: []
+    notes:
+      - "2026-04-28: Backend/API contract now returns the expanded customer profile fields. UI work should wire create/edit payloads, table indicators, and a focused detail presentation without expanding ticket selectors beyond lightweight identity."
+      - "2026-04-28: Updated customer create/edit dialogs with grouped Identity, Account, Preferences, and Support sections for the approved fields."
+      - "2026-04-28: Updated the customer table with compact job title, external reference/website, support tier, lifecycle status, preferred contact, and timezone/language indicators."
+      - "2026-04-28: Added a focused customer profile details dialog for full profile review, including address and internal notes, without changing ticket selector payloads or ticket embedded customer summaries."
+      - "2026-04-28: Added `CustomersPage.test.tsx` coverage for enriched profile display, detail dialog content, and create payload behavior; updated `customerApi.test.ts` for the expanded payload contract."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Decide which fields belong in the customer table, which belong in dialogs, and which should be shown only in a detail view or support context panel.
+    next_actions: []
     tags:
       - customers
       - frontend
       - tickets
       - ux
     created_at: "2026-04-27T20:13:21+08:00"
-    updated_at: "2026-04-27T20:13:21+08:00"
-    changed_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-28T21:21:42+08:00"
+    changed_at: "2026-04-28T21:21:42+08:00"
     changed_source: codex
 
   - id: CUST-P1-T04
     title: Verify customer profile enrichment and close out epic
     type: task
     parent_id: CUST-P1
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Run the relevant verification suite and close the customer profile epic when the expanded data model and UI are complete.
@@ -519,21 +540,21 @@ items:
       - "`CUST-P1` and its children meet their definitions of done before being marked complete."
     dependencies:
       - CUST-P1-T03
-    notes: []
+    notes:
+      - "2026-04-28: Verified the customer profile epic with focused customer frontend tests, full frontend tests, frontend lint/build, backend Pint dirty check, backend test suite, YAML validation, and `git diff --check`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run the relevant backend and frontend verification after implementation lands.
+    next_actions: []
     tags:
       - customers
       - verification
       - backend
       - frontend
     created_at: "2026-04-27T20:13:21+08:00"
-    updated_at: "2026-04-27T20:13:21+08:00"
-    changed_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-28T21:21:42+08:00"
+    changed_at: "2026-04-28T21:21:42+08:00"
     changed_source: codex
 
   - id: HARDEN-P1

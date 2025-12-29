@@ -1,14 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { ApiError } from '@/services/api/client';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { WorkspaceTicketingSettings } from '@/types/api';
 import {
   createTicketCategory,
@@ -23,96 +21,14 @@ import {
   updateTicketType,
   updateTicketingSettings,
 } from './settings-api';
+import { type DictionaryKind, TicketingDictionaryDialogs } from './TicketingDictionaryDialogs';
 
 type TicketingSettingsSectionProps = {
   workspaceSlug: string;
 };
 
-type DictionaryKind = 'categories' | 'types' | 'tags';
-
 function slugify(value: string): string {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-}
-
-type DictionaryEditorProps<T extends { id: number; name: string; is_active: boolean }> = {
-  title: string;
-  rows: T[];
-  selectedId: string;
-  setSelectedId: (value: string) => void;
-  nameDraft: string;
-  setNameDraft: (value: string) => void;
-  keyDraft?: string;
-  setKeyDraft?: (value: string) => void;
-  onSelect: (id: string) => void;
-  onSave: () => void;
-  onToggle: () => void;
-  isSaving: boolean;
-  errorMessage: string | null;
-};
-
-function DictionaryEditor<T extends { id: number; name: string; is_active: boolean }>(props: DictionaryEditorProps<T>) {
-  const {
-    title,
-    rows,
-    selectedId,
-    setSelectedId,
-    nameDraft,
-    setNameDraft,
-    keyDraft,
-    setKeyDraft,
-    onSelect,
-    onSave,
-    onToggle,
-    isSaving,
-    errorMessage,
-  } = props;
-
-  const selected = useMemo(() => rows.find((row) => String(row.id) === selectedId), [rows, selectedId]);
-
-  return (
-    <div className="rounded-lg border p-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-medium">{title}</h3>
-        <Badge variant="outline">{rows.length} records</Badge>
-      </div>
-      <div className="grid gap-3 md:grid-cols-[220px_1fr_1fr_auto_auto]">
-        <Select
-          value={selectedId}
-          onValueChange={(value) => {
-            const selected = value ?? '';
-            setSelectedId(selected);
-            onSelect(selected);
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={`Select ${title.toLowerCase()}`} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {rows.map((row) => (
-                <SelectItem key={row.id} value={String(row.id)}>
-                  {row.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <Input aria-label={`${title} name`} value={nameDraft} onChange={(event) => setNameDraft(event.target.value)} placeholder="Name" />
-        {setKeyDraft ? (
-          <Input aria-label={`${title} key`} value={keyDraft ?? ''} onChange={(event) => setKeyDraft(event.target.value)} placeholder="key-value" />
-        ) : (
-          <div />
-        )}
-        <Button type="button" variant="outline" onClick={onSave} disabled={!selected || !nameDraft.trim() || isSaving}>
-          Save
-        </Button>
-        <Button type="button" variant="outline" onClick={onToggle} disabled={!selected || isSaving}>
-          {selected?.is_active ? 'Deactivate' : 'Activate'}
-        </Button>
-      </div>
-      {errorMessage ? <p className="mt-2 text-sm text-destructive">{errorMessage}</p> : null}
-    </div>
-  );
 }
 
 export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSectionProps) {
@@ -341,182 +257,56 @@ export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSec
           <CardDescription>Review owner-managed terms first, then open the focused manager for changes.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Categories</TableHead>
-                  <TableHead>Ticket types</TableHead>
-                  <TableHead>Tags</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>{categories.length}</TableCell>
-                  <TableCell>{types.length}</TableCell>
-                  <TableCell>{tags.length}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3">
-            <DictionarySummary
-              description="Routing and reporting labels."
-              label="Categories"
-              onOpen={() => setActiveDictionary('categories')}
-              total={categories.length}
-            />
-            <DictionarySummary
-              description="Intake and template grouping."
-              label="Ticket types"
-              onOpen={() => setActiveDictionary('types')}
-              total={types.length}
-            />
-            <DictionarySummary
-              description="Lightweight ticket markers."
-              label="Tags"
-              onOpen={() => setActiveDictionary('tags')}
-              total={tags.length}
-            />
-          </div>
+          <TicketingDictionaryDialogs
+            activeDictionary={activeDictionary}
+            categories={categories}
+            categoryKeyDraft={categoryKeyDraft}
+            categoryName={categoryName}
+            categoryNameDraft={categoryNameDraft}
+            dictionaryError={dictionaryError}
+            isCreatingCategory={createCategory.isPending}
+            isCreatingTag={createTag.isPending}
+            isCreatingType={createType.isPending}
+            isSavingCategory={updateCategory.isPending || toggleCategory.isPending}
+            isSavingTag={updateTag.isPending || toggleTag.isPending}
+            isSavingType={updateType.isPending || toggleType.isPending}
+            onCreateCategory={() => createCategory.mutate()}
+            onCreateTag={() => createTag.mutate()}
+            onCreateType={() => createType.mutate()}
+            onSelectCategory={hydrateCategoryDrafts}
+            onSelectTag={hydrateTagDrafts}
+            onSelectType={hydrateTypeDrafts}
+            onSetActiveDictionary={setActiveDictionary}
+            onSaveCategory={() => updateCategory.mutate()}
+            onSaveTag={() => updateTag.mutate()}
+            onSaveType={() => updateType.mutate()}
+            onToggleCategory={() => toggleCategory.mutate()}
+            onToggleTag={() => toggleTag.mutate()}
+            onToggleType={() => toggleType.mutate()}
+            selectedCategoryId={selectedCategoryId}
+            selectedTagId={selectedTagId}
+            selectedTypeId={selectedTypeId}
+            setCategoryKeyDraft={setCategoryKeyDraft}
+            setCategoryName={setCategoryName}
+            setCategoryNameDraft={setCategoryNameDraft}
+            setSelectedCategoryId={setSelectedCategoryId}
+            setSelectedTagId={setSelectedTagId}
+            setSelectedTypeId={setSelectedTypeId}
+            setTagName={setTagName}
+            setTagNameDraft={setTagNameDraft}
+            setTypeKeyDraft={setTypeKeyDraft}
+            setTypeName={setTypeName}
+            setTypeNameDraft={setTypeNameDraft}
+            tagName={tagName}
+            tagNameDraft={tagNameDraft}
+            tags={tags}
+            typeKeyDraft={typeKeyDraft}
+            typeName={typeName}
+            typeNameDraft={typeNameDraft}
+            types={types}
+          />
         </CardContent>
       </Card>
-
-      <Dialog open={activeDictionary === 'categories'} onOpenChange={(open) => setActiveDictionary(open ? 'categories' : null)}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Manage Categories</DialogTitle>
-            <DialogDescription>Create or update ticket categories without crowding the settings overview.</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <InlineCreate label="Category" value={categoryName} onChange={setCategoryName} onSubmit={() => createCategory.mutate()} disabled={!categoryName || createCategory.isPending} />
-            <DictionaryEditor
-              title="Categories"
-              rows={categories}
-              selectedId={selectedCategoryId}
-              setSelectedId={setSelectedCategoryId}
-              nameDraft={categoryNameDraft}
-              setNameDraft={setCategoryNameDraft}
-              keyDraft={categoryKeyDraft}
-              setKeyDraft={setCategoryKeyDraft}
-              onSelect={hydrateCategoryDrafts}
-              onSave={() => updateCategory.mutate()}
-              onToggle={() => toggleCategory.mutate()}
-              isSaving={updateCategory.isPending || toggleCategory.isPending}
-              errorMessage={dictionaryError}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDictionary === 'types'} onOpenChange={(open) => setActiveDictionary(open ? 'types' : null)}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Manage Ticket Types</DialogTitle>
-            <DialogDescription>Create or update intake types used by templates and routing.</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <InlineCreate label="Ticket type" value={typeName} onChange={setTypeName} onSubmit={() => createType.mutate()} disabled={!typeName || createType.isPending} />
-            <DictionaryEditor
-              title="Ticket types"
-              rows={types}
-              selectedId={selectedTypeId}
-              setSelectedId={setSelectedTypeId}
-              nameDraft={typeNameDraft}
-              setNameDraft={setTypeNameDraft}
-              keyDraft={typeKeyDraft}
-              setKeyDraft={setTypeKeyDraft}
-              onSelect={hydrateTypeDrafts}
-              onSave={() => updateType.mutate()}
-              onToggle={() => toggleType.mutate()}
-              isSaving={updateType.isPending || toggleType.isPending}
-              errorMessage={dictionaryError}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeDictionary === 'tags'} onOpenChange={(open) => setActiveDictionary(open ? 'tags' : null)}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Manage Tags</DialogTitle>
-            <DialogDescription>Create or update lightweight tags used to mark and filter tickets.</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4">
-            <InlineCreate label="Tag" value={tagName} onChange={setTagName} onSubmit={() => createTag.mutate()} disabled={!tagName || createTag.isPending} />
-            <DictionaryEditor
-              title="Tags"
-              rows={tags}
-              selectedId={selectedTagId}
-              setSelectedId={setSelectedTagId}
-              nameDraft={tagNameDraft}
-              setNameDraft={setTagNameDraft}
-              onSelect={hydrateTagDrafts}
-              onSave={() => updateTag.mutate()}
-              onToggle={() => toggleTag.mutate()}
-              isSaving={updateTag.isPending || toggleTag.isPending}
-              errorMessage={dictionaryError}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
-
-function DictionarySummary({
-  description,
-  label,
-  onOpen,
-  total,
-}: {
-  description: string;
-  label: string;
-  onOpen: () => void;
-  total: number;
-}) {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
-      <div>
-        <p className="text-sm font-medium">{label}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-      </div>
-      <Badge variant="outline" className="w-fit">
-        {total} records
-      </Badge>
-      <Button type="button" variant="outline" onClick={onOpen}>
-        Manage {label.toLowerCase()}
-      </Button>
-    </div>
-  );
-}
-
-function InlineCreate({
-  label,
-  value,
-  onChange,
-  onSubmit,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <form
-      className="flex gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit();
-      }}
-    >
-      <Input aria-label={`${label} name`} placeholder={`${label} name`} value={value} onChange={(event) => onChange(event.target.value)} />
-      <Button type="submit" variant="outline" disabled={disabled}>
-        Add
-      </Button>
-    </form>
   );
 }

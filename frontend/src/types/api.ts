@@ -25,6 +25,16 @@ export type Customer = {
   email: string | null;
   phone: string | null;
   company: string | null;
+  job_title: string | null;
+  website: string | null;
+  timezone: string | null;
+  preferred_contact_method: string | null;
+  preferred_language: string | null;
+  address: string | null;
+  external_reference: string | null;
+  support_tier: string | null;
+  status: string | null;
+  internal_notes: string | null;
   created_at?: string;
   updated_at?: string;
 };

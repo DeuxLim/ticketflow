@@ -42,6 +42,81 @@ class CustomersCrudTest extends TestCase
         ]);
     }
 
+    public function test_workspace_user_can_create_and_update_enriched_customer_profile(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+            'phone' => '+639171234567',
+            'company' => 'Acme Corp',
+            'job_title' => 'Operations Lead',
+            'website' => 'https://acme.example',
+            'timezone' => 'Asia/Manila',
+            'preferred_contact_method' => 'email',
+            'preferred_language' => 'English',
+            'address' => '123 Support Street, Makati',
+            'external_reference' => 'CRM-1001',
+            'support_tier' => 'enterprise',
+            'status' => 'active',
+            'internal_notes' => 'Escalate renewal questions to account owner.',
+        ])->assertCreated()
+            ->assertJsonPath('data.job_title', 'Operations Lead')
+            ->assertJsonPath('data.website', 'https://acme.example')
+            ->assertJsonPath('data.timezone', 'Asia/Manila')
+            ->assertJsonPath('data.preferred_contact_method', 'email')
+            ->assertJsonPath('data.preferred_language', 'English')
+            ->assertJsonPath('data.address', '123 Support Street, Makati')
+            ->assertJsonPath('data.external_reference', 'CRM-1001')
+            ->assertJsonPath('data.support_tier', 'enterprise')
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.internal_notes', 'Escalate renewal questions to account owner.')
+            ->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/customers/{$customer['id']}", [
+            'job_title' => 'Support Director',
+            'support_tier' => 'strategic',
+            'status' => 'onboarding',
+            'internal_notes' => 'Needs weekly check-in during onboarding.',
+        ])->assertOk()
+            ->assertJsonPath('data.job_title', 'Support Director')
+            ->assertJsonPath('data.support_tier', 'strategic')
+            ->assertJsonPath('data.status', 'onboarding')
+            ->assertJsonPath('data.internal_notes', 'Needs weekly check-in during onboarding.');
+
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer['id'],
+            'job_title' => 'Support Director',
+            'support_tier' => 'strategic',
+            'status' => 'onboarding',
+        ]);
+    }
+
+    public function test_enriched_customer_profile_validation_rejects_invalid_values(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'website' => 'not-a-url',
+            'timezone' => 'Mars/Base',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['website', 'timezone']);
+    }
+
     public function test_customer_from_other_workspace_is_not_accessible(): void
     {
         $owner = User::factory()->create();
