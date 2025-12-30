@@ -1307,6 +1307,39 @@ Verification:
 
 Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`.
 
+## 2026-04-27 20:13 +08:00 - Added Customer Profile Enrichment Roadmap Epic
+
+- Reviewed the current customer contract before adding roadmap scope:
+  - backend persistence stores only `name`, `email`, `phone`, and `company`
+  - the customer API resource returns only those fields plus timestamps
+  - the workspace customer UI only creates, edits, lists, and searches against that minimal record
+- Added new planned epic `CUST-P1` to capture the missing customer-context work without disrupting the active `MAINT-P2` refactor.
+- Scoped the new epic around helpdesk-relevant customer enrichment instead of CRM sprawl.
+- Recorded the recommended first-pass customer fields in canonical state:
+  - `job_title`
+  - `website`
+  - `timezone`
+  - `preferred_contact_method`
+  - `preferred_language`
+  - `address`
+  - `external_reference`
+  - `support_tier`
+  - `status`
+  - `internal_notes`
+- Added child tasks for:
+  - schema and boundary definition
+  - backend model and API expansion
+  - customer UI and ticket touchpoint expansion
+  - verification and epic closeout
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- root: YAML validation for `project-state.yaml`
+
+## Resume From Here
+
+Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`. After `MAINT-P2`, begin `CUST-P1-T01`.
+
 ## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
 
 - Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.
