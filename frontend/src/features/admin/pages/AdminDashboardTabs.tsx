@@ -50,20 +50,22 @@ export function AdminDashboardTabs({
 }: Props) {
   return (
     <Tabs defaultValue="workspaces" className="flex flex-col gap-4">
-      <TabsList className="grid w-full grid-cols-2 sm:max-w-md">
+      <div className="overflow-x-auto pb-1">
+      <TabsList className="grid w-full min-w-[220px] grid-cols-2 sm:max-w-md">
         <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
       </TabsList>
+      </div>
 
-      <TabsContent value="workspaces" className="mt-0">
+      <TabsContent value="workspaces" className="mt-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
         <Card className="shadow-none">
           <CardHeader className="border-b">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex flex-col gap-1">
                 <CardTitle>Workspaces</CardTitle>
                 <CardDescription>{workspacesMeta?.total ?? 0} tenant records</CardDescription>
               </div>
-              <FieldGroup className="w-full md:max-w-sm">
+              <FieldGroup className="w-full lg:max-w-sm">
                 <Field>
                   <FieldLabel htmlFor="workspace-search">Search workspaces</FieldLabel>
                   <Input
@@ -208,15 +210,15 @@ export function AdminDashboardTabs({
         </Card>
       </TabsContent>
 
-      <TabsContent value="users" className="mt-0">
+      <TabsContent value="users" className="mt-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200">
         <Card className="shadow-none">
           <CardHeader className="border-b">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex flex-col gap-1">
                 <CardTitle>Users</CardTitle>
                 <CardDescription>{usersMeta?.total ?? 0} platform accounts</CardDescription>
               </div>
-              <FieldGroup className="w-full md:max-w-sm">
+              <FieldGroup className="w-full lg:max-w-sm">
                 <Field>
                   <FieldLabel htmlFor="user-search">Search users</FieldLabel>
                   <Input
@@ -249,7 +251,7 @@ export function AdminDashboardTabs({
 function UsersList({ users }: { users: AdminUser[] }) {
   return (
     <>
-      <div className="hidden overflow-x-auto md:block">
+      <div className="hidden overflow-x-auto lg:block">
         <Table className="min-w-[720px]">
           <TableHeader>
             <TableRow>
@@ -278,7 +280,7 @@ function UsersList({ users }: { users: AdminUser[] }) {
         </Table>
       </div>
 
-      <div className="grid gap-3 p-4 md:hidden">
+      <div className="grid gap-3 p-4 lg:hidden">
         {users.map((user) => (
           <article key={user.id} aria-label={`User ${formatUserName(user)}`} className="rounded-lg border bg-card p-4">
             <div className="flex items-start justify-between gap-3">
