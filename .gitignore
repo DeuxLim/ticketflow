@@ -13,7 +13,15 @@ build/
 !.env.example
 
 # Local agent/tooling metadata
-.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/ticketing-*/
+!.agents/skills/ticketing-*/SKILL.md
+!.agents/skills/codebase-refactor-maintainability-improvement/
+!.agents/skills/codebase-refactor-maintainability-improvement/SKILL.md
+!.agents/learnings/
+!.agents/learnings/*.md
 
 # Stale root duplicate; real Laravel code lives in backend/app/
 /app/
