@@ -1,0 +1,240 @@
+schema_version: 1
+project: Ticketing
+updated_at: "2026-04-13T22:45:00+08:00"
+updated_by: codex
+source_files:
+  canonical: project-state.yaml
+  roadmap: roadmap.md
+  progress_log: changelog/progress-log.md
+current_focus:
+  - WSSET-P1
+items:
+  - id: WSSET-P1
+    title: Workspace Settings Phase 1
+    type: epic
+    parent_id: null
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Build backend APIs and a real Settings UI for workspace general settings plus ticketing and form configuration.
+    definition_of_done:
+      - Workspace settings and ticket config schema, models, APIs, frontend UI, and verification tasks are complete.
+      - Targeted workspace settings backend tests pass.
+      - Frontend production build passes.
+      - Enterprise regression tests and backend formatting checks are run or explicitly waived.
+    dependencies: []
+    notes:
+      - "2026-04-13: Initialized from docs/superpowers/plans/2026-04-13-workspace-settings-phase-1.md because no roadmap.md existed yet."
+      - "2026-04-13: Targeted backend test passed: php artisan test --filter=WorkspaceSettingsPhaseOneTest."
+      - "2026-04-13: Frontend build passed: npm run build. Vite reported existing large chunk/font resolution warnings."
+    incomplete_reason: "Full verification and cleanup remains: enterprise regression tests and backend formatting check from Task 6 have not been run in this session."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Run EnterpriseFoundationTest and EnterprisePhaseTwoFlowsTest filters.
+      - Run backend Pint dirty formatting check if available.
+      - Update this item to complete only after Task 6 verification is satisfied or explicitly waived.
+    tags:
+      - workspace-settings
+      - ticketing-config
+      - mvp
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T01
+    title: Backend settings schema and models
+    type: task
+    parent_id: WSSET-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add workspace settings and ticket configuration tables, models, relationships, and default provisioning.
+    definition_of_done:
+      - Workspace settings and ticket config migration exists.
+      - WorkspaceSetting, TicketQueue, TicketCategory, TicketTag, TicketType, TicketCustomField, and TicketFormTemplate models exist.
+      - Workspace relationships exist.
+      - Workspace creation provisions default settings and ticket config.
+      - Targeted test covers default provisioning.
+    dependencies: []
+    notes:
+      - "2026-04-13: Verified by WorkspaceSettingsPhaseOneTest passing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - backend
+      - database
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T02
+    title: Backend general and ticketing settings APIs
+    type: task
+    parent_id: WSSET-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add general and ticketing settings read/update endpoints with validation, permissions, and audit logging.
+    definition_of_done:
+      - General settings GET/PATCH endpoints exist and enforce workspace.manage.
+      - Ticketing settings GET/PATCH endpoints exist and enforce tickets.manage.
+      - Validation covers ticket number sequence placeholder.
+      - Audit events are recorded for updates.
+      - Targeted tests pass.
+    dependencies:
+      - WSSET-P1-T01
+    notes:
+      - "2026-04-13: Verified by WorkspaceSettingsPhaseOneTest passing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - backend
+      - api
+      - permissions
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T03
+    title: Backend ticket config CRUD APIs
+    type: task
+    parent_id: WSSET-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add scoped CRUD endpoints for ticket queues, categories, tags, types, custom fields, and form templates.
+    definition_of_done:
+      - Ticket config list/create/update endpoints exist.
+      - Queries are scoped to the active workspace.
+      - Duplicate keys are scoped per workspace.
+      - Default switching is atomic where applicable.
+      - Targeted tests pass.
+    dependencies:
+      - WSSET-P1-T01
+    notes:
+      - "2026-04-13: Verified by WorkspaceSettingsPhaseOneTest passing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - backend
+      - api
+      - ticketing-config
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T04
+    title: Frontend settings route and types
+    type: task
+    parent_id: WSSET-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add settings route, API types, API helpers, permissions-aware navigation, and page coordinator.
+    definition_of_done:
+      - Settings route is registered.
+      - Workspace settings page exists.
+      - API types and settings API helpers exist.
+      - Settings navigation is permission-aware.
+      - Frontend build passes.
+    dependencies:
+      - WSSET-P1-T02
+      - WSSET-P1-T03
+    notes:
+      - "2026-04-13: Verified by npm run build passing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - settings-ui
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T05
+    title: Frontend settings sections
+    type: task
+    parent_id: WSSET-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add general, ticketing, forms, workflow/automation, governance, and integrations settings sections.
+    definition_of_done:
+      - General settings section can load and update workspace settings.
+      - Ticketing section can list and manage ticket dictionaries.
+      - Forms section can manage custom fields and form templates.
+      - Operations sections summarize workflow, security, and integrations areas without fake editors.
+      - Frontend build passes.
+    dependencies:
+      - WSSET-P1-T04
+    notes:
+      - "2026-04-13: Verified by npm run build passing."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - settings-ui
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
+
+  - id: WSSET-P1-T06
+    title: Full verification and cleanup
+    type: task
+    parent_id: WSSET-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Run final backend, enterprise regression, frontend build, and formatting verification for Workspace Settings Phase 1.
+    definition_of_done:
+      - WorkspaceSettingsPhaseOneTest passes.
+      - EnterpriseFoundationTest and EnterprisePhaseTwoFlowsTest pass.
+      - Frontend build passes.
+      - Backend Pint dirty formatting check passes or formatting issues are fixed.
+    dependencies:
+      - WSSET-P1-T01
+      - WSSET-P1-T02
+      - WSSET-P1-T03
+      - WSSET-P1-T04
+      - WSSET-P1-T05
+    notes:
+      - "2026-04-13: WorkspaceSettingsPhaseOneTest passed: 11 tests, 64 assertions."
+      - "2026-04-13: npm run build passed. Vite reported existing large chunk/font resolution warnings."
+    incomplete_reason: "Enterprise regression filters and backend Pint dirty formatting check have not been run in this session."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Run php artisan test --filter=EnterpriseFoundationTest.
+      - Run php artisan test --filter=EnterprisePhaseTwoFlowsTest.
+      - Run ./vendor/bin/pint --dirty --test from backend.
+    tags:
+      - verification
+      - release-readiness
+    created_at: "2026-04-13T22:45:00+08:00"
+    updated_at: "2026-04-13T22:45:00+08:00"
+    changed_at: "2026-04-13T22:45:00+08:00"
+    changed_source: codex
