@@ -1,0 +1,1311 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { z } from 'zod';
+import { ForbiddenState } from '@/components/forbidden-state';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
+import type { Customer, Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
+
+const commentSchema = z.object({
+  body: z.string().min(2, 'Comment must not be empty'),
+  is_internal: z.boolean(),
+});
+
+const ticketUpdateSchema = z.object({
+  customer_id: z.string().min(1, 'Select a customer'),
+  title: z.string().min(3, 'Title is required'),
+  description: z.string().min(5, 'Description is required'),
+  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  assigned_to_user_id: z.string().optional().or(z.literal('')),
+  category: z.string().optional().or(z.literal('')),
+  queue_key: z.string().optional().or(z.literal('')),
+  tags: z.string().optional().or(z.literal('')),
+  custom_fields: z.record(z.string(), z.string()).optional(),
+});
+
+const checklistSchema = z.object({
+  title: z.string().min(2, 'Task title is required'),
+});
+
+const relatedTicketSchema = z.object({
+  related_ticket_id: z.string().min(1, 'Select a ticket'),
+  relationship_type: z.string().min(2, 'Relationship is required'),
+});
+
+type CommentForm = z.infer<typeof commentSchema>;
+type TicketUpdateForm = z.infer<typeof ticketUpdateSchema>;
+type ChecklistForm = z.infer<typeof checklistSchema>;
+type RelatedTicketForm = z.infer<typeof relatedTicketSchema>;
+
+type ActivityLog = {
+  id: number;
+  action: string;
+  created_at: string;
+  user?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  } | null;
+  meta?: Record<string, unknown> | null;
+};
+
+type Attachment = {
+  id: number;
+  ticket_id: number;
+  comment_id: number | null;
+  original_name: string;
+  mime_type: string | null;
+  size_bytes: number;
+  uploader?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  } | null;
+  created_at: string;
+};
+
+type MemberOption = {
+  id: number;
+  user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+};
+
+type AuthUser = {
+  id: number;
+  email: string;
+  is_platform_admin: boolean;
+};
+
+function formatDate(value?: string | null): string {
+  if (!value) return '—';
+  return new Date(value).toLocaleString();
+}
+
+function fullName(person?: { first_name?: string; last_name?: string } | null): string {
+  if (!person) return '—';
+  return `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || '—';
+}
+
+function bytesToReadable(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function nextStatuses(current: Ticket['status']): Ticket['status'][] {
+  const map: Record<Ticket['status'], Ticket['status'][]> = {
+    open: ['in_progress', 'closed'],
+    in_progress: ['resolved', 'closed'],
+    resolved: ['closed', 'in_progress'],
+    closed: ['in_progress'],
+  };
+
+  return map[current] ?? [];
+}
+
+function humanizeAction(action: string): string {
+  return action.replaceAll('.', ' ').replaceAll('_', ' ').replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function customFieldValue(value: TicketCustomFieldValue['value']): string {
+  if (value === null || value === undefined || value === '') return '—';
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
+}
+
+function statusLabel(value?: string | null): string {
+  return value ? value.replaceAll('_', ' ') : '—';
+}
+
+export function TicketDetailsPage() {
+  const { workspaceSlug, ticketId } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isRelatedOpen, setIsRelatedOpen] = useState(false);
+  const [quickActionMessage, setQuickActionMessage] = useState<string | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [commentFiles, setCommentFiles] = useState<File[]>([]);
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingCommentBody, setEditingCommentBody] = useState('');
+  const accessQuery = useWorkspaceAccess(workspaceSlug);
+  const canView = accessQuery.can('tickets.view');
+  const canComment = accessQuery.can('tickets.comment');
+  const canManage = accessQuery.can('tickets.manage');
+  const canManageMembers = accessQuery.can('members.manage');
+
+  const commentForm = useForm<CommentForm>({
+    resolver: zodResolver(commentSchema),
+    defaultValues: { body: '', is_internal: false },
+  });
+
+  const editForm = useForm<TicketUpdateForm>({
+    resolver: zodResolver(ticketUpdateSchema),
+    defaultValues: {
+      customer_id: '',
+      title: '',
+      description: '',
+      status: 'open',
+      priority: 'medium',
+      assigned_to_user_id: '',
+      category: '',
+      queue_key: '',
+      tags: '',
+      custom_fields: {},
+    },
+  });
+
+  const checklistForm = useForm<ChecklistForm>({
+    resolver: zodResolver(checklistSchema),
+    defaultValues: { title: '' },
+  });
+
+  const relatedTicketForm = useForm<RelatedTicketForm>({
+    resolver: zodResolver(relatedTicketSchema),
+    defaultValues: { related_ticket_id: '', relationship_type: 'related' },
+  });
+  const editCustomerIdValue = useWatch({ control: editForm.control, name: 'customer_id' });
+  const editAssigneeIdValue = useWatch({ control: editForm.control, name: 'assigned_to_user_id' });
+  const editStatusValue = useWatch({ control: editForm.control, name: 'status' });
+  const editPriorityValue = useWatch({ control: editForm.control, name: 'priority' });
+  const relatedTicketIdValue = useWatch({ control: relatedTicketForm.control, name: 'related_ticket_id' });
+  const relatedTicketRelationshipValue = useWatch({ control: relatedTicketForm.control, name: 'relationship_type' });
+
+  const ticketQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket', ticketId],
+    queryFn: () => apiRequest<{ data: Ticket }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}`),
+    enabled: Boolean(workspaceSlug && ticketId && canView),
+  });
+
+  const customersQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'customers', 'for-ticket-details'],
+    queryFn: () => apiRequest<{ data: Customer[] }>(`/workspaces/${workspaceSlug}/customers`),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const membersQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'members', 'for-ticket-details'],
+    queryFn: () => apiRequest<{ data: MemberOption[] }>(`/workspaces/${workspaceSlug}/members`),
+    enabled: Boolean(workspaceSlug && canManage && canManageMembers),
+  });
+
+  const relatedTicketOptionsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'tickets', 'related-options'],
+    queryFn: () => apiRequest<{ data: Ticket[] }>(`/workspaces/${workspaceSlug}/tickets`),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const commentsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'],
+    queryFn: () => apiRequest<{ data: TicketComment[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments`),
+    enabled: Boolean(workspaceSlug && ticketId && canView),
+  });
+
+  const activityQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'],
+    queryFn: () => apiRequest<{ data: ActivityLog[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/activity`),
+    enabled: Boolean(workspaceSlug && ticketId && canView),
+  });
+
+  const meQuery = useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => apiRequest<{ data: AuthUser }>('/auth/me'),
+    staleTime: 60_000,
+  });
+
+  const attachmentsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'],
+    queryFn: () => apiRequest<{ data: Attachment[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`),
+    enabled: Boolean(workspaceSlug && ticketId && canView),
+  });
+
+  const addComment = useMutation({
+    mutationFn: async (values: CommentForm) => {
+      const response = await apiRequest<{ data: TicketComment }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments`, {
+        method: 'POST',
+        body: JSON.stringify(values),
+      });
+
+      const commentId = response.data.id;
+
+      for (const file of commentFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('comment_id', String(commentId));
+
+        await apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`, {
+          method: 'POST',
+          body: formData,
+        });
+      }
+
+      return response;
+    },
+    onSuccess: () => {
+      commentForm.reset({ body: '', is_internal: false });
+      setCommentFiles([]);
+      setIsCommentOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+    },
+  });
+
+  const updateComment = useMutation({
+    mutationFn: ({ commentId, body }: { commentId: number; body: string }) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments/${commentId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ body }),
+      }),
+    onSuccess: () => {
+      setEditingCommentId(null);
+      setEditingCommentBody('');
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const deleteComment = useMutation({
+    mutationFn: (commentId: number) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments/${commentId}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+    },
+  });
+
+  const updateTicket = useMutation({
+    mutationFn: (values: TicketUpdateForm) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          customer_id: Number(values.customer_id),
+          title: values.title,
+          description: values.description,
+          status: values.status,
+          priority: values.priority,
+          assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
+          category: values.category || null,
+          queue_key: values.queue_key || null,
+          tags: values.tags
+            ? values.tags
+                .split(',')
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+            : null,
+          custom_fields: values.custom_fields ?? {},
+        }),
+      }),
+    onSuccess: () => {
+      setIsEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const quickTransition = useMutation({
+    mutationFn: async (status: Ticket['status']) => {
+      try {
+        return await apiRequest<{ data: Ticket; message?: string }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/transition`, {
+          method: 'POST',
+          body: JSON.stringify({ to_status: status }),
+        });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 422) {
+          return apiRequest<{ data: Ticket }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+          });
+        }
+        throw error;
+      }
+    },
+    onSuccess: (payload) => {
+      if ((payload as { message?: string }).message) {
+        setQuickActionMessage((payload as { message?: string }).message ?? null);
+      } else {
+        setQuickActionMessage(null);
+      }
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+    },
+  });
+
+  const uploadAttachment = useMutation({
+    mutationFn: () => {
+      if (!attachmentFile) throw new Error('Please select a file first.');
+      const formData = new FormData();
+      formData.append('file', attachmentFile);
+
+      return apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`, {
+        method: 'POST',
+        body: formData,
+      });
+    },
+    onSuccess: () => {
+      setAttachmentFile(null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const deleteAttachment = useMutation({
+    mutationFn: (attachmentId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const addWatcher = useMutation({
+    mutationFn: () => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/watchers`, { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const removeWatcher = useMutation({
+    mutationFn: (watcherId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/watchers/${watcherId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const addChecklistItem = useMutation({
+    mutationFn: (values: ChecklistForm) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items`, {
+        method: 'POST',
+        body: JSON.stringify({ title: values.title }),
+      }),
+    onSuccess: () => {
+      checklistForm.reset({ title: '' });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const updateChecklistItem = useMutation({
+    mutationFn: ({ itemId, values }: { itemId: number; values: Partial<TicketChecklistItem> }) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(values),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const deleteChecklistItem = useMutation({
+    mutationFn: (itemId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/${itemId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const addRelatedTicket = useMutation({
+    mutationFn: (values: RelatedTicketForm) =>
+      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/related-tickets`, {
+        method: 'POST',
+        body: JSON.stringify({
+          related_ticket_id: Number(values.related_ticket_id),
+          relationship_type: values.relationship_type,
+        }),
+      }),
+    onSuccess: () => {
+      relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
+      setIsRelatedOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const deleteRelatedTicket = useMutation({
+    mutationFn: (linkId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/related-tickets/${linkId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
+  const deleteTicket = useMutation({
+    mutationFn: () => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+      navigate(`/workspaces/${workspaceSlug}/tickets`);
+    },
+  });
+
+  const ticket = ticketQuery.data?.data;
+  const customers = customersQuery.data?.data ?? [];
+  const members = membersQuery.data?.data ?? [];
+  const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
+  const attachments = useMemo(() => attachmentsQuery.data?.data ?? [], [attachmentsQuery.data?.data]);
+  const activityLogs = useMemo(() => activityQuery.data?.data ?? [], [activityQuery.data?.data]);
+  const watchers = ticket?.watchers ?? [];
+  const checklistItems = ticket?.checklist_items ?? [];
+  const relatedTickets = ticket?.related_tickets ?? [];
+  const customFields = ticket?.custom_fields ?? [];
+  const stateSummary = ticket?.state_summary;
+  const currentUserId = meQuery.data?.data.id;
+  const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
+  const attachmentsByComment = useMemo(() => {
+    return attachments.reduce<Record<number, Attachment[]>>((acc, attachment) => {
+      if (attachment.comment_id === null) {
+        return acc;
+      }
+
+      if (!acc[attachment.comment_id]) {
+        acc[attachment.comment_id] = [];
+      }
+
+      acc[attachment.comment_id].push(attachment);
+      return acc;
+    }, {});
+  }, [attachments]);
+
+  const assignmentHistory = useMemo(
+    () => activityLogs.filter((event) => event.action === 'ticket.assignee_changed' || event.action === 'ticket.bulk_updated'),
+    [activityLogs],
+  );
+
+  const slaSignals = useMemo(() => {
+    if (!ticket) return [] as Array<{ key: string; label: string; time: string | null; severity: 'warning' | 'info' }>;
+
+    const now = new Date();
+    const signals: Array<{ key: string; label: string; time: string | null; severity: 'warning' | 'info' }> = [];
+
+    if (ticket.first_response_due_at && !ticket.first_responded_at && new Date(ticket.first_response_due_at) < now) {
+      signals.push({
+        key: 'first-response-breach',
+        label: 'First response SLA breached',
+        time: ticket.first_response_due_at,
+        severity: 'warning',
+      });
+    }
+
+    if (ticket.resolution_due_at && !ticket.resolved_at && new Date(ticket.resolution_due_at) < now) {
+      signals.push({
+        key: 'resolution-breach',
+        label: 'Resolution SLA breached',
+        time: ticket.resolution_due_at,
+        severity: 'warning',
+      });
+    }
+
+    if (signals.length === 0) {
+      signals.push({
+        key: 'sla-healthy',
+        label: 'No active SLA breaches',
+        time: null,
+        severity: 'info',
+      });
+    }
+
+    return signals;
+  }, [ticket]);
+
+  useEffect(() => {
+    if (!ticket) return;
+
+    editForm.reset({
+      customer_id: String(ticket.customer_id),
+      title: ticket.title,
+      description: ticket.description,
+      status: ticket.status,
+      priority: ticket.priority,
+      assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
+      category: ticket.category ?? '',
+      queue_key: ticket.queue_key ?? '',
+      tags: (ticket.tags ?? []).join(', '),
+      custom_fields: Object.fromEntries((ticket.custom_fields ?? []).map((field) => [field.key ?? String(field.ticket_custom_field_id), field.value === null || field.value === undefined ? '' : customFieldValue(field.value)])),
+    });
+  }, [ticket, editForm]);
+
+  if (accessQuery.isLoading) {
+    return <p className="text-sm text-muted-foreground">Checking access...</p>;
+  }
+
+  if (!canView) {
+    return (
+      <ForbiddenState
+        title="Ticket details unavailable"
+        description="You need the tickets.view permission to open ticket threads."
+      />
+    );
+  }
+
+  if (ticketQuery.isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading ticket...</p>;
+  }
+
+  if (ticketQuery.isError && ticketQuery.error instanceof ApiError && ticketQuery.error.status === 403) {
+    return (
+      <ForbiddenState
+        title="Ticket details unavailable"
+        description="Your role can no longer access this ticket in the current workspace."
+      />
+    );
+  }
+
+  if (ticketQuery.isError || !ticket) {
+    return <p className="text-sm text-destructive">Unable to load ticket.</p>;
+  }
+
+  return (
+    <section className="flex flex-col gap-6">
+      <header className="rounded-xl border bg-card p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{ticket.ticket_number}</Badge>
+          <Badge variant="secondary">{ticket.status}</Badge>
+          <Badge variant="outline">{ticket.priority}</Badge>
+        </div>
+
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{ticket.title}</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{ticket.description}</p>
+
+        {quickActionMessage && <p className="text-xs text-muted-foreground">{quickActionMessage}</p>}
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          {nextStatuses(ticket.status).map((next) => (
+            <Button
+              key={next}
+              disabled={!canManage || quickTransition.isPending}
+              onClick={() => quickTransition.mutate(next)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Move to {next.replace('_', ' ')}
+            </Button>
+          ))}
+          <Button disabled={!canComment} onClick={() => setIsCommentOpen(true)} size="sm" type="button">
+            Add Comment
+          </Button>
+          <Button
+            disabled={!canComment || addWatcher.isPending || removeWatcher.isPending || meQuery.isLoading}
+            onClick={() => {
+              if (selfWatcher) {
+                removeWatcher.mutate(selfWatcher.id);
+              } else {
+                addWatcher.mutate();
+              }
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {selfWatcher ? 'Unfollow' : 'Follow'}
+          </Button>
+          <Button disabled={!canManage} onClick={() => setIsEditOpen(true)} size="sm" type="button" variant="outline">
+            Edit Ticket
+          </Button>
+          <Button
+            disabled={!canManage || deleteTicket.isPending}
+            onClick={() => {
+              const ok = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
+              if (ok) deleteTicket.mutate();
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {deleteTicket.isPending ? 'Deleting...' : 'Delete Ticket'}
+          </Button>
+        </div>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="flex flex-col gap-6">
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Ticket Summary</CardTitle>
+            <CardDescription>Customer, ownership, and workflow state.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 text-sm md:grid-cols-2">
+            <DetailItem label="Customer" value={ticket.customer?.name ?? '—'} />
+            <DetailItem label="Assignee" value={ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'} />
+            <DetailItem label="Created by" value={fullName(ticket.creator)} />
+            <DetailItem label="Queue" value={ticket.queue_key ?? '—'} />
+            <DetailItem label="Category" value={ticket.category ?? '—'} />
+            <DetailItem label="Assignment" value={statusLabel(stateSummary?.assignment.strategy)} />
+            <DetailItem
+              label="Approval"
+              value={stateSummary?.approval.pending_count ? `${stateSummary.approval.pending_count} pending` : statusLabel(stateSummary?.approval.latest_status) === '—' ? 'No active approval' : statusLabel(stateSummary?.approval.latest_status)}
+            />
+            <DetailItem label="Automation" value={stateSummary?.automation.recent_count ? `${stateSummary.automation.recent_count} recent runs` : 'No recent runs'} />
+            <DetailItem label="Tags" value={ticket.tags && ticket.tags.length > 0 ? ticket.tags.join(', ') : '—'} />
+            <DetailItem label="Updated" value={formatDate(ticket.updated_at)} />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Comments</CardTitle>
+            <CardDescription>Customer-visible and internal notes.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {(commentsQuery.data?.data ?? []).map((comment) => (
+              <div key={comment.id} className="rounded-md border border-border p-3">
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={comment.is_internal ? 'secondary' : 'outline'}>
+                      {comment.is_internal ? 'Internal' : 'Public'}
+                    </Badge>
+                    <span>
+                      {comment.user
+                        ? `${comment.user.first_name} ${comment.user.last_name}`
+                        : comment.customer
+                          ? comment.customer.name
+                          : 'System'}
+                    </span>
+                    <span>•</span>
+                    <span>{formatDate(comment.created_at)}</span>
+                    {comment.updated_at && comment.updated_at !== comment.created_at && (
+                      <>
+                        <span>•</span>
+                        <span>edited {formatDate(comment.updated_at)}</span>
+                      </>
+                    )}
+                  </div>
+                  {canComment && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setEditingCommentId(comment.id);
+                          setEditingCommentBody(comment.body);
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        disabled={deleteComment.isPending}
+                        onClick={() => {
+                          const ok = window.confirm('Delete this comment?');
+                          if (ok) {
+                            deleteComment.mutate(comment.id);
+                          }
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {editingCommentId === comment.id ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      onChange={(event) => setEditingCommentBody(event.target.value)}
+                      value={editingCommentBody}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        disabled={updateComment.isPending || editingCommentBody.trim().length < 2}
+                        onClick={() => updateComment.mutate({ commentId: comment.id, body: editingCommentBody })}
+                        size="sm"
+                        type="button"
+                      >
+                        {updateComment.isPending ? 'Saving...' : 'Save'}
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setEditingCommentId(null);
+                          setEditingCommentBody('');
+                        }}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm">{comment.body}</p>
+                )}
+
+                {(attachmentsByComment[comment.id] ?? []).length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {(attachmentsByComment[comment.id] ?? []).map((attachment) => (
+                      <div key={attachment.id} className="flex items-center justify-between rounded border border-border p-2">
+                        <div className="text-xs">
+                          <p className="font-medium">{attachment.original_name}</p>
+                          <p className="text-muted-foreground">
+                            {bytesToReadable(attachment.size_bytes)} • {formatDate(attachment.created_at)}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+            {!commentsQuery.data?.data.length && <p className="text-sm text-muted-foreground">No comments yet.</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Checklist</CardTitle>
+            <CardDescription>Small tasks required before closing.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {checklistItems.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
+                <label className="flex min-w-0 items-center gap-3 text-sm">
+                  <Checkbox
+                    checked={item.is_completed}
+                    disabled={!canManage || updateChecklistItem.isPending}
+                    onCheckedChange={(checked) => updateChecklistItem.mutate({ itemId: item.id, values: { is_completed: checked === true } })}
+                  />
+                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
+                  {canManage && (
+                    <Button disabled={deleteChecklistItem.isPending} onClick={() => deleteChecklistItem.mutate(item.id)} size="sm" type="button" variant="outline">
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
+            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit((values) => addChecklistItem.mutate(values))}>
+              <Input disabled={!canManage} placeholder="Add an operator task…" {...checklistForm.register('title')} />
+              <Button disabled={!canManage || addChecklistItem.isPending} type="submit">
+                {addChecklistItem.isPending ? 'Adding…' : 'Add Task'}
+              </Button>
+            </form>
+            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
+          </CardContent>
+        </Card>
+        </div>
+
+        <aside className="flex flex-col gap-6">
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>SLA</CardTitle>
+            <CardDescription>Response and resolution timing.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            <Badge variant={stateSummary?.sla.status === 'breached' ? 'destructive' : 'secondary'} className="w-fit">
+              {statusLabel(stateSummary?.sla.status)}
+            </Badge>
+            <DetailItem label="First response due" value={formatDate(ticket.first_response_due_at)} />
+            <DetailItem label="First responded" value={formatDate(ticket.first_responded_at)} />
+            <DetailItem label="Resolution due" value={formatDate(ticket.resolution_due_at)} />
+            <DetailItem label="Resolved at" value={formatDate(ticket.resolved_at)} />
+            <Separator />
+            {slaSignals.map((signal) => (
+              <p key={signal.key} className={signal.severity === 'warning' ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
+                {signal.label}{signal.time ? ` (${formatDate(signal.time)})` : ''}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Assignment History</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {assignmentHistory.map((event) => {
+              const from = event.meta?.from ?? event.meta?.assigned_to_user_id ?? null;
+              const to = event.meta?.to ?? event.meta?.assigned_to_user_id ?? null;
+
+              return (
+                <div key={event.id} className="rounded-md border border-border p-3 text-sm">
+                  <p className="font-medium">{humanizeAction(event.action)}</p>
+                  {(from !== null || to !== null) && (
+                    <p className="text-xs text-muted-foreground">From: {String(from ?? 'Unassigned')} · To: {String(to ?? 'Unassigned')}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">{fullName(event.user)} · {formatDate(event.created_at)}</p>
+                </div>
+              );
+            })}
+            {!assignmentHistory.length && <p className="text-sm text-muted-foreground">No assignment changes yet.</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Watchers</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              {watchers.map((watcher) => (
+                <Badge key={watcher.id} variant="secondary">
+                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
+                </Badge>
+              ))}
+            </div>
+            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Related Tickets</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {relatedTickets.map((link) => (
+              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    {link.ticket ? (
+                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
+                        {link.ticket.ticket_number}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
+                    )}
+                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
+                  </div>
+                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
+                </div>
+                {canManage && (
+                  <Button
+                    className="mt-2"
+                    disabled={deleteRelatedTicket.isPending}
+                    onClick={() => deleteRelatedTicket.mutate(link.id)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
+            <Button disabled={!canManage} onClick={() => setIsRelatedOpen(true)} size="sm" type="button" variant="outline">
+              Link Ticket
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Custom Fields</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm">
+            {customFields.map((field) => (
+              <DetailItem key={field.id} label={field.label ?? field.key ?? 'Field'} value={customFieldValue(field.value)} />
+            ))}
+            {!customFields.length && <p className="text-sm text-muted-foreground">No dynamic fields configured for this ticket.</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Attachments</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                accept="*/*"
+                onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
+                type="file"
+              />
+              <Button
+                disabled={!canComment || !attachmentFile || uploadAttachment.isPending}
+                onClick={() => uploadAttachment.mutate()}
+                size="sm"
+                type="button"
+              >
+                {uploadAttachment.isPending ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+            {uploadAttachment.isError && <p className="text-xs text-destructive">{(uploadAttachment.error as Error).message}</p>}
+
+            {attachments.filter((attachment) => attachment.comment_id === null).map((attachment) => (
+              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
+                <div>
+                  <p className="font-medium">{attachment.original_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatDate(attachment.created_at)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    disabled={!canManage || deleteAttachment.isPending}
+                    onClick={() => {
+                      const ok = window.confirm(`Delete ${attachment.original_name}?`);
+                      if (ok) deleteAttachment.mutate(attachment.id);
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {!attachments.some((attachment) => attachment.comment_id === null) && (
+              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+        <CardHeader>
+          <CardTitle>Activity Timeline</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          {activityLogs.map((event) => (
+            <div key={event.id} className="rounded-md border border-border p-3 text-sm">
+              <p className="font-medium">{humanizeAction(event.action)}</p>
+              <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatDate(event.created_at)}</p>
+            </div>
+          ))}
+          {!activityLogs.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
+        </CardContent>
+      </Card>
+        </aside>
+      </div>
+
+      <Dialog
+        onOpenChange={(open) => {
+          setIsCommentOpen(open);
+          if (!open) {
+            commentForm.reset({ body: '', is_internal: false });
+            setCommentFiles([]);
+          }
+        }}
+        open={isCommentOpen}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Comment</DialogTitle>
+            <DialogDescription>Internal comments are visible to workspace team members only.</DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-3" id="comment-form" onSubmit={commentForm.handleSubmit((values) => addComment.mutate(values))}>
+            <div className="space-y-2">
+              <Label htmlFor="comment-body">Comment</Label>
+              <Textarea id="comment-body" {...commentForm.register('body')} />
+              {commentForm.formState.errors.body && <p className="text-xs text-destructive">{commentForm.formState.errors.body.message}</p>}
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" {...commentForm.register('is_internal')} />
+              Internal comment
+            </label>
+
+            <div className="space-y-2">
+              <Label htmlFor="comment-files">Attachments (optional)</Label>
+              <Input
+                id="comment-files"
+                multiple
+                onChange={(event) => setCommentFiles(Array.from(event.target.files ?? []))}
+                type="file"
+              />
+              {commentFiles.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {commentFiles.length} file{commentFiles.length > 1 ? 's' : ''} selected
+                </p>
+              )}
+            </div>
+          </form>
+
+          <DialogFooter>
+            <Button onClick={() => setIsCommentOpen(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button disabled={commentForm.formState.isSubmitting || addComment.isPending} form="comment-form" type="submit">
+              {addComment.isPending ? 'Posting...' : 'Post Comment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          setIsRelatedOpen(open);
+          if (!open) {
+            relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
+          }
+        }}
+        open={isRelatedOpen}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Link Related Ticket</DialogTitle>
+            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work.</DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-3" id="related-ticket-form" onSubmit={relatedTicketForm.handleSubmit((values) => addRelatedTicket.mutate(values))}>
+            <div className="space-y-2">
+              <Label>Ticket</Label>
+              <Select
+                onValueChange={(value) => relatedTicketForm.setValue('related_ticket_id', value ?? '', { shouldValidate: true })}
+                value={relatedTicketIdValue ?? ''}
+              >
+                <SelectTrigger><SelectValue placeholder="Select ticket" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {relatedTicketOptions.map((option) => (
+                      <SelectItem key={option.id} value={String(option.id)}>
+                        {option.ticket_number} — {option.title}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {relatedTicketForm.formState.errors.related_ticket_id && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.related_ticket_id.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Relationship</Label>
+              <Select
+                onValueChange={(value) => relatedTicketForm.setValue('relationship_type', value ?? 'related', { shouldValidate: true })}
+                value={relatedTicketRelationshipValue ?? 'related'}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="related">Related</SelectItem>
+                    <SelectItem value="blocks">Blocks</SelectItem>
+                    <SelectItem value="blocked_by">Blocked By</SelectItem>
+                    <SelectItem value="duplicate">Duplicate</SelectItem>
+                    <SelectItem value="caused_by">Caused By</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {relatedTicketForm.formState.errors.relationship_type && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.relationship_type.message}</p>}
+            </div>
+          </form>
+
+          {addRelatedTicket.isError && <p className="text-xs text-destructive">{(addRelatedTicket.error as Error).message}</p>}
+
+          <DialogFooter>
+            <Button onClick={() => setIsRelatedOpen(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button disabled={addRelatedTicket.isPending || relatedTicketForm.formState.isSubmitting} form="related-ticket-form" type="submit">
+              {addRelatedTicket.isPending ? 'Linking...' : 'Link Ticket'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+        }}
+        open={isEditOpen}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Ticket</DialogTitle>
+            <DialogDescription>Update assignment, priority, status, and operational metadata.</DialogDescription>
+          </DialogHeader>
+
+          <form className="grid gap-4 md:grid-cols-2" id="edit-ticket-details-form" onSubmit={editForm.handleSubmit((values) => updateTicket.mutate(values))}>
+            <div className="space-y-2">
+              <Label>Customer</Label>
+              <Select
+                onValueChange={(value) => editForm.setValue('customer_id', value ?? '', { shouldValidate: true })}
+                value={editCustomerIdValue ?? ''}
+              >
+                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={String(customer.id)}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {editForm.formState.errors.customer_id && <p className="text-xs text-destructive">{editForm.formState.errors.customer_id.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Assignee</Label>
+              <Select
+                onValueChange={(value) => editForm.setValue('assigned_to_user_id', value === 'none' || value === null ? '' : value)}
+                value={editAssigneeIdValue || 'none'}
+              >
+                <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {ticket.assignee && !members.some((member) => member.user.id === ticket.assignee?.id) && (
+                      <SelectItem value={String(ticket.assignee.id)}>
+                        {ticket.assignee.first_name} {ticket.assignee.last_name}
+                      </SelectItem>
+                    )}
+                    {members.map((member) => (
+                      <SelectItem key={member.user.id} value={String(member.user.id)}>
+                        {member.user.first_name} {member.user.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="details-title">Title</Label>
+              <Input id="details-title" {...editForm.register('title')} />
+              {editForm.formState.errors.title && <p className="text-xs text-destructive">{editForm.formState.errors.title.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                onValueChange={(value) => editForm.setValue('status', value as TicketUpdateForm['status'])}
+                value={editStatusValue ?? 'open'}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select
+                onValueChange={(value) => editForm.setValue('priority', value as TicketUpdateForm['priority'])}
+                value={editPriorityValue ?? 'medium'}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="details-category">Category</Label>
+              <Input id="details-category" placeholder="incident" {...editForm.register('category')} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="details-queue">Queue Key</Label>
+              <Input id="details-queue" placeholder="p1" {...editForm.register('queue_key')} />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="details-description">Description</Label>
+              <Textarea id="details-description" {...editForm.register('description')} />
+              {editForm.formState.errors.description && <p className="text-xs text-destructive">{editForm.formState.errors.description.message}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="details-tags">Tags (comma separated)</Label>
+              <Input id="details-tags" placeholder="network, vpn, urgent" {...editForm.register('tags')} />
+            </div>
+
+            {customFields.length > 0 && (
+              <div className="space-y-3 md:col-span-2">
+                <p className="text-sm font-medium">Dynamic Fields</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {customFields.map((field) => {
+                    const fieldKey = field.key ?? String(field.ticket_custom_field_id);
+                    const inputId = `custom-field-${fieldKey}`;
+
+                    return (
+                      <div key={field.id} className="space-y-2">
+                        <Label htmlFor={inputId}>{field.label ?? fieldKey}</Label>
+                        <Input id={inputId} {...editForm.register(`custom_fields.${fieldKey}`)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </form>
+
+          {updateTicket.isError && <p className="text-xs text-destructive">{(updateTicket.error as Error).message}</p>}
+
+          <DialogFooter>
+            <Button onClick={() => setIsEditOpen(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button disabled={updateTicket.isPending || editForm.formState.isSubmitting} form="edit-ticket-details-form" type="submit">
+              {updateTicket.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate font-medium">{value}</p>
+    </div>
+  );
+}
