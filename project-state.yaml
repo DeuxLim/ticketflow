@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-13T22:45:00+08:00"
+updated_at: "2026-04-13T22:32:32+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -13,7 +13,7 @@ items:
     title: Workspace Settings Phase 1
     type: epic
     parent_id: null
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Build backend APIs and a real Settings UI for workspace general settings plus ticketing and form configuration.
@@ -27,21 +27,19 @@ items:
       - "2026-04-13: Initialized from docs/superpowers/plans/2026-04-13-workspace-settings-phase-1.md because no roadmap.md existed yet."
       - "2026-04-13: Targeted backend test passed: php artisan test --filter=WorkspaceSettingsPhaseOneTest."
       - "2026-04-13: Frontend build passed: npm run build. Vite reported existing large chunk/font resolution warnings."
-    incomplete_reason: "Full verification and cleanup remains: enterprise regression tests and backend formatting check from Task 6 have not been run in this session."
+      - "2026-04-13: EnterpriseFoundationTest, EnterprisePhaseTwoFlowsTest, and backend Pint dirty formatting check passed."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run EnterpriseFoundationTest and EnterprisePhaseTwoFlowsTest filters.
-      - Run backend Pint dirty formatting check if available.
-      - Update this item to complete only after Task 6 verification is satisfied or explicitly waived.
+    next_actions: []
     tags:
       - workspace-settings
       - ticketing-config
       - mvp
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T01
@@ -69,9 +67,9 @@ items:
     tags:
       - backend
       - database
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T02
@@ -101,9 +99,9 @@ items:
       - backend
       - api
       - permissions
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T03
@@ -133,9 +131,9 @@ items:
       - backend
       - api
       - ticketing-config
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T04
@@ -165,9 +163,9 @@ items:
     tags:
       - frontend
       - settings-ui
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T05
@@ -196,16 +194,16 @@ items:
     tags:
       - frontend
       - settings-ui
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
 
   - id: WSSET-P1-T06
     title: Full verification and cleanup
     type: task
     parent_id: WSSET-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Run final backend, enterprise regression, frontend build, and formatting verification for Workspace Settings Phase 1.
@@ -223,18 +221,18 @@ items:
     notes:
       - "2026-04-13: WorkspaceSettingsPhaseOneTest passed: 11 tests, 64 assertions."
       - "2026-04-13: npm run build passed. Vite reported existing large chunk/font resolution warnings."
-    incomplete_reason: "Enterprise regression filters and backend Pint dirty formatting check have not been run in this session."
+      - "2026-04-13: EnterpriseFoundationTest passed: 5 tests, 24 assertions."
+      - "2026-04-13: EnterprisePhaseTwoFlowsTest passed: 4 tests, 20 assertions."
+      - "2026-04-13: Backend Pint dirty formatting check passed."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run php artisan test --filter=EnterpriseFoundationTest.
-      - Run php artisan test --filter=EnterprisePhaseTwoFlowsTest.
-      - Run ./vendor/bin/pint --dirty --test from backend.
+    next_actions: []
     tags:
       - verification
       - release-readiness
-    created_at: "2026-04-13T22:45:00+08:00"
-    updated_at: "2026-04-13T22:45:00+08:00"
-    changed_at: "2026-04-13T22:45:00+08:00"
+    created_at: "2026-04-13T22:32:32+08:00"
+    updated_at: "2026-04-13T22:32:32+08:00"
+    changed_at: "2026-04-13T22:32:32+08:00"
     changed_source: codex
