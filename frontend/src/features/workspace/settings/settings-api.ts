@@ -8,6 +8,11 @@ import type {
   BreakGlassRecord,
   RetentionPolicyConfig,
   TenantExportRecord,
+  TenantIdentityProviderConfig,
+  TenantSecurityPolicyConfig,
+  ProvisioningDirectoryRecord,
+  WebhookDeliveryRecord,
+  WebhookEndpointRecord,
   TicketWorkflowConfig,
   TicketCategoryConfig,
   TicketCustomFieldConfig,
@@ -83,6 +88,13 @@ export function createTicketCategory(workspaceSlug: string, payload: Partial<Tic
   });
 }
 
+export function updateTicketCategory(workspaceSlug: string, id: number, payload: Partial<TicketCategoryConfig>) {
+  return apiRequest<ApiEnvelope<TicketCategoryConfig>>(`/workspaces/${workspaceSlug}/ticket-categories/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listTicketTags(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<TicketTagConfig[]>>(`/workspaces/${workspaceSlug}/ticket-tags`);
 }
@@ -90,6 +102,13 @@ export function listTicketTags(workspaceSlug: string) {
 export function createTicketTag(workspaceSlug: string, payload: Partial<TicketTagConfig>) {
   return apiRequest<ApiEnvelope<TicketTagConfig>>(`/workspaces/${workspaceSlug}/ticket-tags`, {
     method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateTicketTag(workspaceSlug: string, id: number, payload: Partial<TicketTagConfig>) {
+  return apiRequest<ApiEnvelope<TicketTagConfig>>(`/workspaces/${workspaceSlug}/ticket-tags/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }
@@ -105,6 +124,13 @@ export function createTicketType(workspaceSlug: string, payload: Partial<TicketT
   });
 }
 
+export function updateTicketType(workspaceSlug: string, id: number, payload: Partial<TicketTypeConfig>) {
+  return apiRequest<ApiEnvelope<TicketTypeConfig>>(`/workspaces/${workspaceSlug}/ticket-types/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listTicketCustomFields(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<TicketCustomFieldConfig[]>>(`/workspaces/${workspaceSlug}/ticket-custom-fields`);
 }
@@ -112,6 +138,13 @@ export function listTicketCustomFields(workspaceSlug: string) {
 export function createTicketCustomField(workspaceSlug: string, payload: Record<string, unknown>) {
   return apiRequest<ApiEnvelope<TicketCustomFieldConfig>>(`/workspaces/${workspaceSlug}/ticket-custom-fields`, {
     method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateTicketCustomField(workspaceSlug: string, id: number, payload: Record<string, unknown>) {
+  return apiRequest<ApiEnvelope<TicketCustomFieldConfig>>(`/workspaces/${workspaceSlug}/ticket-custom-fields/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }
@@ -127,8 +160,43 @@ export function createTicketFormTemplate(workspaceSlug: string, payload: Record<
   });
 }
 
+export function updateTicketFormTemplate(workspaceSlug: string, id: number, payload: Record<string, unknown>) {
+  return apiRequest<ApiEnvelope<TicketFormTemplateConfig>>(`/workspaces/${workspaceSlug}/ticket-form-templates/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listWorkflows(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<TicketWorkflowConfig[]>>(`/workspaces/${workspaceSlug}/workflows`);
+}
+
+export function createWorkflow(workspaceSlug: string, payload: {
+  name: string;
+  is_default?: boolean;
+  transitions: Array<{
+    from_status: string;
+    to_status: string;
+    required_permission?: string | null;
+    requires_approval?: boolean;
+    sort_order?: number;
+  }>;
+}) {
+  return apiRequest<ApiEnvelope<TicketWorkflowConfig>>(`/workspaces/${workspaceSlug}/workflows`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateWorkflow(workspaceSlug: string, workflowId: number, payload: {
+  name?: string;
+  is_active?: boolean;
+  is_default?: boolean;
+}) {
+  return apiRequest<ApiEnvelope<TicketWorkflowConfig>>(`/workspaces/${workspaceSlug}/workflows/${workflowId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
 }
 
 export function activateWorkflow(workspaceSlug: string, workflowId: number) {
@@ -138,14 +206,67 @@ export function activateWorkflow(workspaceSlug: string, workflowId: number) {
   });
 }
 
+type WorkflowSimulationResponse = {
+  data: {
+    allowed: boolean;
+    reason: string | null;
+    requires_approval: boolean;
+    required_permission: string | null;
+    approver_mode: 'role' | 'users' | null;
+    approval_timeout_minutes: number | null;
+  };
+};
+
+export function simulateWorkflowTransition(workspaceSlug: string, ticketId: number, toStatus: string) {
+  return apiRequest<WorkflowSimulationResponse>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/workflow/simulate`, {
+    method: 'POST',
+    body: JSON.stringify({ to_status: toStatus }),
+  });
+}
+
 export function listAutomationRules(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<AutomationRuleConfig[]>>(`/workspaces/${workspaceSlug}/automation-rules`);
+}
+
+export function createAutomationRule(workspaceSlug: string, payload: {
+  name: string;
+  event_type: string;
+  priority?: number;
+  conditions?: unknown[];
+  actions: unknown[];
+  is_active?: boolean;
+}) {
+  return apiRequest<ApiEnvelope<AutomationRuleConfig>>(`/workspaces/${workspaceSlug}/automation-rules`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateAutomationRule(workspaceSlug: string, ruleId: number, payload: {
+  name?: string;
+  event_type?: string;
+  priority?: number;
+  is_active?: boolean;
+  conditions?: unknown[];
+  actions?: unknown[];
+}) {
+  return apiRequest<ApiEnvelope<AutomationRuleConfig>>(`/workspaces/${workspaceSlug}/automation-rules/${ruleId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
 }
 
 export function toggleAutomationRule(workspaceSlug: string, ruleId: number, isActive: boolean) {
   return apiRequest<ApiEnvelope<AutomationRuleConfig>>(`/workspaces/${workspaceSlug}/automation-rules/${ruleId}/toggle`, {
     method: 'POST',
     body: JSON.stringify({ is_active: isActive }),
+  });
+}
+
+export function testAutomationRule(workspaceSlug: string, ruleId: number, ticketId: number) {
+  return apiRequest<{ data: Record<string, unknown> | null }>(`/workspaces/${workspaceSlug}/automation-rules/${ruleId}/test`, {
+    method: 'POST',
+    body: JSON.stringify({ ticket_id: ticketId }),
   });
 }
 
@@ -206,4 +327,102 @@ export function createBreakGlassRequest(workspaceSlug: string, reason: string, d
 
 export function listAuditEvents(workspaceSlug: string) {
   return apiRequest<{ data: AuditEventRecord[] }>(`/workspaces/${workspaceSlug}/audit-events?per_page=20`);
+}
+
+type OidcStartResponse = {
+  data: {
+    authorization_url: string;
+    state: string;
+  };
+};
+
+type CreateProvisioningDirectoryResponse = ApiEnvelope<ProvisioningDirectoryRecord> & {
+  meta?: {
+    token?: string;
+  };
+};
+
+export function getTenantSecurityPolicy(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<TenantSecurityPolicyConfig>>(`/workspaces/${workspaceSlug}/security-policy`);
+}
+
+export function updateTenantSecurityPolicy(workspaceSlug: string, payload: Partial<TenantSecurityPolicyConfig>) {
+  return apiRequest<ApiEnvelope<TenantSecurityPolicyConfig>>(`/workspaces/${workspaceSlug}/security-policy`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listIdentityProviders(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<TenantIdentityProviderConfig[]>>(`/workspaces/${workspaceSlug}/identity-providers`);
+}
+
+export function createIdentityProvider(workspaceSlug: string, payload: Record<string, unknown>) {
+  return apiRequest<ApiEnvelope<TenantIdentityProviderConfig>>(`/workspaces/${workspaceSlug}/identity-providers`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteIdentityProvider(workspaceSlug: string, providerId: number) {
+  return apiRequest<{ message: string }>(`/workspaces/${workspaceSlug}/identity-providers/${providerId}`, {
+    method: 'DELETE',
+  });
+}
+
+export function startOidcSso(workspaceSlug: string, providerId: number) {
+  return apiRequest<OidcStartResponse>(`/workspaces/${workspaceSlug}/auth/sso/oidc/start`, {
+    method: 'POST',
+    body: JSON.stringify({ provider_id: providerId }),
+  });
+}
+
+export function listProvisioningDirectories(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<ProvisioningDirectoryRecord[]>>(`/workspaces/${workspaceSlug}/provisioning-directories`);
+}
+
+export function createProvisioningDirectory(workspaceSlug: string, name: string) {
+  return apiRequest<CreateProvisioningDirectoryResponse>(`/workspaces/${workspaceSlug}/provisioning-directories`, {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  });
+}
+
+type CreateWebhookEndpointPayload = {
+  name: string;
+  url: string;
+  secret: string;
+  events: string[];
+  is_active?: boolean;
+};
+
+type WebhookDeliveriesResponse = {
+  data: WebhookDeliveryRecord[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    total: number;
+  };
+};
+
+export function listWebhookEndpoints(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<WebhookEndpointRecord[]>>(`/workspaces/${workspaceSlug}/webhooks`);
+}
+
+export function createWebhookEndpoint(workspaceSlug: string, payload: CreateWebhookEndpointPayload) {
+  return apiRequest<ApiEnvelope<WebhookEndpointRecord>>(`/workspaces/${workspaceSlug}/webhooks`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listWebhookDeliveries(workspaceSlug: string) {
+  return apiRequest<WebhookDeliveriesResponse>(`/workspaces/${workspaceSlug}/webhook-deliveries`);
+}
+
+export function retryWebhookDelivery(workspaceSlug: string, deliveryId: number) {
+  return apiRequest<ApiEnvelope<WebhookDeliveryRecord>>(`/workspaces/${workspaceSlug}/webhook-deliveries/${deliveryId}/retry`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 }

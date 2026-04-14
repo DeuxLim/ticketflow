@@ -207,6 +207,85 @@ class WorkspaceSettingsPhaseOneTest extends TestCase
             ->assertJsonPath('data.field_schema.0.key', 'asset_id');
     }
 
+    public function test_ticket_dictionary_and_form_resources_support_updates_with_nullable_template_type(): void
+    {
+        [$workspace] = $this->createWorkspaceAsOwner();
+
+        $category = $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-categories", [
+            'key' => 'billing',
+            'name' => 'Billing',
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/ticket-categories/{$category['id']}", [
+            'name' => 'Billing and Finance',
+            'is_active' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'Billing and Finance')
+            ->assertJsonPath('data.is_active', false);
+
+        $tag = $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-tags", [
+            'name' => 'vip',
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/ticket-tags/{$tag['id']}", [
+            'name' => 'vip-priority',
+            'is_active' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'vip-priority')
+            ->assertJsonPath('data.is_active', false);
+
+        $type = $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-types", [
+            'key' => 'problem',
+            'name' => 'Problem',
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/ticket-types/{$type['id']}", [
+            'name' => 'Problem Management',
+            'is_active' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'Problem Management')
+            ->assertJsonPath('data.is_active', false);
+
+        $field = $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-custom-fields", [
+            'key' => 'asset_id',
+            'label' => 'Asset ID',
+            'field_type' => 'text',
+            'is_required' => true,
+            'is_active' => true,
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/ticket-custom-fields/{$field['id']}", [
+            'label' => 'Asset Number',
+            'is_required' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.label', 'Asset Number')
+            ->assertJsonPath('data.is_required', false);
+
+        $ticketTypeId = DB::table('ticket_types')
+            ->where('workspace_id', $workspace['id'])
+            ->where('key', 'incident')
+            ->value('id');
+
+        $template = $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-form-templates", [
+            'ticket_type_id' => $ticketTypeId,
+            'name' => 'Incident Intake',
+            'field_schema' => [
+                ['key' => 'asset_id', 'required' => true],
+            ],
+            'is_default' => false,
+            'is_active' => true,
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/ticket-form-templates/{$template['id']}", [
+            'name' => 'Universal Intake',
+            'ticket_type_id' => null,
+            'is_active' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'Universal Intake')
+            ->assertJsonPath('data.ticket_type_id', null)
+            ->assertJsonPath('data.is_active', false);
+    }
+
     public function test_member_without_tickets_manage_cannot_manage_ticket_config(): void
     {
         [$workspace] = $this->createWorkspaceAsOwner();

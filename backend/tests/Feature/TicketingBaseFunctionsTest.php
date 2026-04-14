@@ -44,6 +44,139 @@ class TicketingBaseFunctionsTest extends TestCase
             ->assertJsonPath('meta.total', 18);
     }
 
+    public function test_ticket_list_per_page_is_bounded_to_valid_range(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        for ($i = 1; $i <= 3; $i++) {
+            $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+                'customer_id' => $customer['id'],
+                'title' => "Issue {$i}",
+                'description' => 'Needs support',
+                'priority' => 'medium',
+            ])->assertCreated();
+        }
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?per_page=0")
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonCount(1, 'data');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?per_page=999")
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 200)
+            ->assertJsonCount(3, 'data');
+    }
+
+    public function test_customer_list_per_page_is_bounded_to_valid_range(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        for ($i = 1; $i <= 3; $i++) {
+            $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+                'name' => "Customer {$i}",
+                'email' => "customer{$i}@example.com",
+            ])->assertCreated();
+        }
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?per_page=0")
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonCount(1, 'data');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?per_page=999")
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 200)
+            ->assertJsonCount(3, 'data');
+    }
+
+    public function test_ticket_list_supports_status_and_customer_filters(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $firstCustomer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Customer One',
+            'email' => 'one@example.com',
+        ])->json('data');
+
+        $secondCustomer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Customer Two',
+            'email' => 'two@example.com',
+        ])->json('data');
+
+        $matchingTicket = $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $firstCustomer['id'],
+            'title' => 'Filter Match',
+            'description' => 'Matching ticket',
+            'priority' => 'medium',
+            'status' => 'open',
+        ])->assertCreated()->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $secondCustomer['id'],
+            'title' => 'Filter Miss',
+            'description' => 'Non-matching ticket',
+            'priority' => 'medium',
+            'status' => 'resolved',
+        ])->assertCreated();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?status=open&customer_id={$firstCustomer['id']}")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.id', $matchingTicket['id']);
+    }
+
+    public function test_customer_list_supports_search_filter(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Filter',
+            'email' => 'jane.filter@example.com',
+            'company' => 'Filter Corp',
+        ])->assertCreated();
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'John Other',
+            'email' => 'john.other@example.com',
+            'company' => 'Other Corp',
+        ])->assertCreated();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/customers?search=Filter")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.name', 'Jane Filter');
+    }
+
     public function test_owner_can_bulk_update_tickets(): void
     {
         $owner = User::factory()->create();

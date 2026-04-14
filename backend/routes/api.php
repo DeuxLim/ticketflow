@@ -192,6 +192,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
                 ->middleware('workspace_permission:invitations.manage');
             Route::get('/members', [WorkspaceMemberController::class, 'index'])
                 ->middleware('workspace_permission:members.manage');
+            Route::get('/members/assignable', [WorkspaceMemberController::class, 'assignable'])
+                ->middleware('workspace_permission:tickets.manage');
             Route::get('/roles', [WorkspaceRoleController::class, 'index'])
                 ->middleware('workspace_permission:roles.manage');
 

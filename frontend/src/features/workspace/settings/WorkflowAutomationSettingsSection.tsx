@@ -1,22 +1,45 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
   activateWorkflow,
   approveApproval,
+  createAutomationRule,
+  createWorkflow,
   listApprovals,
   listAutomationExecutions,
   listAutomationRules,
   listWorkflows,
   rejectApproval,
+  simulateWorkflowTransition,
+  testAutomationRule,
   toggleAutomationRule,
+  updateAutomationRule,
+  updateWorkflow,
 } from './settings-api';
+import { apiRequest } from '@/services/api/client';
+import type { ApiPaginationMeta, Ticket } from '@/types/api';
 
 type WorkflowAutomationSettingsSectionProps = {
   workspaceSlug: string;
 };
+
+type SimulationResult = {
+  allowed: boolean;
+  reason: string | null;
+  requires_approval: boolean;
+  required_permission: string | null;
+  approver_mode: 'role' | 'users' | null;
+  approval_timeout_minutes: number | null;
+};
+
+const statusOptions = ['open', 'in_progress', 'resolved', 'closed'];
+const eventTypeOptions = ['ticket.created', 'ticket.updated', 'ticket.comment_added', 'ticket.sla.breached'];
 
 export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAutomationSettingsSectionProps) {
   const queryClient = useQueryClient();
@@ -24,15 +47,115 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   const rulesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'automation-rules'], queryFn: () => listAutomationRules(workspaceSlug) });
   const approvalsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'approvals'], queryFn: () => listApprovals(workspaceSlug) });
   const executionsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'automation-executions'], queryFn: () => listAutomationExecutions(workspaceSlug) });
+  const ticketsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'tickets', 'workflow-automation-tests'],
+    queryFn: () => apiRequest<{ data: Ticket[]; meta: ApiPaginationMeta }>(`/workspaces/${workspaceSlug}/tickets?per_page=200`),
+  });
+
+  const [workflowName, setWorkflowName] = useState('');
+  const [workflowIsDefault, setWorkflowIsDefault] = useState(false);
+  const [transitionFromStatus, setTransitionFromStatus] = useState('open');
+  const [transitionToStatus, setTransitionToStatus] = useState('in_progress');
+  const [transitionRequiredPermission, setTransitionRequiredPermission] = useState('tickets.manage');
+  const [transitionRequiresApproval, setTransitionRequiresApproval] = useState(false);
+  const [workflowUpdateNameDrafts, setWorkflowUpdateNameDrafts] = useState<Record<number, string>>({});
+  const [workflowUpdateActiveDrafts, setWorkflowUpdateActiveDrafts] = useState<Record<number, boolean>>({});
+
+  const [simulationTicketId, setSimulationTicketId] = useState('');
+  const [simulationTargetStatus, setSimulationTargetStatus] = useState('resolved');
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+
+  const [automationRuleName, setAutomationRuleName] = useState('');
+  const [automationEventType, setAutomationEventType] = useState('ticket.created');
+  const [automationPriority, setAutomationPriority] = useState(100);
+  const [automationConditionsJson, setAutomationConditionsJson] = useState('[]');
+  const [automationActionsJson, setAutomationActionsJson] = useState('[{"type":"notify"}]');
+  const [automationNameDrafts, setAutomationNameDrafts] = useState<Record<number, string>>({});
+  const [automationPriorityDrafts, setAutomationPriorityDrafts] = useState<Record<number, number>>({});
+  const [automationTestTicketId, setAutomationTestTicketId] = useState<Record<number, string>>({});
+  const [automationTestResults, setAutomationTestResults] = useState<Record<number, string>>({});
 
   const activate = useMutation({
     mutationFn: (workflowId: number) => activateWorkflow(workspaceSlug, workflowId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'workflows'] }),
   });
 
+  const createWorkflowMutation = useMutation({
+    mutationFn: () =>
+      createWorkflow(workspaceSlug, {
+        name: workflowName.trim(),
+        is_default: workflowIsDefault,
+        transitions: [
+          {
+            from_status: transitionFromStatus,
+            to_status: transitionToStatus,
+            required_permission: transitionRequiredPermission.trim() || null,
+            requires_approval: transitionRequiresApproval,
+            sort_order: 0,
+          },
+        ],
+      }),
+    onSuccess: () => {
+      setWorkflowName('');
+      setWorkflowIsDefault(false);
+      setTransitionFromStatus('open');
+      setTransitionToStatus('in_progress');
+      setTransitionRequiredPermission('tickets.manage');
+      setTransitionRequiresApproval(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'workflows'] });
+    },
+  });
+
+  const updateWorkflowMutation = useMutation({
+    mutationFn: ({ workflowId, name, isActive }: { workflowId: number; name: string; isActive: boolean }) =>
+      updateWorkflow(workspaceSlug, workflowId, { name, is_active: isActive }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'workflows'] }),
+  });
+
+  const simulateWorkflow = useMutation({
+    mutationFn: () => simulateWorkflowTransition(workspaceSlug, Number(simulationTicketId), simulationTargetStatus),
+    onSuccess: (response) => setSimulationResult(response.data),
+  });
+
   const toggleRule = useMutation({
     mutationFn: ({ ruleId, isActive }: { ruleId: number; isActive: boolean }) => toggleAutomationRule(workspaceSlug, ruleId, isActive),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'automation-rules'] }),
+  });
+
+  const createRuleMutation = useMutation({
+    mutationFn: () =>
+      createAutomationRule(workspaceSlug, {
+        name: automationRuleName.trim(),
+        event_type: automationEventType,
+        priority: automationPriority,
+        conditions: JSON.parse(automationConditionsJson) as unknown[],
+        actions: JSON.parse(automationActionsJson) as unknown[],
+        is_active: true,
+      }),
+    onSuccess: () => {
+      setAutomationRuleName('');
+      setAutomationEventType('ticket.created');
+      setAutomationPriority(100);
+      setAutomationConditionsJson('[]');
+      setAutomationActionsJson('[{"type":"notify"}]');
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'automation-rules'] });
+    },
+  });
+
+  const updateRuleMutation = useMutation({
+    mutationFn: ({ ruleId, name, priority }: { ruleId: number; name: string; priority: number }) =>
+      updateAutomationRule(workspaceSlug, ruleId, { name, priority }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'automation-rules'] }),
+  });
+
+  const dryRunRuleMutation = useMutation({
+    mutationFn: ({ ruleId, ticketId }: { ruleId: number; ticketId: number }) => testAutomationRule(workspaceSlug, ruleId, ticketId),
+    onSuccess: (response, variables) => {
+      setAutomationTestResults((previous) => ({
+        ...previous,
+        [variables.ruleId]: JSON.stringify(response.data ?? {}, null, 2),
+      }));
+    },
   });
 
   const approve = useMutation({
@@ -49,6 +172,11 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   const rules = rulesQuery.data?.data ?? [];
   const approvals = approvalsQuery.data?.data ?? [];
   const executions = executionsQuery.data?.data ?? [];
+  const testTickets = ticketsQuery.data?.data ?? [];
+
+  const canCreateWorkflow = workflowName.trim().length > 0 && transitionFromStatus !== transitionToStatus;
+  const canSimulateWorkflow = Number(simulationTicketId) > 0 && simulationTargetStatus.length > 0;
+  const canCreateAutomationRule = automationRuleName.trim().length > 0 && automationActionsJson.trim().length > 0;
 
   return (
     <div className="grid gap-5 xl:grid-cols-2">
@@ -56,27 +184,118 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
         <CardHeader>
           <Badge variant="secondary" className="w-fit">Workflow</Badge>
           <CardTitle>Workflow lifecycle</CardTitle>
-          <CardDescription>Activate default workflow and inspect transition/approval paths.</CardDescription>
+          <CardDescription>Create, update, activate, and simulate workflow transitions.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          {workflows.map((workflow) => (
-            <div key={workflow.id} className="rounded-md border p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium">{workflow.name}</p>
-                  <p className="text-xs text-muted-foreground">{workflow.transitions.length} transitions</p>
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Create workflow</p>
+            <Input placeholder="Workflow name" value={workflowName} onChange={(event) => setWorkflowName(event.target.value)} />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Input placeholder="From status" value={transitionFromStatus} onChange={(event) => setTransitionFromStatus(event.target.value)} />
+              <Input placeholder="To status" value={transitionToStatus} onChange={(event) => setTransitionToStatus(event.target.value)} />
+            </div>
+            <Input
+              placeholder="Required permission (optional)"
+              value={transitionRequiredPermission}
+              onChange={(event) => setTransitionRequiredPermission(event.target.value)}
+            />
+            <label className="flex items-center gap-2 text-xs">
+              <Checkbox checked={transitionRequiresApproval} onCheckedChange={(checked) => setTransitionRequiresApproval(checked === true)} />
+              <span>Transition requires approval</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs">
+              <Checkbox checked={workflowIsDefault} onCheckedChange={(checked) => setWorkflowIsDefault(checked === true)} />
+              <span>Set as default workflow</span>
+            </label>
+            {createWorkflowMutation.isError && (
+              <p className="text-xs text-destructive">{(createWorkflowMutation.error as Error).message}</p>
+            )}
+            <Button size="sm" variant="outline" disabled={!canCreateWorkflow || createWorkflowMutation.isPending} onClick={() => createWorkflowMutation.mutate()}>
+              {createWorkflowMutation.isPending ? 'Creating...' : 'Create workflow'}
+            </Button>
+          </div>
+
+          {workflows.map((workflow) => {
+            const nameDraft = workflowUpdateNameDrafts[workflow.id] ?? workflow.name;
+            const activeDraft = workflowUpdateActiveDrafts[workflow.id] ?? workflow.is_active;
+            return (
+              <div key={workflow.id} className="rounded-md border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{workflow.name}</p>
+                    <p className="text-xs text-muted-foreground">{workflow.transitions.length} transitions</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {workflow.is_default && <Badge>Default</Badge>}
+                    {!workflow.is_default && (
+                      <Button size="sm" variant="outline" onClick={() => activate.mutate(workflow.id)}>
+                        Activate
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {workflow.is_default && <Badge>Default</Badge>}
-                  {!workflow.is_default && (
-                    <Button size="sm" variant="outline" onClick={() => activate.mutate(workflow.id)}>
-                      Activate
-                    </Button>
-                  )}
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                  <Input value={nameDraft} onChange={(event) => setWorkflowUpdateNameDrafts((previous) => ({ ...previous, [workflow.id]: event.target.value }))} />
+                  <label className="flex items-center gap-2 text-xs">
+                    <Checkbox
+                      checked={activeDraft}
+                      onCheckedChange={(checked) => setWorkflowUpdateActiveDrafts((previous) => ({ ...previous, [workflow.id]: checked === true }))}
+                    />
+                    <span>Active</span>
+                  </label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => updateWorkflowMutation.mutate({ workflowId: workflow.id, name: nameDraft.trim() || workflow.name, isActive: activeDraft })}
+                  >
+                    Save
+                  </Button>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+
+          <Separator />
+
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Simulate transition</p>
+            <Input
+              placeholder="Ticket ID"
+              type="number"
+              value={simulationTicketId}
+              onChange={(event) => setSimulationTicketId(event.target.value)}
+            />
+            <Input
+              list="workflow-target-statuses"
+              placeholder="Target status"
+              value={simulationTargetStatus}
+              onChange={(event) => setSimulationTargetStatus(event.target.value)}
+            />
+            <datalist id="workflow-target-statuses">
+              {statusOptions.map((status) => (
+                <option key={status} value={status} />
+              ))}
+            </datalist>
+            {simulateWorkflow.isError && (
+              <p className="text-xs text-destructive">{(simulateWorkflow.error as Error).message}</p>
+            )}
+            <Button size="sm" variant="outline" disabled={!canSimulateWorkflow || simulateWorkflow.isPending} onClick={() => simulateWorkflow.mutate()}>
+              {simulateWorkflow.isPending ? 'Simulating...' : 'Simulate transition'}
+            </Button>
+            {simulationResult && (
+              <div className="rounded border p-2 text-xs">
+                <p className="font-medium">Allowed: {simulationResult.allowed ? 'yes' : 'no'}</p>
+                {simulationResult.reason && <p className="text-muted-foreground">Reason: {simulationResult.reason}</p>}
+                <p className="text-muted-foreground">Requires approval: {simulationResult.requires_approval ? 'yes' : 'no'}</p>
+                {simulationResult.required_permission && (
+                  <p className="text-muted-foreground">Required permission: {simulationResult.required_permission}</p>
+                )}
+              </div>
+            )}
+            {testTickets.length > 0 && (
+              <p className="text-xs text-muted-foreground">Sample ticket IDs: {testTickets.slice(0, 5).map((ticket) => ticket.id).join(', ')}</p>
+            )}
+          </div>
 
           <Separator />
 
@@ -89,7 +308,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                   <div>
                     <p className="text-sm">Approval #{approval.id}</p>
                     <p className="text-xs text-muted-foreground">
-                      ticket #{approval.ticket_id} → {approval.requested_transition_to_status ?? 'n/a'}
+                      ticket #{approval.ticket_id} to {approval.requested_transition_to_status ?? 'n/a'}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -107,25 +326,90 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
         <CardHeader>
           <Badge variant="secondary" className="w-fit">Automation</Badge>
           <CardTitle>Rules and execution logs</CardTitle>
-          <CardDescription>Toggle automation rules and inspect recent execution outcomes.</CardDescription>
+          <CardDescription>Create, update, test, and toggle automation rules.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Create rule</p>
+            <Input placeholder="Rule name" value={automationRuleName} onChange={(event) => setAutomationRuleName(event.target.value)} />
+            <Input list="automation-event-types" placeholder="Event type" value={automationEventType} onChange={(event) => setAutomationEventType(event.target.value)} />
+            <datalist id="automation-event-types">
+              {eventTypeOptions.map((eventType) => (
+                <option key={eventType} value={eventType} />
+              ))}
+            </datalist>
+            <Input type="number" placeholder="Priority" value={automationPriority} onChange={(event) => setAutomationPriority(Number(event.target.value) || 0)} />
+            <Input placeholder="Conditions JSON" value={automationConditionsJson} onChange={(event) => setAutomationConditionsJson(event.target.value)} />
+            <Input placeholder="Actions JSON" value={automationActionsJson} onChange={(event) => setAutomationActionsJson(event.target.value)} />
+            {createRuleMutation.isError && (
+              <p className="text-xs text-destructive">{(createRuleMutation.error as Error).message}</p>
+            )}
+            <Button size="sm" variant="outline" disabled={!canCreateAutomationRule || createRuleMutation.isPending} onClick={() => createRuleMutation.mutate()}>
+              {createRuleMutation.isPending ? 'Creating...' : 'Create rule'}
+            </Button>
+          </div>
+
           <div className="space-y-2">
-            {rules.map((rule) => (
-              <div key={rule.id} className="flex items-center justify-between gap-3 rounded-md border p-3">
-                <div>
-                  <p className="text-sm font-medium">{rule.name}</p>
-                  <p className="text-xs text-muted-foreground">{rule.event_type} • priority {rule.priority}</p>
+            {rules.map((rule) => {
+              const nameDraft = automationNameDrafts[rule.id] ?? rule.name;
+              const priorityDraft = automationPriorityDrafts[rule.id] ?? rule.priority;
+              const testTicketIdDraft = automationTestTicketId[rule.id] ?? '';
+
+              return (
+                <div key={rule.id} className="rounded-md border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">{rule.name}</p>
+                      <p className="text-xs text-muted-foreground">{rule.event_type} • priority {rule.priority}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleRule.mutate({ ruleId: rule.id, isActive: !rule.is_active })}
+                    >
+                      {rule.is_active ? 'Disable' : 'Enable'}
+                    </Button>
+                  </div>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
+                    <Input value={nameDraft} onChange={(event) => setAutomationNameDrafts((previous) => ({ ...previous, [rule.id]: event.target.value }))} />
+                    <Input
+                      type="number"
+                      value={priorityDraft}
+                      onChange={(event) => setAutomationPriorityDrafts((previous) => ({ ...previous, [rule.id]: Number(event.target.value) || 0 }))}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => updateRuleMutation.mutate({ ruleId: rule.id, name: nameDraft.trim() || rule.name, priority: priorityDraft })}
+                    >
+                      Save
+                    </Button>
+                  </div>
+
+                  <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                    <Input
+                      placeholder="Ticket ID for dry-run"
+                      type="number"
+                      value={testTicketIdDraft}
+                      onChange={(event) => setAutomationTestTicketId((previous) => ({ ...previous, [rule.id]: event.target.value }))}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={Number(testTicketIdDraft) <= 0}
+                      onClick={() => dryRunRuleMutation.mutate({ ruleId: rule.id, ticketId: Number(testTicketIdDraft) })}
+                    >
+                      Dry run
+                    </Button>
+                  </div>
+
+                  {automationTestResults[rule.id] && (
+                    <pre className="mt-2 overflow-x-auto rounded border p-2 text-xs">{automationTestResults[rule.id]}</pre>
+                  )}
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toggleRule.mutate({ ruleId: rule.id, isActive: !rule.is_active })}
-                >
-                  {rule.is_active ? 'Disable' : 'Enable'}
-                </Button>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Separator />

@@ -36,4 +36,27 @@ class WorkspaceMemberController extends Controller
             ])->values(),
         ]);
     }
+
+    public function assignable(Workspace $workspace): JsonResponse
+    {
+        $memberships = WorkspaceMembership::query()
+            ->with(['user:id,first_name,last_name,email'])
+            ->where('workspace_id', $workspace->id)
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'data' => $memberships
+                ->filter(fn (WorkspaceMembership $membership) => $membership->user !== null)
+                ->map(fn (WorkspaceMembership $membership) => [
+                    'id' => $membership->id,
+                    'user' => [
+                        'id' => $membership->user->id,
+                        'first_name' => $membership->user->first_name,
+                        'last_name' => $membership->user->last_name,
+                        'email' => $membership->user->email,
+                    ],
+                ])->values(),
+        ]);
+    }
 }

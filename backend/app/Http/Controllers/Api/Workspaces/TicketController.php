@@ -70,7 +70,8 @@ class TicketController extends Controller
             $query->where('customer_id', $customerId);
         }
 
-        $tickets = $query->latest('id')->paginate(15);
+        $perPage = min(max($request->integer('per_page', 15), 1), 200);
+        $tickets = $query->latest('id')->paginate($perPage);
 
         return response()->json([
             'data' => TicketResource::collection($tickets->items()),

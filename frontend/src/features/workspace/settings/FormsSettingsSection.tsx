@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { ApiError } from '@/services/api/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { TicketCustomFieldConfig } from '@/types/api';
 import {
@@ -14,6 +15,8 @@ import {
   listTicketCustomFields,
   listTicketFormTemplates,
   listTicketTypes,
+  updateTicketCustomField,
+  updateTicketFormTemplate,
 } from './settings-api';
 
 type FormsSettingsSectionProps = {
@@ -21,6 +24,7 @@ type FormsSettingsSectionProps = {
 };
 
 const fieldTypes: TicketCustomFieldConfig['field_type'][] = ['text', 'textarea', 'number', 'select', 'multiselect', 'checkbox', 'date'];
+const anyTypeValue = '__any__';
 
 function slugify(value: string): string {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -31,7 +35,18 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
   const [fieldLabel, setFieldLabel] = useState('');
   const [fieldType, setFieldType] = useState<TicketCustomFieldConfig['field_type']>('text');
   const [templateName, setTemplateName] = useState('');
-  const [ticketTypeId, setTicketTypeId] = useState('');
+  const [ticketTypeId, setTicketTypeId] = useState(anyTypeValue);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [selectedFieldId, setSelectedFieldId] = useState('');
+  const [fieldLabelDraft, setFieldLabelDraft] = useState('');
+  const [fieldTypeDraft, setFieldTypeDraft] = useState<TicketCustomFieldConfig['field_type']>('text');
+  const [fieldRequiredDraft, setFieldRequiredDraft] = useState(false);
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [templateNameDraft, setTemplateNameDraft] = useState('');
+  const [templateTicketTypeDraft, setTemplateTicketTypeDraft] = useState(anyTypeValue);
+  const [templateActiveDraft, setTemplateActiveDraft] = useState(true);
 
   const fieldsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'], queryFn: () => listTicketCustomFields(workspaceSlug) });
   const templatesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'ticket-form-templates'], queryFn: () => listTicketFormTemplates(workspaceSlug) });
@@ -53,25 +68,88 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
     onSuccess: () => {
       setFieldLabel('');
       setFieldType('text');
+      setFormError(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'] });
     },
+    onError: (error: ApiError) => setFormError(error.message),
   });
 
   const createTemplate = useMutation({
     mutationFn: () =>
       createTicketFormTemplate(workspaceSlug, {
         name: templateName,
-        ticket_type_id: ticketTypeId ? Number(ticketTypeId) : null,
+        ticket_type_id: ticketTypeId === anyTypeValue ? null : Number(ticketTypeId),
         field_schema: fields.filter((field) => field.is_active).map((field) => ({ key: field.key, required: field.is_required })),
         is_default: false,
         is_active: true,
       }),
     onSuccess: () => {
       setTemplateName('');
-      setTicketTypeId('');
+      setTicketTypeId(anyTypeValue);
+      setFormError(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket-form-templates'] });
     },
+    onError: (error: ApiError) => setFormError(error.message),
   });
+
+  const updateField = useMutation({
+    mutationFn: () =>
+      updateTicketCustomField(workspaceSlug, Number(selectedFieldId), {
+        label: fieldLabelDraft,
+        field_type: fieldTypeDraft,
+        is_required: fieldRequiredDraft,
+      }),
+    onSuccess: () => {
+      setFormError(null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'] });
+    },
+    onError: (error: ApiError) => setFormError(error.message),
+  });
+
+  const toggleField = useMutation({
+    mutationFn: () => {
+      const field = fields.find((item) => String(item.id) === selectedFieldId);
+      if (!field) {
+        return Promise.reject(new Error('Select a field first.'));
+      }
+      return updateTicketCustomField(workspaceSlug, field.id, { is_active: !field.is_active });
+    },
+    onSuccess: () => {
+      setFormError(null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'] });
+    },
+    onError: (error: ApiError) => setFormError(error.message),
+  });
+
+  const updateTemplate = useMutation({
+    mutationFn: () =>
+      updateTicketFormTemplate(workspaceSlug, Number(selectedTemplateId), {
+        name: templateNameDraft,
+        ticket_type_id: templateTicketTypeDraft === anyTypeValue ? null : Number(templateTicketTypeDraft),
+        is_active: templateActiveDraft,
+      }),
+    onSuccess: () => {
+      setFormError(null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket-form-templates'] });
+    },
+    onError: (error: ApiError) => setFormError(error.message),
+  });
+
+  function hydrateFieldDrafts(id: string): void {
+    const selected = fields.find((field) => String(field.id) === id);
+    setFieldLabelDraft(selected?.label ?? '');
+    setFieldTypeDraft(selected?.field_type ?? 'text');
+    setFieldRequiredDraft(Boolean(selected?.is_required));
+    setFormError(null);
+  }
+
+  function hydrateTemplateDrafts(id: string): void {
+    const selected = templates.find((template) => String(template.id) === id);
+    setTemplateNameDraft(selected?.name ?? '');
+    setTemplateTicketTypeDraft(selected?.ticket_type_id ? String(selected.ticket_type_id) : anyTypeValue);
+    setTemplateActiveDraft(Boolean(selected?.is_active));
+    setFormError(null);
+  }
 
   return (
     <div className="grid gap-5 xl:grid-cols-2">
@@ -81,7 +159,7 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
             Forms
           </Badge>
           <CardTitle>Custom fields</CardTitle>
-          <CardDescription>Define reusable fields for future dynamic ticket forms.</CardDescription>
+          <CardDescription>Define reusable fields for dynamic ticket forms.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <form
@@ -119,6 +197,60 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
             </Button>
           </form>
 
+          <div className="rounded-lg border p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-medium">Edit field</h3>
+              <Badge variant="outline">{fields.length} records</Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[180px_1fr_180px_120px_auto_auto]">
+              <Select
+                value={selectedFieldId}
+                onValueChange={(value) => {
+                  const selected = value ?? '';
+                  setSelectedFieldId(selected);
+                  hydrateFieldDrafts(selected);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select field" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {fields.map((field) => (
+                      <SelectItem key={field.id} value={String(field.id)}>
+                        {field.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input aria-label="Field label draft" value={fieldLabelDraft} onChange={(event) => setFieldLabelDraft(event.target.value)} />
+              <Select value={fieldTypeDraft} onValueChange={(value) => setFieldTypeDraft(value as TicketCustomFieldConfig['field_type'])}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {fieldTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="outline" onClick={() => setFieldRequiredDraft((current) => !current)} disabled={!selectedFieldId}>
+                {fieldRequiredDraft ? 'Required' : 'Optional'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => updateField.mutate()} disabled={!selectedFieldId || !fieldLabelDraft || updateField.isPending}>
+                Save
+              </Button>
+              <Button type="button" variant="outline" onClick={() => toggleField.mutate()} disabled={!selectedFieldId || toggleField.isPending}>
+                {fields.find((field) => String(field.id) === selectedFieldId)?.is_active ? 'Deactivate' : 'Activate'}
+              </Button>
+            </div>
+          </div>
+
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -149,7 +281,7 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
       <Card className="shadow-none">
         <CardHeader>
           <CardTitle>Form templates</CardTitle>
-          <CardDescription>Create templates from the active custom field dictionary.</CardDescription>
+          <CardDescription>Create and update templates from the custom field dictionary.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <form
@@ -166,12 +298,13 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
               </Field>
               <Field>
                 <FieldLabel>Ticket type</FieldLabel>
-                <Select value={ticketTypeId} onValueChange={(value) => setTicketTypeId(value ?? '')}>
+                <Select value={ticketTypeId} onValueChange={(value) => setTicketTypeId(value ?? anyTypeValue)}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue placeholder="Any type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
+                      <SelectItem value={anyTypeValue}>Any type</SelectItem>
                       {ticketTypes.map((type) => (
                         <SelectItem key={type.id} value={String(type.id)}>
                           {type.name}
@@ -182,10 +315,64 @@ export function FormsSettingsSection({ workspaceSlug }: FormsSettingsSectionProp
                 </Select>
               </Field>
             </FieldGroup>
-            <Button type="submit" className="self-end" disabled={!templateName || !ticketTypeId || createTemplate.isPending}>
+            <Button type="submit" className="self-end" disabled={!templateName || createTemplate.isPending}>
               Add template
             </Button>
           </form>
+
+          <div className="rounded-lg border p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-medium">Edit template</h3>
+              <Badge variant="outline">{templates.length} records</Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[180px_1fr_180px_auto_auto]">
+              <Select
+                value={selectedTemplateId}
+                onValueChange={(value) => {
+                  const selected = value ?? '';
+                  setSelectedTemplateId(selected);
+                  hydrateTemplateDrafts(selected);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={String(template.id)}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input aria-label="Template name draft" value={templateNameDraft} onChange={(event) => setTemplateNameDraft(event.target.value)} />
+              <Select value={templateTicketTypeDraft} onValueChange={(value) => setTemplateTicketTypeDraft(value ?? anyTypeValue)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value={anyTypeValue}>Any type</SelectItem>
+                    {ticketTypes.map((type) => (
+                      <SelectItem key={type.id} value={String(type.id)}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="outline" onClick={() => setTemplateActiveDraft((current) => !current)} disabled={!selectedTemplateId}>
+                {templateActiveDraft ? 'Active' : 'Inactive'}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => updateTemplate.mutate()} disabled={!selectedTemplateId || !templateNameDraft || updateTemplate.isPending}>
+                Save
+              </Button>
+            </div>
+          </div>
+
+          {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
 
           <div className="rounded-lg border">
             <Table>

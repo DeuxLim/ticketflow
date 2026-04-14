@@ -173,6 +173,119 @@ class EnterpriseFoundationTest extends TestCase
         ]);
     }
 
+    public function test_integrations_endpoints_return_contracts_used_by_settings_ui(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme Enterprise',
+            'slug' => 'acme-enterprise',
+        ])->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [
+            'name' => 'Ticket Events',
+            'url' => 'https://example.test/hooks',
+            'secret' => 'supersecret123',
+            'events' => ['ticket.created'],
+        ])->assertCreated()
+            ->assertJsonPath('data.name', 'Ticket Events')
+            ->assertJsonPath('data.events', 'ticket.created');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/webhooks", [
+            'name' => '',
+            'url' => 'invalid-url',
+            'secret' => '123',
+            'events' => [],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['name', 'url', 'secret', 'events']);
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/webhooks")
+            ->assertOk()
+            ->assertJsonPath('data.0.name', 'Ticket Events')
+            ->assertJsonPath('data.0.is_active', true);
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Webhook Contract Test',
+            'description' => 'Generate integration event and delivery.',
+            'priority' => 'high',
+        ])->assertCreated();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/webhook-deliveries")
+            ->assertOk()
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 1)
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.endpoint.name', 'Ticket Events')
+            ->assertJsonPath('data.0.event.event_type', 'ticket.created');
+    }
+
+    public function test_security_governance_endpoints_return_contracts_used_by_settings_ui(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme Enterprise',
+            'slug' => 'acme-enterprise',
+        ])->json('data');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/security-policy")
+            ->assertOk()
+            ->assertJsonPath('data.require_sso', false)
+            ->assertJsonPath('data.require_mfa', false)
+            ->assertJsonPath('data.session_ttl_minutes', 720)
+            ->assertJsonPath('data.ip_allowlist', [])
+            ->assertJsonPath('data.tenant_mode', 'shared')
+            ->assertJsonPath('data.feature_flags', []);
+
+        $provider = $this->postJson("/api/workspaces/{$workspace['slug']}/identity-providers", [
+            'provider_type' => 'oidc',
+            'name' => 'Okta OIDC',
+            'authorization_url' => 'https://example.okta.com/oauth2/v1/authorize',
+            'token_url' => 'https://example.okta.com/oauth2/v1/token',
+            'userinfo_url' => 'https://example.okta.com/oauth2/v1/userinfo',
+            'redirect_uri' => 'https://app.example.com/auth/callback',
+            'client_id' => 'client-123',
+            'client_secret' => 'secret-123',
+            'is_active' => true,
+        ])->assertCreated()
+            ->assertJsonPath('data.provider_type', 'oidc')
+            ->assertJsonPath('data.name', 'Okta OIDC')
+            ->json('data');
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/identity-providers")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $provider['id'])
+            ->assertJsonPath('data.0.provider_type', 'oidc')
+            ->assertJsonPath('data.0.is_active', true);
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/auth/sso/oidc/start", [
+            'provider_id' => $provider['id'],
+        ])->assertOk()
+            ->assertJsonPath('data.state', fn ($value) => is_string($value) && strlen($value) >= 20)
+            ->assertJsonPath('data.authorization_url', fn ($value) => is_string($value) && str_contains($value, 'state='));
+
+        $directory = $this->postJson("/api/workspaces/{$workspace['slug']}/provisioning-directories", [
+            'name' => 'Azure AD',
+        ])->assertCreated()
+            ->assertJsonPath('data.name', 'Azure AD')
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('meta.token', fn ($value) => is_string($value) && str_starts_with($value, 'scim_'))
+            ->json();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/provisioning-directories")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $directory['data']['id'])
+            ->assertJsonPath('data.0.status', 'active');
+    }
+
     public function test_ip_allowlist_policy_blocks_workspace_requests_from_non_allowlisted_ip(): void
     {
         $owner = User::factory()->create();

@@ -151,4 +151,78 @@ class EnterprisePhaseTwoFlowsTest extends TestCase
             'workspace_role_id' => (int) $group['id'],
         ]);
     }
+
+    public function test_workflow_transition_simulation_reports_allowed_and_disallowed_paths(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Ops Hub',
+            'slug' => 'ops-hub',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        $ticket = $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Simulate workflow',
+            'description' => 'Check transition simulation',
+            'priority' => 'high',
+        ])->assertCreated()->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets/{$ticket['id']}/workflow/simulate", [
+            'to_status' => 'in_progress',
+        ])->assertOk()
+            ->assertJsonPath('data.allowed', true)
+            ->assertJsonPath('data.requires_approval', false);
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets/{$ticket['id']}/workflow/simulate", [
+            'to_status' => 'closed',
+        ])->assertOk()
+            ->assertJsonPath('data.allowed', false)
+            ->assertJsonPath('data.reason', 'Transition is not defined in the active workflow.');
+    }
+
+    public function test_automation_rule_dry_run_returns_rule_decision_payload(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Ops Hub',
+            'slug' => 'ops-hub',
+        ])->json('data');
+
+        $rule = $this->postJson("/api/workspaces/{$workspace['slug']}/automation-rules", [
+            'name' => 'Escalate urgent',
+            'event_type' => 'ticket.updated',
+            'conditions' => ['priority' => 'urgent'],
+            'actions' => ['status' => 'in_progress'],
+            'is_active' => true,
+        ])->assertCreated()->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        $ticket = $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Dry run target',
+            'description' => 'Validate dry-run payload',
+            'priority' => 'urgent',
+        ])->assertCreated()->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/automation-rules/{$rule['id']}/test", [
+            'ticket_id' => $ticket['id'],
+        ])->assertOk()
+            ->assertJsonPath('data.rule_id', $rule['id'])
+            ->assertJsonPath('data.rule_name', 'Escalate urgent')
+            ->assertJsonPath('data.matched', true)
+            ->assertJsonPath('data.updates.status', 'in_progress');
+    }
 }

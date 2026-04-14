@@ -416,3 +416,79 @@ export type AuditEventRecord = {
   actor_user_id: number | null;
   created_at: string;
 };
+
+export type TenantSecurityPolicyConfig = {
+  id: number;
+  workspace_id: number;
+  require_sso: boolean;
+  require_mfa: boolean;
+  session_ttl_minutes: number;
+  ip_allowlist: string[];
+  tenant_mode: 'shared' | 'dedicated';
+  dedicated_data_plane_key: string | null;
+  feature_flags: Record<string, unknown>;
+};
+
+export type TenantIdentityProviderConfig = {
+  id: number;
+  workspace_id: number;
+  provider_type: 'saml' | 'oidc';
+  name: string;
+  issuer: string | null;
+  sso_url: string | null;
+  authorization_url: string | null;
+  token_url: string | null;
+  userinfo_url: string | null;
+  redirect_uri: string | null;
+  metadata_url: string | null;
+  x509_certificate: string | null;
+  client_id: string | null;
+  is_active: boolean;
+  certificate_expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProvisioningDirectoryRecord = {
+  id: number;
+  workspace_id: number;
+  name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WebhookEndpointRecord = {
+  id: number;
+  workspace_id: number;
+  name: string;
+  url: string;
+  events: string | string[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type WebhookDeliveryRecord = {
+  id: number;
+  webhook_endpoint_id: number;
+  integration_event_id: number;
+  attempt_count: number;
+  status: 'pending' | 'retrying' | 'delivered' | 'failed';
+  response_status: number | null;
+  response_body: string | null;
+  next_attempt_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+  endpoint?: {
+    id: number;
+    name: string;
+    url: string;
+  };
+  event?: {
+    id: number;
+    event_type: string;
+    occurred_at: string;
+  };
+};

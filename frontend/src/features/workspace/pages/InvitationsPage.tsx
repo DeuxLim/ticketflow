@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, type UseFormReturn } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ForbiddenState } from '@/components/forbidden-state';
@@ -10,9 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
+import {
+  cancelWorkspaceInvitation,
+  createWorkspaceInvitation,
+  listWorkspaceInvitations,
+  listWorkspaceRoles,
+} from '@/features/workspace/pages/invitationsApi';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ApiError, apiRequest } from '@/services/api/client';
+import { ApiError } from '@/services/api/client';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -23,14 +29,16 @@ const invitationSchema = z.object({
 
 type InvitationForm = z.infer<typeof invitationSchema>;
 
-type WorkspaceRole = { id: number; name: string; slug: string };
-type Invitation = {
-  id: number;
-  email: string;
-  status: string;
-  expires_at: string;
-  roles: Array<{ id: number; name: string; slug: string }>;
-};
+function applyInvitationFieldErrors(form: UseFormReturn<InvitationForm>, error: unknown) {
+  if (!(error instanceof ApiError)) return;
+
+  for (const [field, messages] of Object.entries(error.fieldErrors)) {
+    if (!messages.length) continue;
+    if (field === 'email' || field === 'role_id') {
+      form.setError(field, { type: 'server', message: messages[0] });
+    }
+  }
+}
 
 export function InvitationsPage() {
   const { workspaceSlug } = useParams();
@@ -55,32 +63,29 @@ export function InvitationsPage() {
 
   const rolesQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'roles'],
-    queryFn: () => apiRequest<{ data: WorkspaceRole[] }>(`/workspaces/${workspaceSlug}/roles`),
+    queryFn: () => listWorkspaceRoles(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
   const invitationsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'invitations'],
-    queryFn: () => apiRequest<{ data: Invitation[] }>(`/workspaces/${workspaceSlug}/invitations`),
+    queryFn: () => listWorkspaceInvitations(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
   const createInvitation = useMutation({
     mutationFn: (values: InvitationForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/invitations`, {
-        method: 'POST',
-        body: JSON.stringify({ email: values.email, role_ids: [Number(values.role_id)] }),
-      }),
+      createWorkspaceInvitation(workspaceSlug ?? '', values.email, Number(values.role_id)),
     onSuccess: () => {
       reset({ email: '', role_id: '' });
       setIsInviteOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'invitations'] });
     },
+    onError: (error) => applyInvitationFieldErrors(invitationForm, error),
   });
 
   const cancelInvitation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest(`/workspaces/${workspaceSlug}/invitations/${id}/cancel`, { method: 'POST' }),
+    mutationFn: (id: number) => cancelWorkspaceInvitation(workspaceSlug ?? '', id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'invitations'] });
     },

@@ -4,20 +4,9 @@ import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { ApiError, apiRequest } from '@/services/api/client';
+import { ApiError } from '@/services/api/client';
+import { listWorkspaceMembers } from '@/features/workspace/pages/membersApi';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-type Member = {
-  id: number;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    username: string;
-    email: string;
-  };
-  roles: Array<{ id: number; name: string; slug: string }>;
-};
 
 export function MembersPage() {
   const { workspaceSlug } = useParams();
@@ -26,7 +15,7 @@ export function MembersPage() {
 
   const query = useQuery({
     queryKey: ['workspace', workspaceSlug, 'members'],
-    queryFn: () => apiRequest<{ data: Member[] }>(`/workspaces/${workspaceSlug}/members`),
+    queryFn: () => listWorkspaceMembers(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManageMembers),
   });
 

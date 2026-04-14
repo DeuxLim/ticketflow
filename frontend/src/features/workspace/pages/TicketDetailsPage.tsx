@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ForbiddenState } from '@/components/forbidden-state';
@@ -16,8 +16,31 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  addWorkspaceTicketWatcher,
+  createWorkspaceChecklistItem,
+  createWorkspaceRelatedTicket,
+  createWorkspaceTicketComment,
+  deleteWorkspaceChecklistItem,
+  deleteWorkspaceRelatedTicket,
+  deleteWorkspaceTicket,
+  deleteWorkspaceTicketAttachment,
+  deleteWorkspaceTicketComment,
+  getWorkspaceTicket,
+  listWorkspaceTicketActivity,
+  listWorkspaceTicketAttachments,
+  listWorkspaceTicketComments,
+  removeWorkspaceTicketWatcher,
+  transitionWorkspaceTicket,
+  updateWorkspaceChecklistItem,
+  updateWorkspaceTicketComment,
+  updateWorkspaceTicket,
+  uploadWorkspaceTicketAttachment,
+} from '@/features/workspace/pages/ticketDetailsApi';
+import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
+import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Customer, Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
+import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
 
 const commentSchema = z.object({
   body: z.string().min(2, 'Comment must not be empty'),
@@ -80,21 +103,38 @@ type Attachment = {
   created_at: string;
 };
 
-type MemberOption = {
-  id: number;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-};
-
 type AuthUser = {
   id: number;
   email: string;
   is_platform_admin: boolean;
 };
+
+function applyTicketDetailsFieldErrors(
+  form: UseFormReturn<TicketUpdateForm>,
+  error: unknown,
+) {
+  if (!(error instanceof ApiError)) {
+    return;
+  }
+
+  for (const [field, messages] of Object.entries(error.fieldErrors)) {
+    if (!messages.length) continue;
+
+    if (
+      field === 'customer_id' ||
+      field === 'title' ||
+      field === 'description' ||
+      field === 'status' ||
+      field === 'priority' ||
+      field === 'assigned_to_user_id' ||
+      field === 'category' ||
+      field === 'queue_key' ||
+      field === 'tags'
+    ) {
+      form.setError(field, { type: 'server', message: messages[0] });
+    }
+  }
+}
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -154,7 +194,6 @@ export function TicketDetailsPage() {
   const canView = accessQuery.can('tickets.view');
   const canComment = accessQuery.can('tickets.comment');
   const canManage = accessQuery.can('tickets.manage');
-  const canManageMembers = accessQuery.can('members.manage');
 
   const commentForm = useForm<CommentForm>({
     resolver: zodResolver(commentSchema),
@@ -195,37 +234,37 @@ export function TicketDetailsPage() {
 
   const ticketQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId],
-    queryFn: () => apiRequest<{ data: Ticket }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}`),
+    queryFn: () => getWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
   const customersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'customers', 'for-ticket-details'],
-    queryFn: () => apiRequest<{ data: Customer[] }>(`/workspaces/${workspaceSlug}/customers`),
+    queryFn: () => listTicketCustomersForSelectors(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
   const membersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'members', 'for-ticket-details'],
-    queryFn: () => apiRequest<{ data: MemberOption[] }>(`/workspaces/${workspaceSlug}/members`),
-    enabled: Boolean(workspaceSlug && canManage && canManageMembers),
+    queryFn: () => listAssignableMembersForTickets(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
   });
 
   const relatedTicketOptionsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'tickets', 'related-options'],
-    queryFn: () => apiRequest<{ data: Ticket[] }>(`/workspaces/${workspaceSlug}/tickets`),
+    queryFn: () => listRelatedTicketOptions(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
   const commentsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'],
-    queryFn: () => apiRequest<{ data: TicketComment[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments`),
+    queryFn: () => listWorkspaceTicketComments(workspaceSlug ?? '', ticketId ?? '') as Promise<{ data: TicketComment[] }>,
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
   const activityQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'],
-    queryFn: () => apiRequest<{ data: ActivityLog[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/activity`),
+    queryFn: () => listWorkspaceTicketActivity(workspaceSlug ?? '', ticketId ?? '') as Promise<{ data: ActivityLog[] }>,
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
@@ -237,16 +276,13 @@ export function TicketDetailsPage() {
 
   const attachmentsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'],
-    queryFn: () => apiRequest<{ data: Attachment[] }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`),
+    queryFn: () => listWorkspaceTicketAttachments(workspaceSlug ?? '', ticketId ?? '') as Promise<{ data: Attachment[] }>,
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
   const addComment = useMutation({
     mutationFn: async (values: CommentForm) => {
-      const response = await apiRequest<{ data: TicketComment }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments`, {
-        method: 'POST',
-        body: JSON.stringify(values),
-      });
+      const response = await createWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', values) as { data: TicketComment };
 
       const commentId = response.data.id;
 
@@ -255,10 +291,7 @@ export function TicketDetailsPage() {
         formData.append('file', file);
         formData.append('comment_id', String(commentId));
 
-        await apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`, {
-          method: 'POST',
-          body: formData,
-        });
+        await uploadWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', formData);
       }
 
       return response;
@@ -276,10 +309,7 @@ export function TicketDetailsPage() {
 
   const updateComment = useMutation({
     mutationFn: ({ commentId, body }: { commentId: number; body: string }) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments/${commentId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ body }),
-      }),
+      updateWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', commentId, { body }),
     onSuccess: () => {
       setEditingCommentId(null);
       setEditingCommentBody('');
@@ -290,9 +320,7 @@ export function TicketDetailsPage() {
 
   const deleteComment = useMutation({
     mutationFn: (commentId: number) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/comments/${commentId}`, {
-        method: 'DELETE',
-      }),
+      deleteWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', commentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -302,25 +330,22 @@ export function TicketDetailsPage() {
 
   const updateTicket = useMutation({
     mutationFn: (values: TicketUpdateForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          customer_id: Number(values.customer_id),
-          title: values.title,
-          description: values.description,
-          status: values.status,
-          priority: values.priority,
-          assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
-          category: values.category || null,
-          queue_key: values.queue_key || null,
-          tags: values.tags
-            ? values.tags
-                .split(',')
-                .map((tag) => tag.trim())
-                .filter(Boolean)
-            : null,
-          custom_fields: values.custom_fields ?? {},
-        }),
+      updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', {
+        customer_id: Number(values.customer_id),
+        title: values.title,
+        description: values.description,
+        status: values.status,
+        priority: values.priority,
+        assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
+        category: values.category || null,
+        queue_key: values.queue_key || null,
+        tags: values.tags
+          ? values.tags
+              .split(',')
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+          : null,
+        custom_fields: values.custom_fields ?? {},
       }),
     onSuccess: () => {
       setIsEditOpen(false);
@@ -328,21 +353,18 @@ export function TicketDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
     },
+    onError: (error) => {
+      applyTicketDetailsFieldErrors(editForm, error);
+    },
   });
 
   const quickTransition = useMutation({
     mutationFn: async (status: Ticket['status']) => {
       try {
-        return await apiRequest<{ data: Ticket; message?: string }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}/transition`, {
-          method: 'POST',
-          body: JSON.stringify({ to_status: status }),
-        });
+        return await transitionWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', status);
       } catch (error) {
         if (error instanceof ApiError && error.status === 422) {
-          return apiRequest<{ data: Ticket }>(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status }),
-          });
+          return updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', { status }) as Promise<{ data: Ticket }>;
         }
         throw error;
       }
@@ -365,10 +387,7 @@ export function TicketDetailsPage() {
       const formData = new FormData();
       formData.append('file', attachmentFile);
 
-      return apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments`, {
-        method: 'POST',
-        body: formData,
-      });
+      return uploadWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', formData);
     },
     onSuccess: () => {
       setAttachmentFile(null);
@@ -378,7 +397,7 @@ export function TicketDetailsPage() {
   });
 
   const deleteAttachment = useMutation({
-    mutationFn: (attachmentId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}`, { method: 'DELETE' }),
+    mutationFn: (attachmentId: number) => deleteWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', attachmentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -386,7 +405,7 @@ export function TicketDetailsPage() {
   });
 
   const addWatcher = useMutation({
-    mutationFn: () => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/watchers`, { method: 'POST' }),
+    mutationFn: () => addWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -394,7 +413,7 @@ export function TicketDetailsPage() {
   });
 
   const removeWatcher = useMutation({
-    mutationFn: (watcherId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/watchers/${watcherId}`, { method: 'DELETE' }),
+    mutationFn: (watcherId: number) => removeWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? '', watcherId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -403,10 +422,7 @@ export function TicketDetailsPage() {
 
   const addChecklistItem = useMutation({
     mutationFn: (values: ChecklistForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items`, {
-        method: 'POST',
-        body: JSON.stringify({ title: values.title }),
-      }),
+      createWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', { title: values.title }),
     onSuccess: () => {
       checklistForm.reset({ title: '' });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
@@ -416,10 +432,7 @@ export function TicketDetailsPage() {
 
   const updateChecklistItem = useMutation({
     mutationFn: ({ itemId, values }: { itemId: number; values: Partial<TicketChecklistItem> }) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/${itemId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(values),
-      }),
+      updateWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId, values as Record<string, unknown>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -427,7 +440,7 @@ export function TicketDetailsPage() {
   });
 
   const deleteChecklistItem = useMutation({
-    mutationFn: (itemId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/${itemId}`, { method: 'DELETE' }),
+    mutationFn: (itemId: number) => deleteWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -436,12 +449,9 @@ export function TicketDetailsPage() {
 
   const addRelatedTicket = useMutation({
     mutationFn: (values: RelatedTicketForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/related-tickets`, {
-        method: 'POST',
-        body: JSON.stringify({
-          related_ticket_id: Number(values.related_ticket_id),
-          relationship_type: values.relationship_type,
-        }),
+      createWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', {
+        related_ticket_id: Number(values.related_ticket_id),
+        relationship_type: values.relationship_type,
       }),
     onSuccess: () => {
       relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
@@ -452,7 +462,7 @@ export function TicketDetailsPage() {
   });
 
   const deleteRelatedTicket = useMutation({
-    mutationFn: (linkId: number) => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/related-tickets/${linkId}`, { method: 'DELETE' }),
+    mutationFn: (linkId: number) => deleteWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', linkId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
@@ -460,7 +470,7 @@ export function TicketDetailsPage() {
   });
 
   const deleteTicket = useMutation({
-    mutationFn: () => apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, { method: 'DELETE' }),
+    mutationFn: () => deleteWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
       navigate(`/workspaces/${workspaceSlug}/tickets`);
@@ -469,8 +479,12 @@ export function TicketDetailsPage() {
 
   const ticket = ticketQuery.data?.data;
   const customers = customersQuery.data?.data ?? [];
+  const customersMeta = customersQuery.data?.meta;
   const members = membersQuery.data?.data ?? [];
   const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
+  const relatedTicketsMeta = relatedTicketOptionsQuery.data?.meta;
+  const relatedTicketsCoverageHint = selectorCoverageHint(relatedTicketOptions.length, relatedTicketsMeta?.total, 'tickets');
+  const customersCoverageHint = selectorCoverageHint(customers.length, customersMeta?.total, 'customers');
   const attachments = useMemo(() => attachmentsQuery.data?.data ?? [], [attachmentsQuery.data?.data]);
   const activityLogs = useMemo(() => activityQuery.data?.data ?? [], [activityQuery.data?.data]);
   const watchers = ticket?.watchers ?? [];
@@ -1107,6 +1121,9 @@ export function TicketDetailsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              {relatedTicketsCoverageHint && (
+                <p className="text-xs text-muted-foreground">{relatedTicketsCoverageHint}</p>
+              )}
               {relatedTicketForm.formState.errors.related_ticket_id && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.related_ticket_id.message}</p>}
             </div>
 
@@ -1174,6 +1191,9 @@ export function TicketDetailsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              {customersCoverageHint && (
+                <p className="text-xs text-muted-foreground">{customersCoverageHint}</p>
+              )}
               {editForm.formState.errors.customer_id && <p className="text-xs text-destructive">{editForm.formState.errors.customer_id.message}</p>}
             </div>
 

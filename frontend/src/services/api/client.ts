@@ -5,11 +5,15 @@ export { API_BASE_URL };
 
 export class ApiError extends Error {
   status: number;
+  fieldErrors: Record<string, string[]>;
+  payload: Record<string, unknown> | null;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, payload: Record<string, unknown> | null = null) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.payload = payload;
+    this.fieldErrors = (payload?.errors as Record<string, string[]> | undefined) ?? {};
   }
 }
 
@@ -35,11 +39,11 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({ message: 'Request failed.' }));
+    const payload = await response.json().catch(() => ({ message: 'Request failed.' })) as Record<string, unknown>;
     if (response.status === 401) {
       clearAuthToken();
     }
-    throw new ApiError(payload.message ?? 'Request failed.', response.status);
+    throw new ApiError((payload.message as string | undefined) ?? 'Request failed.', response.status, payload);
   }
 
   return (await response.json()) as T;

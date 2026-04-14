@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { useForm, type FieldErrors, type UseFormRegister } from 'react-hook-form';
+import { useState } from 'react';
+import { useForm, type FieldErrors, type UseFormRegister, type UseFormReturn } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ForbiddenState } from '@/components/forbidden-state';
@@ -12,9 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ApiError, apiRequest } from '@/services/api/client';
+import {
+  createWorkspaceCustomer,
+  deleteWorkspaceCustomer,
+  listWorkspaceCustomers,
+  updateWorkspaceCustomer,
+} from '@/features/workspace/pages/customerApi';
+import { ApiError } from '@/services/api/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import type { ApiEnvelope, Customer } from '@/types/api';
+import type { Customer } from '@/types/api';
 
 const customerSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -24,6 +30,18 @@ const customerSchema = z.object({
 });
 
 type CustomerForm = z.infer<typeof customerSchema>;
+
+function applyCustomerFormFieldErrors(form: UseFormReturn<CustomerForm>, error: unknown) {
+  if (!(error instanceof ApiError)) return;
+
+  for (const [field, messages] of Object.entries(error.fieldErrors)) {
+    if (!messages.length) continue;
+
+    if (field === 'name' || field === 'email' || field === 'company' || field === 'phone') {
+      form.setError(field, { type: 'server', message: messages[0] });
+    }
+  }
+}
 
 export function CustomersPage() {
   const { workspaceSlug } = useParams();
@@ -47,60 +65,45 @@ export function CustomersPage() {
     defaultValues: { name: '', email: '', company: '', phone: '' },
   });
 
-  const customersPath = useMemo(() => {
-    const query = search.trim();
-    if (!query) {
-      return `/workspaces/${workspaceSlug}/customers`;
-    }
-    return `/workspaces/${workspaceSlug}/customers?search=${encodeURIComponent(query)}`;
-  }, [workspaceSlug, search]);
-
   const customersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'customers', search],
-    queryFn: () => apiRequest<ApiEnvelope<Customer[]>>(customersPath),
+    queryFn: () => listWorkspaceCustomers(workspaceSlug ?? '', search),
     enabled: Boolean(workspaceSlug && canView),
   });
 
   const createCustomer = useMutation({
     mutationFn: (values: CustomerForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/customers`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email || null,
-          company: values.company || null,
-          phone: values.phone || null,
-        }),
+      createWorkspaceCustomer(workspaceSlug ?? '', {
+        name: values.name,
+        email: values.email || null,
+        company: values.company || null,
+        phone: values.phone || null,
       }),
     onSuccess: () => {
       createForm.reset({ name: '', email: '', company: '', phone: '' });
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'customers'] });
     },
+    onError: (error) => applyCustomerFormFieldErrors(createForm, error),
   });
 
   const updateCustomer = useMutation({
     mutationFn: ({ customerId, values }: { customerId: number; values: CustomerForm }) =>
-      apiRequest(`/workspaces/${workspaceSlug}/customers/${customerId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email || null,
-          company: values.company || null,
-          phone: values.phone || null,
-        }),
+      updateWorkspaceCustomer(workspaceSlug ?? '', customerId, {
+        name: values.name,
+        email: values.email || null,
+        company: values.company || null,
+        phone: values.phone || null,
       }),
     onSuccess: () => {
       setEditTarget(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'customers'] });
     },
+    onError: (error) => applyCustomerFormFieldErrors(editForm, error),
   });
 
   const deleteCustomer = useMutation({
-    mutationFn: (customerId: number) =>
-      apiRequest<{ message: string }>(`/workspaces/${workspaceSlug}/customers/${customerId}`, {
-        method: 'DELETE',
-      }),
+    mutationFn: (customerId: number) => deleteWorkspaceCustomer(workspaceSlug ?? '', customerId),
     onSuccess: () => {
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'customers'] });

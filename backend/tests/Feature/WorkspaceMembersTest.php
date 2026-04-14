@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -73,5 +74,78 @@ class WorkspaceMembersTest extends TestCase
 
         $this->getJson("/api/workspaces/{$workspace['slug']}/members")
             ->assertForbidden();
+    }
+
+    public function test_member_without_tickets_manage_cannot_view_assignable_members(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme Support',
+            'slug' => 'acme-support',
+        ])->json('data');
+
+        $memberRoleId = DB::table('workspace_roles')
+            ->where('workspace_id', $workspace['id'])
+            ->where('slug', 'member')
+            ->value('id');
+
+        $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
+            'email' => 'agent@example.com',
+            'role_ids' => [$memberRoleId],
+        ])->json('data');
+
+        $agent = User::factory()->create(['email' => 'agent@example.com']);
+        Sanctum::actingAs($agent);
+
+        $this->postJson('/api/invitations/accept', ['token' => $invite['token']])->assertOk();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/members/assignable")
+            ->assertForbidden();
+    }
+
+    public function test_member_with_tickets_manage_can_view_assignable_members_without_members_manage(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme Support',
+            'slug' => 'acme-support',
+        ])->json('data');
+
+        $memberRoleId = DB::table('workspace_roles')
+            ->where('workspace_id', $workspace['id'])
+            ->where('slug', 'member')
+            ->value('id');
+
+        $ticketsManagePermissionId = DB::table('workspace_permissions')
+            ->where('slug', 'tickets.manage')
+            ->value('id');
+
+        DB::table('workspace_role_permissions')->insert([
+            'workspace_role_id' => $memberRoleId,
+            'workspace_permission_id' => $ticketsManagePermissionId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
+            'email' => 'agent@example.com',
+            'role_ids' => [$memberRoleId],
+        ])->json('data');
+
+        $agent = User::factory()->create(['email' => 'agent@example.com']);
+        Sanctum::actingAs($agent);
+
+        $this->postJson('/api/invitations/accept', ['token' => $invite['token']])->assertOk();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/members")
+            ->assertForbidden();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/members/assignable")
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
     }
 }

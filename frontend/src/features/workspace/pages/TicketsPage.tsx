@@ -12,11 +12,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
-import { ApiError, apiRequest } from '@/services/api/client';
+import { ApiError } from '@/services/api/client';
+import {
+  bulkUpdateWorkspaceTickets,
+  createWorkspaceTicket,
+  deleteWorkspaceTicketById,
+  listAssignableMembersForTickets,
+  listTicketCustomersForSelectors,
+  listWorkspaceTickets,
+  updateWorkspaceTicketById,
+} from '@/features/workspace/pages/ticketPageApi';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import type { ApiPaginationMeta, Customer, Ticket } from '@/types/api';
+import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
+import type { Customer, Ticket } from '@/types/api';
 
 const ticketSchema = z.object({
   customer_id: z.string().min(1, 'Select a customer'),
@@ -39,13 +49,26 @@ type MemberOption = {
   };
 };
 
+function applyTicketFormFieldErrors(form: UseFormReturn<TicketForm>, error: unknown) {
+  if (!(error instanceof ApiError)) {
+    return;
+  }
+
+  for (const [field, messages] of Object.entries(error.fieldErrors)) {
+    if (!messages.length) continue;
+
+    if (field === 'customer_id' || field === 'title' || field === 'description' || field === 'status' || field === 'priority' || field === 'assigned_to_user_id') {
+      form.setError(field, { type: 'server', message: messages[0] });
+    }
+  }
+}
+
 export function TicketsPage() {
   const { workspaceSlug } = useParams();
   const queryClient = useQueryClient();
   const accessQuery = useWorkspaceAccess(workspaceSlug);
   const canView = accessQuery.can('tickets.view');
   const canManage = accessQuery.can('tickets.manage');
-  const canManageMembers = accessQuery.can('members.manage');
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -87,47 +110,38 @@ export function TicketsPage() {
 
   const customersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'customers', 'for-ticket'],
-    queryFn: () => apiRequest<{ data: Customer[] }>(`/workspaces/${workspaceSlug}/customers`),
+    queryFn: () => listTicketCustomersForSelectors(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
   const membersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'members', 'for-ticket'],
-    queryFn: () => apiRequest<{ data: MemberOption[] }>(`/workspaces/${workspaceSlug}/members`),
-    enabled: Boolean(workspaceSlug && canManage && canManageMembers),
+    queryFn: () => listAssignableMembersForTickets(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
   });
-
-  const ticketsPath = useMemo(() => {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set('search', search.trim());
-    if (statusFilter !== 'all') params.set('status', statusFilter);
-    if (priorityFilter !== 'all') params.set('priority', priorityFilter);
-    if (customerFilter !== 'all') params.set('customer_id', customerFilter);
-    if (assigneeFilter !== 'all') params.set('assignee_id', assigneeFilter);
-    params.set('page', String(page));
-
-    const suffix = params.toString();
-    return suffix ? `/workspaces/${workspaceSlug}/tickets?${suffix}` : `/workspaces/${workspaceSlug}/tickets`;
-  }, [workspaceSlug, search, statusFilter, priorityFilter, customerFilter, assigneeFilter, page]);
 
   const ticketsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'tickets', search, statusFilter, priorityFilter, customerFilter, assigneeFilter, page],
-    queryFn: () => apiRequest<{ data: Ticket[]; meta: ApiPaginationMeta }>(ticketsPath),
+    queryFn: () => listWorkspaceTickets(workspaceSlug ?? '', {
+      search,
+      status: statusFilter,
+      priority: priorityFilter,
+      customerId: customerFilter,
+      assigneeId: assigneeFilter,
+      page,
+    }),
     enabled: Boolean(workspaceSlug && canView),
   });
 
   const createTicket = useMutation({
     mutationFn: (values: TicketForm) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets`, {
-        method: 'POST',
-        body: JSON.stringify({
-          customer_id: Number(values.customer_id),
-          title: values.title,
-          description: values.description,
-          status: values.status,
-          priority: values.priority,
-          assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
-        }),
+      createWorkspaceTicket(workspaceSlug ?? '', {
+        customer_id: Number(values.customer_id),
+        title: values.title,
+        description: values.description,
+        status: values.status,
+        priority: values.priority,
+        assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
       }),
     onSuccess: () => {
       createForm.reset({
@@ -141,25 +155,28 @@ export function TicketsPage() {
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
     },
+    onError: (error) => {
+      applyTicketFormFieldErrors(createForm, error);
+    },
   });
 
   const updateTicket = useMutation({
     mutationFn: ({ ticketId, values }: { ticketId: number; values: TicketForm }) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          customer_id: Number(values.customer_id),
-          title: values.title,
-          description: values.description,
-          status: values.status,
-          priority: values.priority,
-          assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
-        }),
+      updateWorkspaceTicketById(workspaceSlug ?? '', ticketId, {
+        customer_id: Number(values.customer_id),
+        title: values.title,
+        description: values.description,
+        status: values.status,
+        priority: values.priority,
+        assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
       }),
     onSuccess: () => {
       setEditTarget(null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket'] });
+    },
+    onError: (error) => {
+      applyTicketFormFieldErrors(editForm, error);
     },
   });
 
@@ -173,10 +190,7 @@ export function TicketsPage() {
       if (bulkPriority !== 'none') payload.priority = bulkPriority;
       if (bulkAssignee !== 'none') payload.assigned_to_user_id = bulkAssignee === '' ? null : Number(bulkAssignee);
 
-      return apiRequest(`/workspaces/${workspaceSlug}/tickets/bulk`, {
-        method: 'PATCH',
-        body: JSON.stringify(payload),
-      });
+      return bulkUpdateWorkspaceTickets(workspaceSlug ?? '', payload);
     },
     onSuccess: () => {
       setSelectedTicketIds([]);
@@ -188,10 +202,7 @@ export function TicketsPage() {
   });
 
   const deleteTicket = useMutation({
-    mutationFn: (ticketId: number) =>
-      apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}`, {
-        method: 'DELETE',
-      }),
+    mutationFn: (ticketId: number) => deleteWorkspaceTicketById(workspaceSlug ?? '', ticketId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket'] });
@@ -231,6 +242,8 @@ export function TicketsPage() {
   }
 
   const customers = customersQuery.data?.data ?? [];
+  const customerMeta = customersQuery.data?.meta;
+  const customerCoverageHint = selectorCoverageHint(customers.length, customerMeta?.total, 'customers');
   const members = membersQuery.data?.data ?? [];
 
   return (
@@ -322,6 +335,9 @@ export function TicketsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              {customerCoverageHint && (
+                <p className="mt-1 text-xs text-muted-foreground">{customerCoverageHint}</p>
+              )}
             </Field>
 
             <Field>

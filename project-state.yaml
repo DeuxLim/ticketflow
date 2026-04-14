@@ -1,13 +1,13 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-13T22:32:32+08:00"
+updated_at: "2026-04-14T20:16:33+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
 current_focus:
-  - WSSET-P1
+  - ALIGN-P1
 items:
   - id: WSSET-P1
     title: Workspace Settings Phase 1
@@ -235,4 +235,403 @@ items:
     created_at: "2026-04-13T22:32:32+08:00"
     updated_at: "2026-04-13T22:32:32+08:00"
     changed_at: "2026-04-13T22:32:32+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1
+    title: Backend-Frontend Alignment Hardening
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Close contract and behavior gaps between backend APIs and frontend surfaces before adding new product features.
+    definition_of_done:
+      - Tracked alignment gaps for API coverage, pagination contracts, permission boundaries, and settings parity are implemented.
+      - Frontend and backend behavior is consistent for settings, ticket operations, and enterprise controls.
+      - Regression coverage exists for the hardened paths.
+      - Verification commands pass for backend and frontend.
+    dependencies:
+      - WSSET-P1
+    notes:
+      - "2026-04-14: Deep-dive audit completed across backend routes/controllers/tests and frontend routes/pages/settings modules."
+      - "2026-04-14: Gap inventory added for integrations/security/workflow parity, pagination contracts, assignment permissions, and test coverage."
+      - "2026-04-14: Implemented integrations settings parity UI for webhook endpoint create/list and delivery list/retry."
+      - "2026-04-14: Frontend verification passed: npm run lint and npm run build."
+      - "2026-04-14: Implemented security settings parity UI for tenant security policy, identity providers, OIDC bootstrap, and SCIM provisioning directories."
+      - "2026-04-14: Re-ran frontend verification after security parity implementation: npm run lint and npm run build."
+      - "2026-04-14: Implemented pagination and dataset contract fixes in dashboard and ticket selectors using explicit `per_page` and pagination metadata."
+      - "2026-04-14: Added assignable-members backend endpoint (`/members/assignable`) and switched assignee selectors to `tickets.manage` permission path."
+      - "2026-04-14: Verification passed for backend and frontend after pagination/permission changes."
+      - "2026-04-14: Added backend regression tests for pagination `per_page` bounds and assignable-member permission combinations."
+      - "2026-04-14: Added backend contract regression tests for integrations/security settings endpoints used by frontend."
+      - "2026-04-14: Added frontend Vitest baseline and settings API contract tests for integrations/security endpoint usage."
+      - "2026-04-14: Added frontend UI regression tests for integrations and security settings success/error flows."
+      - "2026-04-14: Added frontend selector coverage utility and regression tests for large-dataset partial-list indicators."
+      - "2026-04-14: Implemented workflow/automation settings parity for create/update/simulate/test operations."
+      - "2026-04-14: Added backend and frontend regression coverage for workflow simulation and automation dry-run settings flows."
+      - "2026-04-14: Marked workflow/automation parity task complete after backend and frontend regression coverage passed."
+      - "2026-04-14: Implemented ticket dictionary/form update parity in frontend settings and added backend/frontend regression coverage for update and nullable template-type flows."
+      - "2026-04-14: Centralized ticket-page selector API calls and added regression tests for bounded customer/ticket selectors and assignable-members endpoint usage."
+      - "2026-04-14: Added permission-driven frontend regression tests for tickets list/details forbidden states and view-only create-action disable behavior."
+      - "2026-04-14: Added tickets-page interaction regression tests (search-query behavior and list-query error rendering) and ticket-details attachment upload mutation error regression test."
+      - "2026-04-14: Started API typing/client consistency hardening by extending `ApiError` with structured field errors and wiring ticket forms to consume backend validation errors."
+      - "2026-04-14: Reduced ad hoc ticket-list API wiring by adding shared typed ticket-list helper and routing TicketsPage query through it."
+      - "2026-04-14: Added shared typed ticket-details API helpers for get/update/transition/upload flows and updated TicketDetailsPage to consume them."
+      - "2026-04-14: Added shared typed customer/dashboard API helpers and migrated CustomersPage and WorkspaceDashboardPage away from ad hoc request wiring."
+      - "2026-04-14: Added shared typed invitations/members/onboarding API helpers with contract tests and migrated corresponding pages to consume them."
+      - "2026-04-14: Extracted additional ticket-details comments/activity/attachments and comment CRUD requests into shared typed helper module."
+      - "2026-04-14: Completed final T08 sweep by extracting remaining high-risk ticket and ticket-details mutations into shared API helpers and validating no residual ad hoc `apiRequest` usage in workspace page components."
+      - "2026-04-14: Frontend verification re-run passed after final T08 sweep (`npm run test`, `npm run lint`, `npm run build`)."
+      - "2026-04-14: Expanded T09 regression depth for ticket lifecycle by covering transition fallback (`/transition` -> PATCH), transition success messaging, and edit-form field error mapping in TicketDetails mutations."
+      - "2026-04-14: Frontend verification passed after T09 expansion (`npm run test`, `npm run lint`, `npm run build`)."
+      - "2026-04-14: Added T09 permission-edge regression for ticket-details view-only roles to ensure lifecycle actions remain disabled without `tickets.manage`."
+    incomplete_reason: "Critical-path hardening is complete; remaining work is optional incremental frontend regression expansion under T09."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Continue optional T09 regression expansion for deeper ticket lifecycle and edge-case UI states.
+    tags:
+      - alignment
+      - hardening
+      - frontend-backend
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T20:16:33+08:00"
+    changed_at: "2026-04-14T20:16:33+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T01
+    title: Deep-dive API and UI gap inventory
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Audit backend and frontend implementation coverage and add concrete hardening tasks to the tracker.
+    definition_of_done:
+      - Backend route/controller/test coverage is inspected for core workspace features and enterprise controls.
+      - Frontend route/page/settings API usage is inspected for contract drift and missing surfaces.
+      - Concrete tracker items are created with scoped definitions of done and next actions.
+    dependencies:
+      - WSSET-P1
+    notes:
+      - "2026-04-14: Confirmed backend enterprise endpoints exist and are covered by EnterpriseFoundationTest and EnterpriseRemainingFoundationTest."
+      - "2026-04-14: Confirmed frontend has no test/spec files under frontend/src."
+      - "2026-04-14: Confirmed several backend endpoints have no frontend usage yet (security-policy, identity-providers, provisioning-directories, webhooks, reports, saved-views)."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - audit
+      - alignment
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T07:01:26+08:00"
+    changed_at: "2026-04-14T07:01:26+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T02
+    title: Integrations settings parity for webhook operations
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Replace the static integrations settings summary with real webhook endpoint management and delivery retry tooling.
+    definition_of_done:
+      - Frontend settings includes list/create flows for `/webhooks`.
+      - Frontend settings includes list and retry flows for `/webhook-deliveries`.
+      - Endpoint creation validation and error states match backend request rules.
+      - Backend and frontend tests cover create and retry success/failure states.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Backend supports `/webhooks`, `/webhook-deliveries`, and retry; current frontend integrations tab is static descriptive text."
+      - "2026-04-14: Replaced static integrations tab with live webhook endpoint create/list and delivery list/retry UI."
+      - "2026-04-14: Added typed integrations API helpers and webhook delivery/endpoint frontend types."
+      - "2026-04-14: Workspace settings integrations tab now reads/writes through backend endpoints."
+      - "2026-04-14: Added backend contract regression assertions for webhook create validation and list/delivery response shapes consumed by settings UI."
+      - "2026-04-14: Added frontend API regression tests for webhook endpoint/list/retry request contracts."
+      - "2026-04-14: Added frontend UI regression tests for webhook endpoint create success/error and delivery retry success/error states."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - frontend
+      - integrations
+      - api-parity
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T07:57:50+08:00"
+    changed_at: "2026-04-14T07:57:50+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T03
+    title: Security governance parity for policy and identity controls
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Align frontend security settings with backend capabilities for tenant policy, IdP, provisioning directory, and SSO bootstrap.
+    definition_of_done:
+      - Frontend includes CRUD/use flows for `/security-policy`, `/identity-providers`, and `/provisioning-directories`.
+      - Frontend exposes OIDC start action via `/auth/sso/oidc/start`.
+      - Sensitive fields and one-time tokens are handled safely in UI state.
+      - Backend and frontend regression coverage is added for these settings flows.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Backend endpoints exist and are tested in enterprise suites, but frontend settings currently omits these management flows."
+      - "2026-04-14: Added frontend API contracts for `/security-policy`, `/identity-providers`, `/provisioning-directories`, and `/auth/sso/oidc/start`."
+      - "2026-04-14: Security tab now supports policy updates, provider create/delete, OIDC start URL generation, and provisioning directory creation with token display."
+      - "2026-04-14: Added backend contract regression assertions for security policy, identity-provider, OIDC-start, and provisioning-directory response fields consumed by settings UI."
+      - "2026-04-14: Added frontend API regression tests for security policy, identity-provider, OIDC-start, and provisioning-directory request contracts."
+      - "2026-04-14: Added frontend UI regression tests for provisioning directory success and security-policy save error states."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - frontend
+      - security
+      - sso
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T07:57:50+08:00"
+    changed_at: "2026-04-14T07:57:50+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T04
+    title: Workflow and automation management parity
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Extend frontend workflow/automation settings to cover create/update/simulate/test operations supported by backend.
+    definition_of_done:
+      - Frontend supports create/update for workflows and automation rules.
+      - Frontend supports workflow simulation and automation rule dry-run testing.
+      - Approval handling remains consistent with transition behavior and permissions.
+      - Regression coverage includes positive and negative paths.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Frontend currently supports activate/toggle/approve/reject/list only; backend also supports create/update/simulate/test endpoints."
+      - "2026-04-14: Added settings API functions for workflow create/update/simulate and automation create/update/test."
+      - "2026-04-14: Expanded workflow/automation settings UI with create/update forms, workflow transition simulation, and automation dry-run tooling."
+      - "2026-04-14: Added API request-contract tests for new workflow/automation client functions."
+      - "2026-04-14: Added backend feature tests for workflow simulation allowed/disallowed paths and automation dry-run decision payloads."
+      - "2026-04-14: Added frontend UI regression tests for workflow creation and transition simulation rendering."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - frontend
+      - workflow
+      - automation
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T08:24:21+08:00"
+    changed_at: "2026-04-14T08:24:21+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T05
+    title: Ticket dictionary and form CRUD parity
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Bring frontend ticketing/forms settings to parity with backend update capabilities and schema flexibility.
+    definition_of_done:
+      - Frontend supports update flows for categories, tags, types, custom fields, and form templates.
+      - Frontend template creation allows nullable `ticket_type_id` consistent with backend API.
+      - Validation and uniqueness errors are surfaced inline.
+      - Regression coverage verifies CRUD parity paths.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Backend provides PATCH endpoints for ticket dictionaries and form templates; frontend currently emphasizes create-only flows."
+      - "2026-04-14: Backend accepts nullable `ticket_type_id`, but current template submit button requires a selected type."
+      - "2026-04-14: Added settings API update helpers for categories/tags/types/custom fields/form templates."
+      - "2026-04-14: Added frontend edit flows for categories, ticket types, tags, custom fields, and templates."
+      - "2026-04-14: Updated template creation flow to allow nullable ticket type (`Any type`) in line with backend validation."
+      - "2026-04-14: Added backend feature regression for dictionary/template update paths including nullable template type."
+      - "2026-04-14: Added frontend regression tests for dictionary/form API contracts and nullable template create behavior."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - frontend
+      - ticketing-config
+      - forms
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T08:33:00+08:00"
+    changed_at: "2026-04-14T08:33:00+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T06
+    title: Pagination and dataset contract alignment
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Fix frontend assumptions that paginated endpoints return full datasets, and align backend/frontend contracts for selectors and dashboards.
+    definition_of_done:
+      - Dashboard metrics and recent lists are based on explicit aggregate endpoints or full-query semantics, not first-page assumptions.
+      - Ticket/customer selectors support complete datasets without hidden page truncation.
+      - Pagination metadata is typed and consumed consistently in frontend.
+      - Tests cover pagination boundaries and filtering behavior.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: `/customers` and `/tickets` are paginated server-side; multiple frontend screens treat returned arrays as complete datasets."
+      - "2026-04-14: Ticket related-ticket options and customer selectors currently rely on paginated first-page results."
+      - "2026-04-14: Added backend `per_page` support for `/customers` and `/tickets` with bounded limits."
+      - "2026-04-14: Updated dashboard queries to use explicit pagination contracts and reporting totals."
+      - "2026-04-14: Updated ticket details/selectors to request bounded datasets and disclose partial-list counts."
+      - "2026-04-14: Added backend regression tests for `/tickets` and `/customers` `per_page` lower/upper bounds."
+      - "2026-04-14: Added backend regression tests for ticket/customer filtering behavior."
+      - "2026-04-14: Added frontend selector coverage helper tests to enforce partial-list indicator behavior when totals exceed loaded options."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - api-contract
+      - pagination
+      - frontend
+      - backend
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T08:16:56+08:00"
+    changed_at: "2026-04-14T08:16:56+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T07
+    title: Ticket assignment permission boundary alignment
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Resolve mismatch between ticket assignment workflows and member-directory permissions.
+    definition_of_done:
+      - Expected permission model for assignee discovery and assignment is documented and enforced consistently.
+      - Frontend assignment flows are usable for intended roles.
+      - Backend permission checks and route guards reflect the agreed model.
+      - Regression tests cover roles with and without members management permission.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Frontend assignee options depend on `/members` which requires `members.manage`; this can block assignment UX for custom roles with `tickets.manage` only."
+      - "2026-04-14: Added `/members/assignable` endpoint guarded by `tickets.manage` and switched ticket assignee selectors to this endpoint."
+      - "2026-04-14: Assignee selection no longer depends on `members.manage` permission."
+      - "2026-04-14: Added regression tests confirming `/members/assignable` denies members without `tickets.manage` and allows members with `tickets.manage` but without `members.manage`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - permissions
+      - tickets
+      - frontend
+      - backend
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T07:19:35+08:00"
+    changed_at: "2026-04-14T07:19:35+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T08
+    title: Frontend API typing and client consistency hardening
+    type: task
+    parent_id: ALIGN-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Normalize frontend API contracts and error handling to reduce drift and improve maintainability.
+    definition_of_done:
+      - API envelope/meta typing is consistent across workspace pages and settings modules.
+      - Validation and field-level backend errors are exposed in structured form for UI handling.
+      - Shared API service modules reduce ad hoc endpoint wiring in page components.
+      - Lint/build pass with no type regressions.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: Mixed direct `apiRequest` usage and inconsistent payload typing increase risk of contract drift."
+      - "2026-04-14: Extended shared `ApiError` to carry backend field errors (`errors`) and response payload metadata."
+      - "2026-04-14: Wired ticket create/update forms to map backend field errors into React Hook Form field-level messages."
+      - "2026-04-14: Added client regression tests for structured API validation errors and auth-token clearing on 401."
+      - "2026-04-14: Added shared typed ticket-list query helper (`listWorkspaceTickets`) and updated tickets page to consume it instead of ad hoc query-string wiring."
+      - "2026-04-14: Added shared typed ticket-details API helpers and contract tests; migrated TicketDetailsPage high-risk calls (get/update/transition/upload) to shared helpers."
+      - "2026-04-14: Added shared typed customer API helpers and dashboard API helpers with contract tests; migrated CustomersPage and WorkspaceDashboardPage to consume them."
+      - "2026-04-14: Added shared typed invitations/members/onboarding API helpers with contract tests; migrated InvitationsPage, MembersPage, and WorkspaceOnboardingPage to shared helpers."
+      - "2026-04-14: Added structured server field-error mapping for invitation and workspace-onboarding forms."
+      - "2026-04-14: Extracted ticket-details comments/activity/attachments query calls and comment CRUD calls into shared typed helper module with contract tests."
+      - "2026-04-14: Completed final sweep for residual ad hoc page-level calls by extracting ticket create/update/bulk/delete and ticket-details mutation/list paths into shared typed helpers."
+      - "2026-04-14: Confirmed `frontend/src/features/workspace/pages` has no direct `apiRequest(...)` usage outside shared API modules/tests."
+      - "2026-04-14: Close-out verification passed (`npm run test`, `npm run lint`, `npm run build`)."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions: []
+    tags:
+      - frontend
+      - api
+      - types
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T17:22:00+08:00"
+    changed_at: "2026-04-14T17:22:00+08:00"
+    changed_source: codex
+
+  - id: ALIGN-P1-T09
+    title: Add frontend regression test baseline for workspace flows
+    type: test
+    parent_id: ALIGN-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Establish frontend regression coverage for critical workspace workflows that currently rely on manual checks.
+    definition_of_done:
+      - Frontend test framework and scripts are wired into the repo standards.
+      - Regression tests cover tickets, settings permissions, and key mutation success/error states.
+      - Test runs are integrated into regular verification commands.
+      - Project tracker includes ongoing test expansion tasks for future features.
+    dependencies:
+      - ALIGN-P1-T01
+    notes:
+      - "2026-04-14: No frontend `test` or `spec` files detected under frontend/src."
+      - "2026-04-14: Added Vitest runner, frontend `npm run test` script, and initial settings API contract tests for integrations/security flows."
+      - "2026-04-14: Added UI-level tests for integrations and governance/security settings states."
+      - "2026-04-14: Added selector coverage helper regression tests for ticket-related partial-list messaging."
+      - "2026-04-14: Added ticket-page API contract regression tests for bounded customer/ticket selector endpoints and assignable-member endpoint usage."
+      - "2026-04-14: Added ticket-route permission tests for tickets list/details forbidden states and disabled create action for view-only roles."
+      - "2026-04-14: Added ticket interaction regression tests for list search query behavior and list query error rendering."
+      - "2026-04-14: Added ticket-details mutation error regression test for attachment upload failures."
+      - "2026-04-14: Added ticket-details lifecycle regression tests for transition 422 fallback behavior, transition success messaging, and edit-dialog server field-error mapping."
+      - "2026-04-14: Added ticket-details permission-edge regression for view-only roles to assert lifecycle controls stay disabled when `tickets.manage` is missing."
+    incomplete_reason: "Baseline plus lifecycle/mutation/permission depth is in place; additional optional edge-case coverage can continue incrementally."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Add deeper ticket lifecycle edge-case tests for watcher/checklist/related-ticket failure states.
+      - Keep frontend `npm run test` in standard verification runs for alignment tasks.
+    tags:
+      - tests
+      - frontend
+      - regression
+    created_at: "2026-04-14T07:01:26+08:00"
+    updated_at: "2026-04-14T20:16:33+08:00"
+    changed_at: "2026-04-14T20:16:33+08:00"
     changed_source: codex

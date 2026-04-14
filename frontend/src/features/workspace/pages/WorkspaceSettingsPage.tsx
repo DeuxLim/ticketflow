@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 import { FormsSettingsSection } from '../settings/FormsSettingsSection';
 import { GeneralSettingsSection } from '../settings/GeneralSettingsSection';
 import { GovernanceSettingsSection } from '../settings/GovernanceSettingsSection';
-import { OperationsSettingsSection } from '../settings/OperationsSettingsSection';
+import { IntegrationsSettingsSection } from '../settings/IntegrationsSettingsSection';
 import { TicketingSettingsSection } from '../settings/TicketingSettingsSection';
 import { WorkflowAutomationSettingsSection } from '../settings/WorkflowAutomationSettingsSection';
 
@@ -71,16 +71,7 @@ export function WorkspaceSettingsPage() {
           <GovernanceSettingsSection workspaceSlug={workspaceSlug} />
         </TabsContent>
         <TabsContent value="integrations" className="flex-none">
-          <OperationsSettingsSection
-            eyebrow="Integrations"
-            title="Webhook operations"
-            description="Webhook endpoint management and delivery retry logs are already available for integration managers."
-            rows={[
-              ['Webhook endpoints', 'Create endpoints and subscribe to integration events.'],
-              ['Delivery logs', 'Inspect delivery status and retry failed events.'],
-              ['Signatures', 'Existing delivery processor signs payloads with endpoint secrets.'],
-            ]}
-          />
+          <IntegrationsSettingsSection workspaceSlug={workspaceSlug} />
         </TabsContent>
       </Tabs>
 

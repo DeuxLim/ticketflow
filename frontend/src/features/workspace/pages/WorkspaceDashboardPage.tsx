@@ -6,28 +6,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { ApiError, apiRequest } from '@/services/api/client';
-import type { Customer, Ticket } from '@/types/api';
+import {
+  getDashboardReportingOverview,
+  listDashboardCustomers,
+  listDashboardRecentTickets,
+} from '@/features/workspace/pages/workspaceDashboardApi';
+import { ApiError } from '@/services/api/client';
 
 export function WorkspaceDashboardPage() {
   const { workspaceSlug } = useParams();
   const accessQuery = useWorkspaceAccess(workspaceSlug);
   const canViewCustomers = accessQuery.can('customers.view');
   const canViewTickets = accessQuery.can('tickets.view');
+  const canViewReporting = accessQuery.can('reporting.view');
 
   const customersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'dashboard', 'customers'],
-    queryFn: () => apiRequest<{ data: Customer[] }>(`/workspaces/${workspaceSlug}/customers`),
+    queryFn: () => listDashboardCustomers(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canViewCustomers),
   });
 
-  const ticketsQuery = useQuery({
+  const recentTicketsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'dashboard', 'tickets'],
-    queryFn: () => apiRequest<{ data: Ticket[] }>(`/workspaces/${workspaceSlug}/tickets`),
+    queryFn: () => listDashboardRecentTickets(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canViewTickets),
   });
 
-  if (accessQuery.isLoading || customersQuery.isLoading || ticketsQuery.isLoading) {
+  const reportingQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'dashboard', 'reporting-overview'],
+    queryFn: () => getDashboardReportingOverview(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canViewReporting),
+  });
+
+  if (accessQuery.isLoading || customersQuery.isLoading || recentTicketsQuery.isLoading || reportingQuery.isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-3">
         <Skeleton className="h-28" />
@@ -46,7 +57,7 @@ export function WorkspaceDashboardPage() {
     );
   }
 
-  if ((customersQuery.error instanceof ApiError && customersQuery.error.status === 403) || (ticketsQuery.error instanceof ApiError && ticketsQuery.error.status === 403)) {
+  if ((customersQuery.error instanceof ApiError && customersQuery.error.status === 403) || (recentTicketsQuery.error instanceof ApiError && recentTicketsQuery.error.status === 403)) {
     return (
       <ForbiddenState
         title="Overview unavailable"
@@ -55,11 +66,14 @@ export function WorkspaceDashboardPage() {
     );
   }
 
-  const customers = customersQuery.data?.data ?? [];
-  const tickets = ticketsQuery.data?.data ?? [];
-  const openCount = tickets.filter((ticket) => ticket.status === 'open' || ticket.status === 'in_progress').length;
-  const highPriorityCount = tickets.filter((ticket) => ticket.priority === 'high' || ticket.priority === 'urgent').length;
-  const recentTickets = tickets.slice(0, 5);
+  const customersTotal = customersQuery.data?.meta?.total ?? 0;
+  const ticketsTotal = reportingQuery.data?.data.totals.tickets ?? recentTicketsQuery.data?.meta?.total ?? 0;
+  const openCount = reportingQuery.data?.data.totals.open ?? null;
+  const backlog = reportingQuery.data?.data.backlog_by_priority;
+  const highPriorityCount = backlog
+    ? (backlog.high ?? 0) + (backlog.urgent ?? 0)
+    : null;
+  const recentTickets = recentTicketsQuery.data?.data ?? [];
 
   return (
     <section className="flex flex-col gap-8">
@@ -72,9 +86,9 @@ export function WorkspaceDashboardPage() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard title="Customers" value={customers.length} description="Total customer records" />
-        <MetricCard title="Tickets" value={tickets.length} description="All ticket records" />
-        <MetricCard title="Open Work" value={openCount} description="Open + in progress tickets" />
+        <MetricCard title="Customers" value={customersTotal} description="Total customer records" />
+        <MetricCard title="Tickets" value={ticketsTotal} description="All ticket records" />
+        <MetricCard title="Open Work" value={openCount === null ? '—' : openCount} description="Open + in progress tickets" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -117,9 +131,9 @@ export function WorkspaceDashboardPage() {
             <CardDescription>Signals that need attention.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <Signal label="Open work" value={String(openCount)} />
+            <Signal label="Open work" value={openCount === null ? '—' : String(openCount)} />
             <Separator />
-            <Signal label="High priority" value={String(highPriorityCount)} />
+            <Signal label="High priority" value={highPriorityCount === null ? '—' : String(highPriorityCount)} />
             <Separator />
             <Signal label="Tenant scope" value={workspaceSlug ?? '—'} />
           </CardContent>
@@ -129,7 +143,7 @@ export function WorkspaceDashboardPage() {
   );
 }
 
-function MetricCard({ title, value, description }: { title: string; value: number; description: string }) {
+function MetricCard({ title, value, description }: { title: string; value: number | string; description: string }) {
   return (
     <Card className="shadow-none">
       <CardHeader>

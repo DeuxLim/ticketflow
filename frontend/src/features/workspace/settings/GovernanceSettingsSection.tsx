@@ -3,15 +3,26 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
+  createIdentityProvider,
+  createProvisioningDirectory,
   createBreakGlassRequest,
   createExport,
+  deleteIdentityProvider,
+  getTenantSecurityPolicy,
   getRetentionPolicy,
+  listIdentityProviders,
   listAuditEvents,
   listBreakGlassRequests,
   listExports,
+  listProvisioningDirectories,
+  startOidcSso,
+  updateTenantSecurityPolicy,
   updateRetentionPolicy,
 } from './settings-api';
 
@@ -25,18 +36,49 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const exportsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'exports'], queryFn: () => listExports(workspaceSlug) });
   const breakGlassQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'break-glass'], queryFn: () => listBreakGlassRequests(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
+  const securityPolicyQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'security-policy'], queryFn: () => getTenantSecurityPolicy(workspaceSlug) });
+  const identityProvidersQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'identity-providers'], queryFn: () => listIdentityProviders(workspaceSlug) });
+  const provisioningDirectoriesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'provisioning-directories'], queryFn: () => listProvisioningDirectories(workspaceSlug) });
 
   const [ticketsDaysDraft, setTicketsDaysDraft] = useState<number | null>(null);
   const [commentsDaysDraft, setCommentsDaysDraft] = useState<number | null>(null);
   const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
   const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
   const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
+  const [requireSsoDraft, setRequireSsoDraft] = useState<boolean | null>(null);
+  const [requireMfaDraft, setRequireMfaDraft] = useState<boolean | null>(null);
+  const [sessionTtlDraft, setSessionTtlDraft] = useState<number | null>(null);
+  const [tenantModeDraft, setTenantModeDraft] = useState<'shared' | 'dedicated' | null>(null);
+  const [dataPlaneKeyDraft, setDataPlaneKeyDraft] = useState<string | null>(null);
+  const [ipAllowlistDraft, setIpAllowlistDraft] = useState<string | null>(null);
+
+  const [providerType, setProviderType] = useState<'saml' | 'oidc'>('oidc');
+  const [providerName, setProviderName] = useState('');
+  const [providerIssuer, setProviderIssuer] = useState('');
+  const [providerSsoUrl, setProviderSsoUrl] = useState('');
+  const [providerAuthUrl, setProviderAuthUrl] = useState('');
+  const [providerTokenUrl, setProviderTokenUrl] = useState('');
+  const [providerRedirectUrl, setProviderRedirectUrl] = useState('');
+  const [providerClientId, setProviderClientId] = useState('');
+  const [providerClientSecret, setProviderClientSecret] = useState('');
+  const [lastOidcUrl, setLastOidcUrl] = useState<string | null>(null);
+  const [directoryName, setDirectoryName] = useState('');
+  const [lastScimToken, setLastScimToken] = useState<string | null>(null);
 
   const policy = retentionQuery.data?.data;
+  const securityPolicy = securityPolicyQuery.data?.data;
+  const providers = identityProvidersQuery.data?.data ?? [];
+  const directories = provisioningDirectoriesQuery.data?.data ?? [];
   const ticketsDays = ticketsDaysDraft ?? policy?.tickets_days ?? 365;
   const commentsDays = commentsDaysDraft ?? policy?.comments_days ?? 365;
   const attachmentsDays = attachmentsDaysDraft ?? policy?.attachments_days ?? 365;
   const auditDays = auditDaysDraft ?? policy?.audit_days ?? 730;
+  const requireSso = requireSsoDraft ?? securityPolicy?.require_sso ?? false;
+  const requireMfa = requireMfaDraft ?? securityPolicy?.require_mfa ?? false;
+  const sessionTtl = sessionTtlDraft ?? securityPolicy?.session_ttl_minutes ?? 720;
+  const tenantMode = tenantModeDraft ?? securityPolicy?.tenant_mode ?? 'shared';
+  const dataPlaneKey = dataPlaneKeyDraft ?? securityPolicy?.dedicated_data_plane_key ?? '';
+  const ipAllowlist = ipAllowlistDraft ?? (securityPolicy?.ip_allowlist ?? []).join('\n');
 
   const saveRetention = useMutation({
     mutationFn: () =>
@@ -63,6 +105,76 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const requestBreakGlass = useMutation({
     mutationFn: () => createBreakGlassRequest(workspaceSlug, breakGlassReason, 60),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] }),
+  });
+
+  const saveSecurityPolicy = useMutation({
+    mutationFn: () =>
+      updateTenantSecurityPolicy(workspaceSlug, {
+        require_sso: requireSso,
+        require_mfa: requireMfa,
+        session_ttl_minutes: sessionTtl,
+        tenant_mode: tenantMode,
+        dedicated_data_plane_key: dataPlaneKey.trim() || null,
+        ip_allowlist: ipAllowlist
+          .split('\n')
+          .map((item) => item.trim())
+          .filter(Boolean),
+      }),
+    onSuccess: () => {
+      setRequireSsoDraft(null);
+      setRequireMfaDraft(null);
+      setSessionTtlDraft(null);
+      setTenantModeDraft(null);
+      setDataPlaneKeyDraft(null);
+      setIpAllowlistDraft(null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'security-policy'] });
+    },
+  });
+
+  const createProvider = useMutation({
+    mutationFn: () =>
+      createIdentityProvider(workspaceSlug, {
+        provider_type: providerType,
+        name: providerName.trim(),
+        issuer: providerIssuer.trim() || null,
+        sso_url: providerSsoUrl.trim() || null,
+        authorization_url: providerAuthUrl.trim() || null,
+        token_url: providerTokenUrl.trim() || null,
+        redirect_uri: providerRedirectUrl.trim() || null,
+        client_id: providerClientId.trim() || null,
+        client_secret: providerClientSecret.trim() || null,
+        is_active: true,
+      }),
+    onSuccess: () => {
+      setProviderName('');
+      setProviderIssuer('');
+      setProviderSsoUrl('');
+      setProviderAuthUrl('');
+      setProviderTokenUrl('');
+      setProviderRedirectUrl('');
+      setProviderClientId('');
+      setProviderClientSecret('');
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'identity-providers'] });
+    },
+  });
+
+  const removeProvider = useMutation({
+    mutationFn: (providerId: number) => deleteIdentityProvider(workspaceSlug, providerId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'identity-providers'] }),
+  });
+
+  const startOidc = useMutation({
+    mutationFn: (providerId: number) => startOidcSso(workspaceSlug, providerId),
+    onSuccess: (response) => setLastOidcUrl(response.data.authorization_url),
+  });
+
+  const createDirectory = useMutation({
+    mutationFn: () => createProvisioningDirectory(workspaceSlug, directoryName.trim()),
+    onSuccess: (response) => {
+      setDirectoryName('');
+      setLastScimToken(response.meta?.token ?? null);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'provisioning-directories'] });
+    },
   });
 
   const exports = exportsQuery.data?.data ?? [];
@@ -147,6 +259,172 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
               {audits.slice(0, 8).map((event) => (
                 <p key={event.id}>
                   {event.action} • {event.resource_type}#{event.resource_id ?? 'n/a'}
+                </p>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-none xl:col-span-2">
+        <CardHeader>
+          <Badge variant="secondary" className="w-fit">Security</Badge>
+          <CardTitle>Access policy and identity</CardTitle>
+          <CardDescription>Manage workspace access guardrails, SSO providers, and SCIM provisioning directories.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5 lg:grid-cols-2">
+          <div className="space-y-4 rounded-md border p-3">
+            <p className="text-sm font-medium">Tenant security policy</p>
+            <FieldGroup>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
+                  <Checkbox checked={requireSso} onCheckedChange={(checked) => setRequireSsoDraft(checked === true)} />
+                  <span>Require SSO</span>
+                </label>
+                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
+                  <Checkbox checked={requireMfa} onCheckedChange={(checked) => setRequireMfaDraft(checked === true)} />
+                  <span>Require MFA</span>
+                </label>
+              </div>
+              <Field>
+                <FieldLabel>Session TTL (minutes)</FieldLabel>
+                <Input type="number" value={sessionTtl} onChange={(event) => setSessionTtlDraft(Number(event.target.value))} />
+              </Field>
+              <Field>
+                <FieldLabel>Tenant mode</FieldLabel>
+                <Select value={tenantMode} onValueChange={(value) => setTenantModeDraft((value as 'shared' | 'dedicated') ?? 'shared')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="shared">shared</SelectItem>
+                      <SelectItem value="dedicated">dedicated</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Dedicated data plane key</FieldLabel>
+                <Input value={dataPlaneKey} onChange={(event) => setDataPlaneKeyDraft(event.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel>IP allowlist (one IP per line)</FieldLabel>
+                <Textarea rows={4} value={ipAllowlist} onChange={(event) => setIpAllowlistDraft(event.target.value)} />
+              </Field>
+            </FieldGroup>
+            {saveSecurityPolicy.isError && (
+              <p className="text-xs text-destructive">{(saveSecurityPolicy.error as Error).message}</p>
+            )}
+            <Button size="sm" variant="outline" disabled={saveSecurityPolicy.isPending || securityPolicyQuery.isLoading} onClick={() => saveSecurityPolicy.mutate()}>
+              {saveSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
+            </Button>
+          </div>
+
+          <div className="space-y-4 rounded-md border p-3">
+            <p className="text-sm font-medium">Identity providers</p>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Provider type</FieldLabel>
+                <Select value={providerType} onValueChange={(value) => setProviderType((value as 'saml' | 'oidc') ?? 'oidc')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="oidc">OIDC</SelectItem>
+                      <SelectItem value="saml">SAML</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Name</FieldLabel>
+                <Input value={providerName} onChange={(event) => setProviderName(event.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel>Issuer</FieldLabel>
+                <Input value={providerIssuer} onChange={(event) => setProviderIssuer(event.target.value)} />
+              </Field>
+              {providerType === 'saml' ? (
+                <Field>
+                  <FieldLabel>SAML SSO URL</FieldLabel>
+                  <Input value={providerSsoUrl} onChange={(event) => setProviderSsoUrl(event.target.value)} />
+                </Field>
+              ) : (
+                <>
+                  <Field>
+                    <FieldLabel>Authorization URL</FieldLabel>
+                    <Input value={providerAuthUrl} onChange={(event) => setProviderAuthUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Token URL</FieldLabel>
+                    <Input value={providerTokenUrl} onChange={(event) => setProviderTokenUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Redirect URI</FieldLabel>
+                    <Input value={providerRedirectUrl} onChange={(event) => setProviderRedirectUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Client ID</FieldLabel>
+                    <Input value={providerClientId} onChange={(event) => setProviderClientId(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel>Client secret</FieldLabel>
+                    <Input type="password" value={providerClientSecret} onChange={(event) => setProviderClientSecret(event.target.value)} />
+                  </Field>
+                </>
+              )}
+            </FieldGroup>
+            {createProvider.isError && (
+              <p className="text-xs text-destructive">{(createProvider.error as Error).message}</p>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!providerName.trim() || createProvider.isPending}
+              onClick={() => createProvider.mutate()}
+            >
+              {createProvider.isPending ? 'Creating...' : 'Create provider'}
+            </Button>
+            <div className="space-y-2 text-xs">
+              {providers.map((provider) => (
+                <div key={provider.id} className="rounded border p-2">
+                  <p className="font-medium">{provider.name} ({provider.provider_type})</p>
+                  <p className="text-muted-foreground">{provider.issuer ?? provider.authorization_url ?? provider.sso_url ?? 'no endpoint configured'}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {provider.provider_type === 'oidc' && (
+                      <Button size="sm" variant="outline" onClick={() => startOidc.mutate(provider.id)}>
+                        Start OIDC
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => removeProvider.mutate(provider.id)} disabled={removeProvider.isPending}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {lastOidcUrl && (
+              <a className="text-xs underline" href={lastOidcUrl} rel="noreferrer" target="_blank">
+                Open latest OIDC authorization URL
+              </a>
+            )}
+          </div>
+
+          <div className="space-y-4 rounded-md border p-3 lg:col-span-2">
+            <p className="text-sm font-medium">SCIM provisioning directories</p>
+            <div className="flex flex-wrap gap-2">
+              <Input className="max-w-sm" value={directoryName} onChange={(event) => setDirectoryName(event.target.value)} placeholder="Directory name" />
+              <Button size="sm" variant="outline" disabled={!directoryName.trim() || createDirectory.isPending} onClick={() => createDirectory.mutate()}>
+                {createDirectory.isPending ? 'Creating...' : 'Create directory'}
+              </Button>
+            </div>
+            {lastScimToken && (
+              <p className="rounded border p-2 text-xs text-muted-foreground">
+                Latest SCIM token (shown once): {lastScimToken}
+              </p>
+            )}
+            <div className="space-y-2 text-xs">
+              {directories.map((directory) => (
+                <p key={directory.id}>
+                  {directory.name} • {directory.status} • {new Date(directory.created_at).toLocaleString()}
                 </p>
               ))}
             </div>
