@@ -148,6 +148,8 @@ describe('TicketsPage interactions', () => {
             search: 'network outage',
             status: 'all',
             priority: 'all',
+            queueKey: 'all',
+            category: 'all',
             customerId: 'all',
             assigneeId: 'all',
             page: 1,

@@ -155,6 +155,8 @@ export function TicketsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [queueFilter, setQueueFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [customerFilter, setCustomerFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
   const [savedViewName, setSavedViewName] = useState('');
@@ -214,11 +216,13 @@ export function TicketsPage() {
   });
 
   const ticketsQuery = useQuery({
-    queryKey: ['workspace', workspaceSlug, 'tickets', search, statusFilter, priorityFilter, customerFilter, assigneeFilter, page],
+    queryKey: ['workspace', workspaceSlug, 'tickets', search, statusFilter, priorityFilter, queueFilter, categoryFilter, customerFilter, assigneeFilter, page],
     queryFn: () => listWorkspaceTickets(workspaceSlug ?? '', {
       search,
       status: statusFilter,
       priority: priorityFilter,
+      queueKey: queueFilter,
+      category: categoryFilter,
       customerId: customerFilter,
       assigneeId: assigneeFilter,
       page,
@@ -385,6 +389,8 @@ export function TicketsPage() {
           search,
           status: statusFilter,
           priority: priorityFilter,
+          queueKey: queueFilter,
+          category: categoryFilter,
           customerId: customerFilter,
           assigneeId: assigneeFilter,
           page,
@@ -419,6 +425,8 @@ export function TicketsPage() {
     setSearch(typeof filters.search === 'string' ? filters.search : '');
     setStatusFilter(typeof filters.status === 'string' ? filters.status : 'all');
     setPriorityFilter(typeof filters.priority === 'string' ? filters.priority : 'all');
+    setQueueFilter(typeof filters.queueKey === 'string' ? filters.queueKey : 'all');
+    setCategoryFilter(typeof filters.category === 'string' ? filters.category : 'all');
     setCustomerFilter(typeof filters.customerId === 'string' ? filters.customerId : 'all');
     setAssigneeFilter(typeof filters.assigneeId === 'string' ? filters.assigneeId : 'all');
     setPage(typeof filters.page === 'number' && Number.isFinite(filters.page) ? Math.max(1, filters.page) : 1);
@@ -542,7 +550,7 @@ export function TicketsPage() {
             </Button>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-6">
+          <div className="grid gap-3 md:grid-cols-8">
             <Field className="md:col-span-2">
               <FieldLabel htmlFor="ticket-search">Search</FieldLabel>
               <Input
@@ -589,6 +597,46 @@ export function TicketsPage() {
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="queue-filter">Queue</FieldLabel>
+              <Select value={queueFilter} onValueChange={(value) => {
+                setQueueFilter(value ?? 'all');
+                resetPageAndSelection();
+              }}>
+                <SelectTrigger className="w-full" id="queue-filter"><SelectValue placeholder="All queues" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">All queues</SelectItem>
+                    {activeQueueConfigs.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.key}>
+                        {queue.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="category-filter">Category</FieldLabel>
+              <Select value={categoryFilter} onValueChange={(value) => {
+                setCategoryFilter(value ?? 'all');
+                resetPageAndSelection();
+              }}>
+                <SelectTrigger className="w-full" id="category-filter"><SelectValue placeholder="All categories" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">All categories</SelectItem>
+                    {activeCategoryConfigs.map((category) => (
+                      <SelectItem key={category.id} value={category.key}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -644,6 +692,8 @@ export function TicketsPage() {
                 setSearch('');
                 setStatusFilter('all');
                 setPriorityFilter('all');
+                setQueueFilter('all');
+                setCategoryFilter('all');
                 setCustomerFilter('all');
                 setAssigneeFilter('all');
                 setPage(1);

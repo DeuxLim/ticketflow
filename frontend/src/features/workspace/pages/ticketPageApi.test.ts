@@ -41,12 +41,14 @@ describe('ticketPageApi', () => {
       search: 'router',
       status: 'open',
       priority: 'high',
+      queueKey: 'ops',
+      category: 'incident',
       customerId: '10',
       assigneeId: '22',
       page: 3,
     });
 
-    expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets?search=router&status=open&priority=high&customer_id=10&assignee_id=22&page=3');
+    expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets?search=router&status=open&priority=high&queue_key=ops&category=incident&customer_id=10&assignee_id=22&page=3');
   });
 
   it('creates, updates, bulk updates, and deletes tickets', async () => {

@@ -27,6 +27,8 @@ type TicketListFilters = {
   search?: string;
   status?: string;
   priority?: string;
+  queueKey?: string;
+  category?: string;
   customerId?: string;
   assigneeId?: string;
   page?: number;
@@ -37,6 +39,8 @@ export function listWorkspaceTickets(workspaceSlug: string, filters: TicketListF
   if (filters.search?.trim()) params.set('search', filters.search.trim());
   if (filters.status && filters.status !== 'all') params.set('status', filters.status);
   if (filters.priority && filters.priority !== 'all') params.set('priority', filters.priority);
+  if (filters.queueKey && filters.queueKey !== 'all') params.set('queue_key', filters.queueKey);
+  if (filters.category && filters.category !== 'all') params.set('category', filters.category);
   if (filters.customerId && filters.customerId !== 'all') params.set('customer_id', filters.customerId);
   if (filters.assigneeId && filters.assigneeId !== 'all') params.set('assignee_id', filters.assigneeId);
   params.set('page', String(filters.page ?? 1));

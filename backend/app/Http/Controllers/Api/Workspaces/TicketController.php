@@ -62,6 +62,14 @@ class TicketController extends Controller
             $query->where('priority', $priority);
         }
 
+        if ($queueKey = $request->string('queue_key')->toString()) {
+            $query->where('queue_key', $queueKey);
+        }
+
+        if ($category = $request->string('category')->toString()) {
+            $query->where('category', $category);
+        }
+
         if ($assigneeId = $request->integer('assignee_id')) {
             $query->where('assigned_to_user_id', $assigneeId);
         }

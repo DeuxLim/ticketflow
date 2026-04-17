@@ -107,7 +107,7 @@ class TicketingBaseFunctionsTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_ticket_list_supports_status_and_customer_filters(): void
+    public function test_ticket_list_supports_status_customer_queue_and_category_filters(): void
     {
         $owner = User::factory()->create();
         Sanctum::actingAs($owner);
@@ -133,6 +133,8 @@ class TicketingBaseFunctionsTest extends TestCase
             'description' => 'Matching ticket',
             'priority' => 'medium',
             'status' => 'open',
+            'queue_key' => 'ops',
+            'category' => 'incident',
         ])->assertCreated()->json('data');
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
@@ -141,9 +143,11 @@ class TicketingBaseFunctionsTest extends TestCase
             'description' => 'Non-matching ticket',
             'priority' => 'medium',
             'status' => 'resolved',
+            'queue_key' => 'general',
+            'category' => 'problem',
         ])->assertCreated();
 
-        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?status=open&customer_id={$firstCustomer['id']}")
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?status=open&customer_id={$firstCustomer['id']}&queue_key=ops&category=incident")
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.id', $matchingTicket['id']);
