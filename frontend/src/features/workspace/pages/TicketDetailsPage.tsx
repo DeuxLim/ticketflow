@@ -178,6 +178,10 @@ function statusLabel(value?: string | null): string {
   return value ? value.replaceAll('_', ' ') : '—';
 }
 
+function mutationErrorMessage(error: unknown): string {
+  return error instanceof Error && error.message ? error.message : 'Action failed. Please try again.';
+}
+
 export function TicketDetailsPage() {
   const { workspaceSlug, ticketId } = useParams();
   const navigate = useNavigate();
@@ -494,6 +498,9 @@ export function TicketDetailsPage() {
   const stateSummary = ticket?.state_summary;
   const currentUserId = meQuery.data?.data.id;
   const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
+  const watcherMutationError = addWatcher.error ?? removeWatcher.error;
+  const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error;
+  const relatedTicketMutationError = addRelatedTicket.error ?? deleteRelatedTicket.error;
   const attachmentsByComment = useMemo(() => {
     return attachments.reduce<Record<number, Attachment[]>>((acc, attachment) => {
       if (attachment.comment_id === null) {
@@ -837,6 +844,9 @@ export function TicketDetailsPage() {
               </Button>
             </form>
             {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
+            {(addChecklistItem.isError || updateChecklistItem.isError || deleteChecklistItem.isError) && (
+              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
+            )}
           </CardContent>
         </Card>
         </div>
@@ -900,6 +910,9 @@ export function TicketDetailsPage() {
               ))}
             </div>
             {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
+            {(addWatcher.isError || removeWatcher.isError) && (
+              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
+            )}
           </CardContent>
         </Card>
 
@@ -941,6 +954,9 @@ export function TicketDetailsPage() {
             <Button disabled={!canManage} onClick={() => setIsRelatedOpen(true)} size="sm" type="button" variant="outline">
               Link Ticket
             </Button>
+            {(addRelatedTicket.isError || deleteRelatedTicket.isError) && (
+              <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
+            )}
           </CardContent>
         </Card>
 
@@ -1148,7 +1164,9 @@ export function TicketDetailsPage() {
             </div>
           </form>
 
-          {addRelatedTicket.isError && <p className="text-xs text-destructive">{(addRelatedTicket.error as Error).message}</p>}
+          {addRelatedTicket.isError && (
+            <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
+          )}
 
           <DialogFooter>
             <Button onClick={() => setIsRelatedOpen(false)} type="button" variant="outline">

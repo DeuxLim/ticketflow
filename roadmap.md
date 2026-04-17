@@ -4,18 +4,17 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- `ALIGN-P1` Backend-Frontend Alignment Hardening - `in_progress`
+- No active in-progress MVP items.
 
 ## MVP Items
 
 ### `ALIGN-P1` Backend-Frontend Alignment Hardening
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Close backend/frontend contract and behavior gaps before adding new features.
-- Current state: gap inventory complete; integrations/security/workflow/ticketing-forms/pagination/assignment hardening is complete with regression coverage, frontend baseline includes selector contracts + permission + interaction/error paths, API typing hardening is complete, and T09 regression depth now covers transition fallback, transition success messaging, edit-form server field-error mapping, plus view-only ticket-details action disabling.
-- Next actions:
-  - Continue optional regression-depth expansion under `ALIGN-P1-T09` for watcher/checklist/related-ticket failure states and additional permission edge cases.
+- Current state: gap inventory complete; integrations/security/workflow/ticketing-forms/pagination/assignment hardening is complete with regression coverage, API typing hardening is complete, and T09 regression depth now also covers watcher/checklist/related-ticket mutation failure states plus corresponding error visibility.
+- Next actions: none for this item.
 
 #### Child Items
 
@@ -27,7 +26,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `ALIGN-P1-T06` Pagination and dataset contract alignment - `complete`
 - `ALIGN-P1-T07` Ticket assignment permission boundary alignment - `complete`
 - `ALIGN-P1-T08` Frontend API typing and client consistency hardening - `complete`
-- `ALIGN-P1-T09` Add frontend regression test baseline for workspace flows - `incomplete`
+- `ALIGN-P1-T09` Add frontend regression test baseline for workspace flows - `complete`
 
 ### `WSSET-P1` Workspace Settings Phase 1
 
@@ -48,4 +47,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Critical-path alignment hardening is complete. Continue `ALIGN-P1-T09` as optional regression-depth expansion (watcher/checklist/related-ticket failure paths and advanced permission-state UX).
+Alignment hardening is complete. Select the next MVP epic before additional implementation.

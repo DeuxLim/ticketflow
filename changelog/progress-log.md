@@ -576,20 +576,25 @@ Verification:
 
 Continue optional `ALIGN-P1-T09` expansion with watcher/checklist/related-ticket failure-state regression tests, then reassess whether to close `ALIGN-P1`.
 
-## 2026-04-14 20:16 +08:00 - Extended T09 Permission-Edge Regression on Ticket Details
+## 2026-04-17 15:49 +08:00 - Completed T09 Failure-State Expansion and Closed ALIGN-P1
 
-- Added ticket-details permission-edge regression coverage in:
-  - `frontend/src/features/workspace/pages/TicketRoutePermissions.test.tsx`
-- New covered path:
-  - when role can view tickets but cannot manage them, ticket-details lifecycle controls remain disabled (quick transition and edit actions).
+- Added watcher/checklist/related-ticket frontend mutation failure-state regression tests in:
+  - `frontend/src/features/workspace/pages/TicketDetailsMutations.test.tsx`
+- Added Ticket Details UI error visibility for mutation failures so failure states are surfaced to operators:
+  - watcher follow/unfollow mutation errors
+  - checklist add/update/delete mutation errors
+  - related-ticket link/remove mutation errors
 - Updated tracker state:
-  - `ALIGN-P1-T09` remains `incomplete` and continues as optional incremental depth expansion.
+  - `ALIGN-P1-T09` moved from `incomplete` to `complete`
+  - `ALIGN-P1` moved from `in_progress` to `complete`
+  - `current_focus` cleared pending next MVP selection
 
 Verification:
-- `frontend`: `npm run test` passed (18 files, 56 tests).
+- `frontend`: `npm run test -- src/features/workspace/pages/TicketDetailsMutations.test.tsx` passed (1 file, 7 tests).
+- `frontend`: `npm run test` passed (18 files, 59 tests).
 - `frontend`: `npm run lint` passed.
 - `frontend`: `npm run build` passed (existing Vite font resolution/chunk-size warnings only).
 
 ## Resume From Here
 
-Continue optional `ALIGN-P1-T09` expansion with watcher/checklist/related-ticket failure-state regression tests, then reassess whether to close `ALIGN-P1`.
+Alignment hardening is complete. Pick the next MVP epic and initialize it in `project-state.yaml` before implementation.

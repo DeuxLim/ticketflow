@@ -328,4 +328,174 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.getByText('Title already exists.')).not.toBeNull();
     });
   });
+
+  it('shows watcher error when follow action fails', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        return { data: buildTicket('open') } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123/watchers' && init?.method === 'POST') {
+        throw new Error('Unable to follow this ticket right now.');
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Follow' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Unable to follow this ticket right now.')).not.toBeNull();
+    });
+  });
+
+  it('shows checklist error when adding a task fails', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        return { data: buildTicket('open') } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123/checklist-items' && init?.method === 'POST') {
+        throw new Error('Could not add checklist item.');
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Add an operator task…'), {
+      target: { value: 'Escalate to NOC' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not add checklist item.')).not.toBeNull();
+    });
+  });
+
+  it('shows related-ticket error when removing a related ticket fails', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        return {
+          data: {
+            ...buildTicket('open'),
+            related_tickets: [
+              {
+                id: 55,
+                ticket_id: 123,
+                related_ticket_id: 456,
+                relationship_type: 'related',
+                ticket: {
+                  id: 456,
+                  ticket_number: 'TKT-000456',
+                  title: 'Upstream issue',
+                },
+              },
+            ],
+          },
+        } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123/related-tickets/55' && init?.method === 'DELETE') {
+        throw new Error('Unable to remove related ticket.');
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Unable to remove related ticket.')).not.toBeNull();
+    });
+  });
 });

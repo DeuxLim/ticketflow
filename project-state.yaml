@@ -1,13 +1,12 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-14T20:16:33+08:00"
+updated_at: "2026-04-17T15:49:43+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus:
-  - ALIGN-P1
+current_focus: []
 items:
   - id: WSSET-P1
     title: Workspace Settings Phase 1
@@ -241,7 +240,7 @@ items:
     title: Backend-Frontend Alignment Hardening
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Close contract and behavior gaps between backend APIs and frontend surfaces before adding new product features.
@@ -285,19 +284,20 @@ items:
       - "2026-04-14: Expanded T09 regression depth for ticket lifecycle by covering transition fallback (`/transition` -> PATCH), transition success messaging, and edit-form field error mapping in TicketDetails mutations."
       - "2026-04-14: Frontend verification passed after T09 expansion (`npm run test`, `npm run lint`, `npm run build`)."
       - "2026-04-14: Added T09 permission-edge regression for ticket-details view-only roles to ensure lifecycle actions remain disabled without `tickets.manage`."
-    incomplete_reason: "Critical-path hardening is complete; remaining work is optional incremental frontend regression expansion under T09."
+      - "2026-04-17: Added T09 watcher/checklist/related-ticket mutation failure-state regression tests and exposed mutation error messages in TicketDetails UI surfaces."
+      - "2026-04-17: Frontend verification passed after closing T09 (`npm run test`, `npm run lint`, `npm run build`)."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Continue optional T09 regression expansion for deeper ticket lifecycle and edge-case UI states.
+    next_actions: []
     tags:
       - alignment
       - hardening
       - frontend-backend
     created_at: "2026-04-14T07:01:26+08:00"
-    updated_at: "2026-04-14T20:16:33+08:00"
-    changed_at: "2026-04-14T20:16:33+08:00"
+    updated_at: "2026-04-17T15:49:43+08:00"
+    changed_at: "2026-04-17T15:49:43+08:00"
     changed_source: codex
 
   - id: ALIGN-P1-T01
@@ -598,7 +598,7 @@ items:
     title: Add frontend regression test baseline for workspace flows
     type: test
     parent_id: ALIGN-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Establish frontend regression coverage for critical workspace workflows that currently rely on manual checks.
@@ -620,18 +620,18 @@ items:
       - "2026-04-14: Added ticket-details mutation error regression test for attachment upload failures."
       - "2026-04-14: Added ticket-details lifecycle regression tests for transition 422 fallback behavior, transition success messaging, and edit-dialog server field-error mapping."
       - "2026-04-14: Added ticket-details permission-edge regression for view-only roles to assert lifecycle controls stay disabled when `tickets.manage` is missing."
-    incomplete_reason: "Baseline plus lifecycle/mutation/permission depth is in place; additional optional edge-case coverage can continue incrementally."
+      - "2026-04-17: Added ticket-details watcher/checklist/related-ticket failure-state regression tests and corresponding UI error visibility for mutation failures."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Add deeper ticket lifecycle edge-case tests for watcher/checklist/related-ticket failure states.
       - Keep frontend `npm run test` in standard verification runs for alignment tasks.
     tags:
       - tests
       - frontend
       - regression
     created_at: "2026-04-14T07:01:26+08:00"
-    updated_at: "2026-04-14T20:16:33+08:00"
-    changed_at: "2026-04-14T20:16:33+08:00"
+    updated_at: "2026-04-17T15:49:43+08:00"
+    changed_at: "2026-04-17T15:49:43+08:00"
     changed_source: codex
