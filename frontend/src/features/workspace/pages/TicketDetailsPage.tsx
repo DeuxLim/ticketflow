@@ -30,6 +30,7 @@ import {
   listWorkspaceTicketActivity,
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
+  reorderWorkspaceChecklistItems,
   removeWorkspaceTicketWatcher,
   transitionWorkspaceTicket,
   updateWorkspaceChecklistItem,
@@ -451,6 +452,15 @@ export function TicketDetailsPage() {
     },
   });
 
+  const reorderChecklistItems = useMutation({
+    mutationFn: (items: Array<{ id: number; sort_order: number }>) =>
+      reorderWorkspaceChecklistItems(workspaceSlug ?? '', ticketId ?? '', items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+    },
+  });
+
   const addRelatedTicket = useMutation({
     mutationFn: (values: RelatedTicketForm) =>
       createWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', {
@@ -499,7 +509,7 @@ export function TicketDetailsPage() {
   const currentUserId = meQuery.data?.data.id;
   const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
   const watcherMutationError = addWatcher.error ?? removeWatcher.error;
-  const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error;
+  const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error ?? reorderChecklistItems.error;
   const relatedTicketMutationError = addRelatedTicket.error ?? deleteRelatedTicket.error;
   const attachmentsByComment = useMemo(() => {
     return attachments.reduce<Record<number, Attachment[]>>((acc, attachment) => {
@@ -515,6 +525,25 @@ export function TicketDetailsPage() {
       return acc;
     }, {});
   }, [attachments]);
+
+  const moveChecklistItem = (itemId: number, direction: 'up' | 'down') => {
+    const index = checklistItems.findIndex((item) => item.id === itemId);
+    if (index < 0) return;
+
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= checklistItems.length) return;
+
+    const reordered = [...checklistItems];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    reorderChecklistItems.mutate(
+      reordered.map((item, sortIndex) => ({
+        id: item.id,
+        sort_order: sortIndex,
+      })),
+    );
+  };
 
   const assignmentHistory = useMemo(
     () => activityLogs.filter((event) => event.action === 'ticket.assignee_changed' || event.action === 'ticket.bulk_updated'),
@@ -828,6 +857,28 @@ export function TicketDetailsPage() {
                 </label>
                 <div className="flex items-center gap-2">
                   {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
+                  {canManage && (
+                    <>
+                      <Button
+                        disabled={reorderChecklistItems.isPending || checklistItems[0]?.id === item.id}
+                        onClick={() => moveChecklistItem(item.id, 'up')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Up
+                      </Button>
+                      <Button
+                        disabled={reorderChecklistItems.isPending || checklistItems[checklistItems.length - 1]?.id === item.id}
+                        onClick={() => moveChecklistItem(item.id, 'down')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Down
+                      </Button>
+                    </>
+                  )}
                   {canManage && (
                     <Button disabled={deleteChecklistItem.isPending} onClick={() => deleteChecklistItem.mutate(item.id)} size="sm" type="button" variant="outline">
                       Delete

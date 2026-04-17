@@ -22,6 +22,7 @@ import {
   listWorkspaceTickets,
   updateWorkspaceTicketById,
 } from '@/features/workspace/pages/ticketPageApi';
+import { createSavedView, deleteSavedView, listSavedViews } from '@/features/workspace/settings/settings-api';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,6 +76,9 @@ export function TicketsPage() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [customerFilter, setCustomerFilter] = useState('all');
   const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [savedViewName, setSavedViewName] = useState('');
+  const [savedViewShared, setSavedViewShared] = useState(false);
+  const [selectedSavedViewId, setSelectedSavedViewId] = useState<string>('none');
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Ticket | null>(null);
@@ -130,6 +134,12 @@ export function TicketsPage() {
       assigneeId: assigneeFilter,
       page,
     }),
+    enabled: Boolean(workspaceSlug && canView),
+  });
+
+  const savedViewsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'saved-views'],
+    queryFn: () => listSavedViews(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canView),
   });
 
@@ -209,6 +219,35 @@ export function TicketsPage() {
     },
   });
 
+  const saveView = useMutation({
+    mutationFn: () =>
+      createSavedView(workspaceSlug ?? '', {
+        name: savedViewName.trim(),
+        is_shared: savedViewShared,
+        filters: {
+          search,
+          status: statusFilter,
+          priority: priorityFilter,
+          customerId: customerFilter,
+          assigneeId: assigneeFilter,
+          page,
+        },
+      }),
+    onSuccess: () => {
+      setSavedViewName('');
+      setSavedViewShared(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'saved-views'] });
+    },
+  });
+
+  const removeSavedView = useMutation({
+    mutationFn: (viewId: number) => deleteSavedView(workspaceSlug ?? '', viewId),
+    onSuccess: () => {
+      setSelectedSavedViewId('none');
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'saved-views'] });
+    },
+  });
+
   const tickets = useMemo(() => ticketsQuery.data?.data ?? [], [ticketsQuery.data?.data]);
   const pagination = ticketsQuery.data?.meta;
   const ticketIds = new Set(tickets.map((ticket) => ticket.id));
@@ -216,6 +255,16 @@ export function TicketsPage() {
 
   const resetPageAndSelection = () => {
     setPage(1);
+    setSelectedTicketIds([]);
+  };
+
+  const applySavedFilters = (filters: Record<string, unknown>) => {
+    setSearch(typeof filters.search === 'string' ? filters.search : '');
+    setStatusFilter(typeof filters.status === 'string' ? filters.status : 'all');
+    setPriorityFilter(typeof filters.priority === 'string' ? filters.priority : 'all');
+    setCustomerFilter(typeof filters.customerId === 'string' ? filters.customerId : 'all');
+    setAssigneeFilter(typeof filters.assigneeId === 'string' ? filters.assigneeId : 'all');
+    setPage(typeof filters.page === 'number' && Number.isFinite(filters.page) ? Math.max(1, filters.page) : 1);
     setSelectedTicketIds([]);
   };
 
@@ -245,6 +294,8 @@ export function TicketsPage() {
   const customerMeta = customersQuery.data?.meta;
   const customerCoverageHint = selectorCoverageHint(customers.length, customerMeta?.total, 'customers');
   const members = membersQuery.data?.data ?? [];
+  const savedViews = savedViewsQuery.data?.data ?? [];
+  const canSaveView = savedViewName.trim().length > 0;
 
   return (
     <section className="flex flex-col gap-6">
@@ -265,6 +316,75 @@ export function TicketsPage() {
           <CardDescription>{tickets.length} records</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-4">
+          <div className="flex flex-wrap items-end gap-3 rounded-md border p-3">
+            <Field className="min-w-[220px] flex-1">
+              <FieldLabel htmlFor="saved-view-select">Saved view</FieldLabel>
+              <Select value={selectedSavedViewId} onValueChange={(value) => {
+                const next = value ?? 'none';
+                setSelectedSavedViewId(next);
+                if (next === 'none') return;
+                const selected = savedViews.find((view) => String(view.id) === next);
+                if (selected) {
+                  applySavedFilters(selected.filters);
+                }
+              }}>
+                <SelectTrigger id="saved-view-select"><SelectValue placeholder="Select a saved view" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">None</SelectItem>
+                    {savedViews.map((view) => (
+                      <SelectItem key={view.id} value={String(view.id)}>
+                        {view.name}{view.is_shared ? ' (shared)' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field className="min-w-[200px]">
+              <FieldLabel htmlFor="saved-view-name">New view name</FieldLabel>
+              <Input
+                id="saved-view-name"
+                value={savedViewName}
+                onChange={(event) => setSavedViewName(event.target.value)}
+                placeholder="My open high-priority tickets"
+              />
+            </Field>
+
+            <label className="flex items-center gap-2 pb-2 text-xs">
+              <input
+                checked={savedViewShared}
+                onChange={(event) => setSavedViewShared(event.target.checked)}
+                type="checkbox"
+              />
+              <span>Shared</span>
+            </label>
+
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              disabled={!canSaveView || saveView.isPending}
+              onClick={() => saveView.mutate()}
+            >
+              {saveView.isPending ? 'Saving...' : 'Save current filters'}
+            </Button>
+
+            <Button
+              size="sm"
+              type="button"
+              variant="outline"
+              disabled={selectedSavedViewId === 'none' || removeSavedView.isPending}
+              onClick={() => {
+                if (selectedSavedViewId === 'none') return;
+                removeSavedView.mutate(Number(selectedSavedViewId));
+              }}
+            >
+              {removeSavedView.isPending ? 'Deleting...' : 'Delete view'}
+            </Button>
+          </div>
+
           <div className="grid gap-3 md:grid-cols-6">
             <Field className="md:col-span-2">
               <FieldLabel htmlFor="ticket-search">Search</FieldLabel>

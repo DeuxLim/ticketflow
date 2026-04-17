@@ -498,4 +498,68 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.getByText('Unable to remove related ticket.')).not.toBeNull();
     });
   });
+
+  it('reorders checklist items when moving an item down', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        return {
+          data: {
+            ...buildTicket('open'),
+            checklist_items: [
+              { id: 10, title: 'Step A', is_completed: false, sort_order: 0 },
+              { id: 20, title: 'Step B', is_completed: false, sort_order: 1 },
+            ],
+          },
+        } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123/checklist-items/reorder' && init?.method === 'PATCH') {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Down' })[0]);
+
+    await waitFor(() => {
+      expect(
+        vi.mocked(apiRequest).mock.calls.some(
+          ([path, init]) =>
+            path === '/workspaces/acme/tickets/123/checklist-items/reorder' &&
+            (init as RequestInit | undefined)?.method === 'PATCH',
+        ),
+      ).toBe(true);
+    });
+  });
 });

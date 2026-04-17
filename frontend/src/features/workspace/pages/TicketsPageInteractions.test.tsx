@@ -64,6 +64,9 @@ describe('TicketsPage interactions', () => {
       if (path.includes('/members/assignable')) {
         return { data: [] } as never;
       }
+      if (path === '/workspaces/acme/saved-views') {
+        return { data: [] } as never;
+      }
       if (path.startsWith('/workspaces/acme/tickets')) {
         return {
           data: [],
@@ -101,6 +104,9 @@ describe('TicketsPage interactions', () => {
       if (path.includes('/members/assignable')) {
         return { data: [] } as never;
       }
+      if (path === '/workspaces/acme/saved-views') {
+        return { data: [] } as never;
+      }
       if (path.startsWith('/workspaces/acme/tickets')) {
         throw new Error('Ticket list failed.');
       }
@@ -116,6 +122,38 @@ describe('TicketsPage interactions', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Ticket list failed.')).not.toBeNull();
+    });
+  });
+
+  it('saves current filters as a saved view', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets" element={<TicketsPage />} />
+      </Routes>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'network outage' } });
+    fireEvent.change(screen.getByLabelText('New view name'), { target: { value: 'Network incidents' } });
+    const saveButton = screen.getAllByRole('button', { name: 'Save current filters' }).find((button) => !button.hasAttribute('disabled'));
+    if (!saveButton) throw new Error('Save current filters button not enabled');
+    fireEvent.click(saveButton);
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/saved-views', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Network incidents',
+          is_shared: false,
+          filters: {
+            search: 'network outage',
+            status: 'all',
+            priority: 'all',
+            customerId: 'all',
+            assigneeId: 'all',
+            page: 1,
+          },
+        }),
+      });
     });
   });
 });

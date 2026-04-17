@@ -1,15 +1,19 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup } from '@testing-library/react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GovernanceSettingsSection } from './GovernanceSettingsSection';
 import {
+  approveBreakGlassRequest,
   createBreakGlassRequest,
   createExport,
   createIdentityProvider,
   createProvisioningDirectory,
+  createSlaPolicy,
   deleteIdentityProvider,
+  downloadExport,
   getRetentionPolicy,
   getTenantSecurityPolicy,
   listAuditEvents,
@@ -17,17 +21,21 @@ import {
   listExports,
   listIdentityProviders,
   listProvisioningDirectories,
+  listSlaPolicies,
   startOidcSso,
   updateRetentionPolicy,
   updateTenantSecurityPolicy,
 } from './settings-api';
 
 vi.mock('./settings-api', () => ({
+  approveBreakGlassRequest: vi.fn(),
   createBreakGlassRequest: vi.fn(),
   createExport: vi.fn(),
   createIdentityProvider: vi.fn(),
   createProvisioningDirectory: vi.fn(),
+  createSlaPolicy: vi.fn(),
   deleteIdentityProvider: vi.fn(),
+  downloadExport: vi.fn(),
   getRetentionPolicy: vi.fn(),
   getTenantSecurityPolicy: vi.fn(),
   listAuditEvents: vi.fn(),
@@ -35,6 +43,7 @@ vi.mock('./settings-api', () => ({
   listExports: vi.fn(),
   listIdentityProviders: vi.fn(),
   listProvisioningDirectories: vi.fn(),
+  listSlaPolicies: vi.fn(),
   startOidcSso: vi.fn(),
   updateRetentionPolicy: vi.fn(),
   updateTenantSecurityPolicy: vi.fn(),
@@ -72,6 +81,10 @@ function getEnabledButtonByName(name: string): HTMLButtonElement {
 }
 
 describe('GovernanceSettingsSection', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -80,6 +93,7 @@ describe('GovernanceSettingsSection', () => {
     } as never);
     vi.mocked(listExports).mockResolvedValue({ data: [] } as never);
     vi.mocked(listBreakGlassRequests).mockResolvedValue({ data: [] } as never);
+    vi.mocked(listSlaPolicies).mockResolvedValue({ data: [] } as never);
     vi.mocked(listAuditEvents).mockResolvedValue({ data: [] } as never);
     vi.mocked(getTenantSecurityPolicy).mockResolvedValue({
       data: {
@@ -99,6 +113,9 @@ describe('GovernanceSettingsSection', () => {
     vi.mocked(updateRetentionPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(createExport).mockResolvedValue({ data: {} } as never);
     vi.mocked(createBreakGlassRequest).mockResolvedValue({ data: {} } as never);
+    vi.mocked(approveBreakGlassRequest).mockResolvedValue({ data: {} } as never);
+    vi.mocked(createSlaPolicy).mockResolvedValue({ data: {} } as never);
+    vi.mocked(downloadExport).mockResolvedValue(undefined);
     vi.mocked(createIdentityProvider).mockResolvedValue({ data: {} } as never);
     vi.mocked(deleteIdentityProvider).mockResolvedValue({ message: 'ok' } as never);
     vi.mocked(startOidcSso).mockResolvedValue({ data: { authorization_url: 'https://example.test', state: 'state' } } as never);
@@ -129,10 +146,56 @@ describe('GovernanceSettingsSection', () => {
 
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Save security policy' }).length).toBeGreaterThan(0);
+    });
     fireEvent.click(getEnabledButtonByName('Save security policy'));
 
     await waitFor(() => {
       expect(screen.getByText('Security policy save failed.')).not.toBeNull();
+    });
+  });
+
+  it('calls break-glass approve and export download actions', async () => {
+    vi.mocked(listExports).mockResolvedValue({
+      data: [{ id: 5, status: 'completed', download_token: 'tok-123', created_at: '2026-04-17T00:00:00Z' }],
+    } as never);
+    vi.mocked(listBreakGlassRequests).mockResolvedValue({
+      data: [{ id: 8, status: 'pending', created_at: '2026-04-17T00:00:00Z' }],
+    } as never);
+
+    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Download' }).length).toBeGreaterThan(0);
+    });
+    fireEvent.click(getEnabledButtonByName('Download'));
+    await waitFor(() => {
+      expect(downloadExport).toHaveBeenCalledWith('acme', 5, 'tok-123');
+    });
+
+    fireEvent.click(getEnabledButtonByName('Approve'));
+    await waitFor(() => {
+      expect(approveBreakGlassRequest).toHaveBeenCalledWith('acme', 8);
+    });
+  });
+
+  it('creates an SLA policy', async () => {
+    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
+
+    fireEvent.change(screen.getAllByPlaceholderText('Policy name')[0], { target: { value: 'P1 SLA' } });
+    fireEvent.change(screen.getAllByPlaceholderText('First response (minutes)')[0], { target: { value: '20' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Resolution (minutes)')[0], { target: { value: '180' } });
+    fireEvent.click(getEnabledButtonByName('Create SLA policy'));
+
+    await waitFor(() => {
+      expect(createSlaPolicy).toHaveBeenCalledWith('acme', {
+        name: 'P1 SLA',
+        priority: 'high',
+        first_response_minutes: 20,
+        resolution_minutes: 180,
+        is_active: true,
+      });
     });
   });
 });

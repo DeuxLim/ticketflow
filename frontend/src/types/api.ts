@@ -158,6 +158,15 @@ export type TicketChecklistItem = {
   updated_at?: string;
 };
 
+export type SavedViewRecord = {
+  id: number;
+  name: string;
+  filters: Record<string, unknown>;
+  is_shared: boolean;
+  created_by_user_id: number | null;
+  created_at?: string;
+};
+
 export type TicketCustomFieldValue = {
   id: number;
   ticket_custom_field_id: number;
@@ -389,10 +398,24 @@ export type RetentionPolicyConfig = {
   purge_enabled: boolean;
 };
 
+export type SlaPolicyConfig = {
+  id: number;
+  workspace_id: number;
+  business_calendar_id: number | null;
+  name: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  first_response_minutes: number;
+  resolution_minutes: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type TenantExportRecord = {
   id: number;
   workspace_id: number;
   status: string;
+  download_token?: string | null;
   download_expires_at: string | null;
   created_at: string;
 };
@@ -406,6 +429,8 @@ export type BreakGlassRecord = {
   approved_at: string | null;
   expires_at: string | null;
   created_at: string;
+  approver_one_user_id?: number | null;
+  approver_two_user_id?: number | null;
 };
 
 export type AuditEventRecord = {

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { apiRequest } from '@/services/api/client';
+import { apiDownload, apiRequest } from '@/services/api/client';
 import {
+  approveBreakGlassRequest,
+  createSavedView,
+  createSlaPolicy,
   createTicketCustomField,
   createTicketFormTemplate,
   createTicketCategory,
@@ -12,7 +15,11 @@ import {
   createProvisioningDirectory,
   createWebhookEndpoint,
   deleteIdentityProvider,
+  deleteSavedView,
+  downloadExport,
   getTenantSecurityPolicy,
+  listSavedViews,
+  listSlaPolicies,
   listIdentityProviders,
   listWorkflows,
   listProvisioningDirectories,
@@ -34,12 +41,14 @@ import {
 
 vi.mock('@/services/api/client', () => ({
   apiRequest: vi.fn(),
+  apiDownload: vi.fn(),
 }));
 
 describe('settings-api integrations and security contracts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(apiRequest).mockResolvedValue({ data: {} } as never);
+    vi.mocked(apiDownload).mockResolvedValue(undefined);
   });
 
   it('calls integrations endpoints with expected methods and payloads', async () => {
@@ -148,6 +157,62 @@ describe('settings-api integrations and security contracts', () => {
       method: 'POST',
       body: JSON.stringify({ name: 'Azure AD' }),
     });
+
+    await approveBreakGlassRequest(workspaceSlug, 19);
+    expect(apiRequest).toHaveBeenNthCalledWith(9, '/workspaces/acme/break-glass/requests/19/approve', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  });
+
+  it('calls saved views, sla policies, and export download endpoints', async () => {
+    const workspaceSlug = 'acme';
+
+    await listSavedViews(workspaceSlug);
+    expect(apiRequest).toHaveBeenNthCalledWith(1, '/workspaces/acme/saved-views');
+
+    await createSavedView(workspaceSlug, {
+      name: 'My Open Tickets',
+      filters: { status: 'open', page: 1 },
+      is_shared: true,
+    });
+    expect(apiRequest).toHaveBeenNthCalledWith(2, '/workspaces/acme/saved-views', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'My Open Tickets',
+        filters: { status: 'open', page: 1 },
+        is_shared: true,
+      }),
+    });
+
+    await deleteSavedView(workspaceSlug, 11);
+    expect(apiRequest).toHaveBeenNthCalledWith(3, '/workspaces/acme/saved-views/11', {
+      method: 'DELETE',
+    });
+
+    await listSlaPolicies(workspaceSlug);
+    expect(apiRequest).toHaveBeenNthCalledWith(4, '/workspaces/acme/sla-policies');
+
+    await createSlaPolicy(workspaceSlug, {
+      name: 'P1 Policy',
+      priority: 'urgent',
+      first_response_minutes: 15,
+      resolution_minutes: 120,
+      is_active: true,
+    });
+    expect(apiRequest).toHaveBeenNthCalledWith(5, '/workspaces/acme/sla-policies', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'P1 Policy',
+        priority: 'urgent',
+        first_response_minutes: 15,
+        resolution_minutes: 120,
+        is_active: true,
+      }),
+    });
+
+    await downloadExport(workspaceSlug, 77, 'abc token');
+    expect(apiDownload).toHaveBeenCalledWith('/workspaces/acme/exports/77/download?token=abc%20token', 'tenant-export-77.json');
   });
 
   it('calls workflow and automation lifecycle endpoints with expected methods and payloads', async () => {

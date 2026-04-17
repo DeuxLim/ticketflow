@@ -1,4 +1,4 @@
-import { apiRequest } from '@/services/api/client';
+import { apiDownload, apiRequest } from '@/services/api/client';
 import type {
   ApprovalRecord,
   ApiEnvelope,
@@ -7,6 +7,8 @@ import type {
   AutomationRuleConfig,
   BreakGlassRecord,
   RetentionPolicyConfig,
+  SavedViewRecord,
+  SlaPolicyConfig,
   TenantExportRecord,
   TenantIdentityProviderConfig,
   TenantSecurityPolicyConfig,
@@ -314,6 +316,28 @@ export function createExport(workspaceSlug: string, include: string[]) {
   });
 }
 
+export function downloadExport(workspaceSlug: string, exportId: number, token: string) {
+  const encodedToken = encodeURIComponent(token);
+  return apiDownload(`/workspaces/${workspaceSlug}/exports/${exportId}/download?token=${encodedToken}`, `tenant-export-${exportId}.json`);
+}
+
+export function listSavedViews(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<SavedViewRecord[]>>(`/workspaces/${workspaceSlug}/saved-views`);
+}
+
+export function createSavedView(workspaceSlug: string, payload: { name: string; filters: Record<string, unknown>; is_shared?: boolean }) {
+  return apiRequest<ApiEnvelope<SavedViewRecord>>(`/workspaces/${workspaceSlug}/saved-views`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteSavedView(workspaceSlug: string, viewId: number) {
+  return apiRequest<{ message: string }>(`/workspaces/${workspaceSlug}/saved-views/${viewId}`, {
+    method: 'DELETE',
+  });
+}
+
 export function listBreakGlassRequests(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<BreakGlassRecord[]>>(`/workspaces/${workspaceSlug}/break-glass/requests`);
 }
@@ -322,6 +346,13 @@ export function createBreakGlassRequest(workspaceSlug: string, reason: string, d
   return apiRequest<ApiEnvelope<BreakGlassRecord>>(`/workspaces/${workspaceSlug}/break-glass/requests`, {
     method: 'POST',
     body: JSON.stringify({ reason, duration_minutes: durationMinutes }),
+  });
+}
+
+export function approveBreakGlassRequest(workspaceSlug: string, breakGlassId: number) {
+  return apiRequest<ApiEnvelope<BreakGlassRecord>>(`/workspaces/${workspaceSlug}/break-glass/requests/${breakGlassId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({}),
   });
 }
 
@@ -385,6 +416,24 @@ export function createProvisioningDirectory(workspaceSlug: string, name: string)
   return apiRequest<CreateProvisioningDirectoryResponse>(`/workspaces/${workspaceSlug}/provisioning-directories`, {
     method: 'POST',
     body: JSON.stringify({ name }),
+  });
+}
+
+export function listSlaPolicies(workspaceSlug: string) {
+  return apiRequest<ApiEnvelope<SlaPolicyConfig[]>>(`/workspaces/${workspaceSlug}/sla-policies`);
+}
+
+export function createSlaPolicy(workspaceSlug: string, payload: {
+  name: string;
+  priority: SlaPolicyConfig['priority'];
+  first_response_minutes: number;
+  resolution_minutes: number;
+  business_calendar_id?: number | null;
+  is_active?: boolean;
+}) {
+  return apiRequest<ApiEnvelope<SlaPolicyConfig>>(`/workspaces/${workspaceSlug}/sla-policies`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }
 

@@ -15,6 +15,7 @@ import {
   listWorkspaceTicketAttachments,
   listWorkspaceTicketComments,
   removeWorkspaceTicketWatcher,
+  reorderWorkspaceChecklistItems,
   transitionWorkspaceTicket,
   updateWorkspaceChecklistItem,
   updateWorkspaceTicketComment,
@@ -114,6 +115,20 @@ describe('ticketDetailsApi', () => {
     expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets/123/checklist-items/4', {
       method: 'PATCH',
       body: JSON.stringify({ is_completed: true }),
+    });
+
+    await reorderWorkspaceChecklistItems('acme', '123', [
+      { id: 4, sort_order: 0 },
+      { id: 5, sort_order: 1 },
+    ]);
+    expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets/123/checklist-items/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        items: [
+          { id: 4, sort_order: 0 },
+          { id: 5, sort_order: 1 },
+        ],
+      }),
     });
 
     await deleteWorkspaceChecklistItem('acme', '123', 4);

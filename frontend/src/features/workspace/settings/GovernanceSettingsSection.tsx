@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
+  approveBreakGlassRequest,
   createIdentityProvider,
   createProvisioningDirectory,
   createBreakGlassRequest,
   createExport,
+  createSlaPolicy,
+  downloadExport,
   deleteIdentityProvider,
   getTenantSecurityPolicy,
   getRetentionPolicy,
@@ -21,6 +24,7 @@ import {
   listBreakGlassRequests,
   listExports,
   listProvisioningDirectories,
+  listSlaPolicies,
   startOidcSso,
   updateTenantSecurityPolicy,
   updateRetentionPolicy,
@@ -33,6 +37,7 @@ type GovernanceSettingsSectionProps = {
 export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsSectionProps) {
   const queryClient = useQueryClient();
   const retentionQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'retention-policy'], queryFn: () => getRetentionPolicy(workspaceSlug) });
+  const slaPoliciesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'sla-policies'], queryFn: () => listSlaPolicies(workspaceSlug) });
   const exportsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'exports'], queryFn: () => listExports(workspaceSlug) });
   const breakGlassQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'break-glass'], queryFn: () => listBreakGlassRequests(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
@@ -45,6 +50,10 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
   const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
   const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
+  const [slaName, setSlaName] = useState('Default SLA');
+  const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
+  const [slaFirstResponseMinutes, setSlaFirstResponseMinutes] = useState(30);
+  const [slaResolutionMinutes, setSlaResolutionMinutes] = useState(240);
   const [requireSsoDraft, setRequireSsoDraft] = useState<boolean | null>(null);
   const [requireMfaDraft, setRequireMfaDraft] = useState<boolean | null>(null);
   const [sessionTtlDraft, setSessionTtlDraft] = useState<number | null>(null);
@@ -105,6 +114,29 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const requestBreakGlass = useMutation({
     mutationFn: () => createBreakGlassRequest(workspaceSlug, breakGlassReason, 60),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] }),
+  });
+
+  const approveBreakGlass = useMutation({
+    mutationFn: (id: number) => approveBreakGlassRequest(workspaceSlug, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] }),
+  });
+
+  const createSlaPolicyMutation = useMutation({
+    mutationFn: () =>
+      createSlaPolicy(workspaceSlug, {
+        name: slaName.trim(),
+        priority: slaPriority,
+        first_response_minutes: slaFirstResponseMinutes,
+        resolution_minutes: slaResolutionMinutes,
+        is_active: true,
+      }),
+    onSuccess: () => {
+      setSlaName('Default SLA');
+      setSlaPriority('high');
+      setSlaFirstResponseMinutes(30);
+      setSlaResolutionMinutes(240);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'sla-policies'] });
+    },
   });
 
   const saveSecurityPolicy = useMutation({
@@ -178,6 +210,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   });
 
   const exports = exportsQuery.data?.data ?? [];
+  const slaPolicies = slaPoliciesQuery.data?.data ?? [];
   const breakGlass = breakGlassQuery.data?.data ?? [];
   const audits = auditQuery.data?.data ?? [];
 
@@ -227,7 +260,56 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             </div>
             <div className="mt-3 space-y-2 text-xs">
               {exports.slice(0, 5).map((item) => (
-                <p key={item.id}>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                  <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!item.download_token}
+                    onClick={() => {
+                      if (!item.download_token) return;
+                      void downloadExport(workspaceSlug, item.id, item.download_token);
+                    }}
+                  >
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <p className="text-sm font-medium">SLA policies</p>
+            <div className="mt-2 grid gap-2 md:grid-cols-2">
+              <Input value={slaName} onChange={(event) => setSlaName(event.target.value)} placeholder="Policy name" />
+              <Select value={slaPriority} onValueChange={(value) => setSlaPriority((value as 'low' | 'medium' | 'high' | 'urgent') ?? 'high')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="low">low</SelectItem>
+                    <SelectItem value="medium">medium</SelectItem>
+                    <SelectItem value="high">high</SelectItem>
+                    <SelectItem value="urgent">urgent</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              <Input type="number" value={slaFirstResponseMinutes} onChange={(event) => setSlaFirstResponseMinutes(Number(event.target.value) || 0)} placeholder="First response (minutes)" />
+              <Input type="number" value={slaResolutionMinutes} onChange={(event) => setSlaResolutionMinutes(Number(event.target.value) || 0)} placeholder="Resolution (minutes)" />
+            </div>
+            <Button
+              className="mt-2"
+              size="sm"
+              variant="outline"
+              disabled={createSlaPolicyMutation.isPending || slaName.trim().length < 2}
+              onClick={() => createSlaPolicyMutation.mutate()}
+            >
+              {createSlaPolicyMutation.isPending ? 'Creating policy...' : 'Create SLA policy'}
+            </Button>
+            <div className="mt-3 space-y-2 text-xs">
+              {slaPolicies.slice(0, 6).map((policy) => (
+                <p key={policy.id}>
+                  {policy.name} • {policy.priority} • first response {policy.first_response_minutes}m • resolution {policy.resolution_minutes}m
+                </p>
               ))}
             </div>
           </div>
@@ -248,7 +330,17 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             </Button>
             <div className="mt-3 space-y-2 text-xs">
               {breakGlass.slice(0, 5).map((item) => (
-                <p key={item.id}>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                  <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={item.status !== 'pending' || approveBreakGlass.isPending}
+                    onClick={() => approveBreakGlass.mutate(item.id)}
+                  >
+                    {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
+                  </Button>
+                </div>
               ))}
             </div>
           </div>
@@ -314,7 +406,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             {saveSecurityPolicy.isError && (
               <p className="text-xs text-destructive">{(saveSecurityPolicy.error as Error).message}</p>
             )}
-            <Button size="sm" variant="outline" disabled={saveSecurityPolicy.isPending || securityPolicyQuery.isLoading} onClick={() => saveSecurityPolicy.mutate()}>
+            <Button size="sm" variant="outline" disabled={saveSecurityPolicy.isPending} onClick={() => saveSecurityPolicy.mutate()}>
               {saveSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
             </Button>
           </div>

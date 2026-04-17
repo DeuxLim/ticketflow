@@ -27,6 +27,8 @@ export function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userSearch, setUserSearch] = useState('');
   const [workspaceSearch, setWorkspaceSearch] = useState('');
+  const [limitsDrafts, setLimitsDrafts] = useState<Record<number, string>>({});
+  const [featureFlagDrafts, setFeatureFlagDrafts] = useState<Record<number, string>>({});
 
   const usersPath = useMemo(
     () => `/admin/users?per_page=20&search=${encodeURIComponent(userSearch.trim())}`,
@@ -115,6 +117,30 @@ export function AdminDashboardPage() {
     },
   });
 
+  const updateWorkspaceLimits = useMutation({
+    mutationFn: ({ workspace, limits }: { workspace: AdminWorkspace; limits: Record<string, unknown> }) =>
+      apiRequest(`/admin/workspaces/${workspace.slug}/limits`, {
+        method: 'PATCH',
+        body: JSON.stringify({ limits }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+  });
+
+  const updateWorkspaceFeatureFlags = useMutation({
+    mutationFn: ({ workspace, featureFlags }: { workspace: AdminWorkspace; featureFlags: Record<string, unknown> }) =>
+      apiRequest(`/admin/workspaces/${workspace.slug}/feature-flags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ feature_flags: featureFlags }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+  });
+
   if (statsQuery.isLoading) {
     return (
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -146,7 +172,9 @@ export function AdminDashboardPage() {
     suspendWorkspace.isPending ||
     reactivateWorkspace.isPending ||
     toggleMaintenance.isPending ||
-    toggleIsolation.isPending;
+    toggleIsolation.isPending ||
+    updateWorkspaceLimits.isPending ||
+    updateWorkspaceFeatureFlags.isPending;
 
   return (
     <section className="flex flex-col gap-6">
@@ -269,46 +297,98 @@ export function AdminDashboardPage() {
                             {new Date(workspace.created_at).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="text-right">
-                            <div className="flex flex-wrap justify-end gap-2">
-                              {workspace.lifecycle_status === 'active' ? (
+                            <div className="flex flex-col items-end gap-2">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                {workspace.lifecycle_status === 'active' ? (
+                                  <Button
+                                    disabled={workspaceActionPending}
+                                    onClick={() => suspendWorkspace.mutate(workspace)}
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    Suspend
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    disabled={workspaceActionPending}
+                                    onClick={() => reactivateWorkspace.mutate(workspace)}
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    Reactivate
+                                  </Button>
+                                )}
                                 <Button
                                   disabled={workspaceActionPending}
-                                  onClick={() => suspendWorkspace.mutate(workspace)}
+                                  onClick={() => toggleMaintenance.mutate(workspace)}
                                   size="sm"
                                   type="button"
                                   variant="outline"
                                 >
-                                  Suspend
+                                  {workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance'}
                                 </Button>
-                              ) : (
                                 <Button
                                   disabled={workspaceActionPending}
-                                  onClick={() => reactivateWorkspace.mutate(workspace)}
+                                  onClick={() => toggleIsolation.mutate(workspace)}
                                   size="sm"
                                   type="button"
                                   variant="outline"
                                 >
-                                  Reactivate
+                                  {workspace.tenant_mode === 'shared' ? 'Move to dedicated' : 'Move to shared'}
                                 </Button>
-                              )}
-                              <Button
-                                disabled={workspaceActionPending}
-                                onClick={() => toggleMaintenance.mutate(workspace)}
-                                size="sm"
-                                type="button"
-                                variant="outline"
-                              >
-                                {workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance'}
-                              </Button>
-                              <Button
-                                disabled={workspaceActionPending}
-                                onClick={() => toggleIsolation.mutate(workspace)}
-                                size="sm"
-                                type="button"
-                                variant="outline"
-                              >
-                                {workspace.tenant_mode === 'shared' ? 'Move to dedicated' : 'Move to shared'}
-                              </Button>
+                              </div>
+
+                              <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
+                                <p className="text-xs font-medium text-muted-foreground">Usage limits JSON</p>
+                                <Input
+                                  value={limitsDrafts[workspace.id] ?? JSON.stringify(workspace.usage_limits ?? {})}
+                                  onChange={(event) => setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: event.target.value }))}
+                                />
+                                <Button
+                                  disabled={workspaceActionPending}
+                                  size="sm"
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const raw = limitsDrafts[workspace.id] ?? JSON.stringify(workspace.usage_limits ?? {});
+                                    try {
+                                      const parsed = JSON.parse(raw) as Record<string, unknown>;
+                                      updateWorkspaceLimits.mutate({ workspace, limits: parsed });
+                                    } catch {
+                                      // Ignore invalid JSON and keep editing.
+                                    }
+                                  }}
+                                >
+                                  Save limits
+                                </Button>
+                              </div>
+
+                              <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
+                                <p className="text-xs font-medium text-muted-foreground">Feature flags JSON</p>
+                                <Input
+                                  value={featureFlagDrafts[workspace.id] ?? JSON.stringify(workspace.feature_flags ?? {})}
+                                  onChange={(event) => setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: event.target.value }))}
+                                />
+                                <Button
+                                  disabled={workspaceActionPending}
+                                  size="sm"
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const raw = featureFlagDrafts[workspace.id] ?? JSON.stringify(workspace.feature_flags ?? {});
+                                    try {
+                                      const parsed = JSON.parse(raw) as Record<string, unknown>;
+                                      updateWorkspaceFeatureFlags.mutate({ workspace, featureFlags: parsed });
+                                    } catch {
+                                      // Ignore invalid JSON and keep editing.
+                                    }
+                                  }}
+                                >
+                                  Save feature flags
+                                </Button>
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>

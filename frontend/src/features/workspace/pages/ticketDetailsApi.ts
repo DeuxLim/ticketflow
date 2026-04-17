@@ -109,6 +109,17 @@ export function deleteWorkspaceChecklistItem(workspaceSlug: string, ticketId: st
   return apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/${itemId}`, { method: 'DELETE' });
 }
 
+export function reorderWorkspaceChecklistItems(
+  workspaceSlug: string,
+  ticketId: string,
+  items: Array<{ id: number; sort_order: number }>,
+) {
+  return apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/checklist-items/reorder`, {
+    method: 'PATCH',
+    body: JSON.stringify({ items }),
+  });
+}
+
 export function createWorkspaceRelatedTicket(workspaceSlug: string, ticketId: string, payload: { related_ticket_id: number; relationship_type: string }) {
   return apiRequest(`/workspaces/${workspaceSlug}/tickets/${ticketId}/related-tickets`, {
     method: 'POST',
