@@ -192,6 +192,32 @@ describe('TicketsPage interactions', () => {
               is_active: true,
               sort_order: 1,
             },
+            {
+              id: 11,
+              key: 'location_code',
+              label: 'Location Code',
+              field_type: 'text',
+              options: [],
+              is_required: false,
+              is_active: true,
+              sort_order: 2,
+            },
+          ],
+        } as never;
+      }
+      if (path === '/workspaces/acme/ticket-form-templates') {
+        return {
+          data: [
+            {
+              id: 50,
+              name: 'Incident Intake',
+              is_active: true,
+              is_default: true,
+              ticket_type_id: null,
+              field_schema: [{ key: 'asset_id', required: false }],
+              visibility_rules: [],
+              required_rules: [],
+            },
           ],
         } as never;
       }
@@ -210,7 +236,10 @@ describe('TicketsPage interactions', () => {
               queue_key: 'ops',
               category: 'incident',
               tags: ['network'],
-              custom_fields: [{ ticket_custom_field_id: 10, key: 'asset_id', value: 'A-100' }],
+              custom_fields: [
+                { ticket_custom_field_id: 10, key: 'asset_id', value: 'A-100' },
+                { ticket_custom_field_id: 11, key: 'location_code', value: 'LOC-1' },
+              ],
             },
           ],
           meta: { current_page: 1, last_page: 1, per_page: 20, total: 1 },
@@ -238,6 +267,7 @@ describe('TicketsPage interactions', () => {
       expect(screen.getByRole('button', { name: 'Save Changes' })).not.toBeNull();
     });
 
+    expect(screen.queryByLabelText('Location Code')).toBeNull();
     fireEvent.change(screen.getByLabelText('Tags (comma separated)'), { target: { value: 'network, urgent' } });
     fireEvent.change(screen.getByLabelText('Asset ID'), { target: { value: 'A-200' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));

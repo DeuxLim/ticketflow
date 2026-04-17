@@ -28,6 +28,7 @@ import {
   listSavedViews,
   listTicketCategories,
   listTicketCustomFields,
+  listTicketFormTemplates,
   listTicketQueues,
   listTicketTags,
 } from '@/features/workspace/settings/settings-api';
@@ -35,7 +36,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
-import type { Customer, Ticket, TicketCategoryConfig, TicketCustomFieldConfig, TicketQueueConfig, TicketTagConfig } from '@/types/api';
+import type { Customer, Ticket, TicketCategoryConfig, TicketCustomFieldConfig, TicketFormTemplateConfig, TicketQueueConfig, TicketTagConfig } from '@/types/api';
 
 const ticketSchema = z.object({
   customer_id: z.string().min(1, 'Select a customer'),
@@ -145,6 +146,30 @@ function buildCustomFieldPayload(
   }, {});
 }
 
+function templateFieldKeys(template: TicketFormTemplateConfig | null): Set<string> | null {
+  if (!template) {
+    return null;
+  }
+
+  const keys = template.field_schema
+    .map((entry) => (typeof entry.key === 'string' ? entry.key : null))
+    .filter((key): key is string => key !== null && key.length > 0);
+
+  return keys.length > 0 ? new Set(keys) : new Set<string>();
+}
+
+function filterCustomFieldsByTemplate(
+  fields: TicketCustomFieldConfig[],
+  template: TicketFormTemplateConfig | null,
+): TicketCustomFieldConfig[] {
+  const keys = templateFieldKeys(template);
+  if (keys === null) {
+    return fields;
+  }
+
+  return fields.filter((field) => keys.has(field.key));
+}
+
 export function TicketsPage() {
   const { workspaceSlug } = useParams();
   const queryClient = useQueryClient();
@@ -165,6 +190,8 @@ export function TicketsPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Ticket | null>(null);
+  const [createTemplateId, setCreateTemplateId] = useState<string>('none');
+  const [editTemplateId, setEditTemplateId] = useState<string>('none');
   const [page, setPage] = useState(1);
   const [selectedTicketIds, setSelectedTicketIds] = useState<number[]>([]);
   const [bulkStatus, setBulkStatus] = useState<'none' | TicketForm['status']>('none');
@@ -260,6 +287,12 @@ export function TicketsPage() {
     enabled: Boolean(workspaceSlug && canManage),
   });
 
+  const templateConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-form-templates'],
+    queryFn: () => listTicketFormTemplates(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
   const activeQueueConfigs = useMemo(
     () =>
       (queueConfigsQuery.data?.data ?? [])
@@ -292,6 +325,20 @@ export function TicketsPage() {
     [customFieldConfigsQuery.data?.data],
   );
 
+  const activeTemplateConfigs = useMemo(
+    () =>
+      (templateConfigsQuery.data?.data ?? [])
+        .filter((template) => template.is_active)
+        .sort((left, right) => Number(right.is_default) - Number(left.is_default) || left.id - right.id),
+    [templateConfigsQuery.data?.data],
+  );
+
+  const defaultTemplateId = activeTemplateConfigs.length > 0 ? String(activeTemplateConfigs[0].id) : 'none';
+  const createSelectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === createTemplateId) ?? null;
+  const editSelectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === editTemplateId) ?? null;
+  const createTemplateFields = filterCustomFieldsByTemplate(activeCustomFieldConfigs, createSelectedTemplate);
+  const editTemplateFields = filterCustomFieldsByTemplate(activeCustomFieldConfigs, editSelectedTemplate);
+
   const createTicket = useMutation({
     mutationFn: (values: TicketForm) =>
       createWorkspaceTicket(workspaceSlug ?? '', {
@@ -304,7 +351,7 @@ export function TicketsPage() {
         category: values.category || null,
         queue_key: values.queue_key || null,
         tags: parseTicketTags(values.tags),
-        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, createTemplateFields),
       }),
     onSuccess: () => {
       createForm.reset({
@@ -339,7 +386,7 @@ export function TicketsPage() {
         category: values.category || null,
         queue_key: values.queue_key || null,
         tags: parseTicketTags(values.tags),
-        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, editTemplateFields),
       }),
     onSuccess: () => {
       setEditTarget(null);
@@ -470,7 +517,14 @@ export function TicketsPage() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Ticket Queue</h1>
           <p className="mt-1 text-sm text-muted-foreground">Full ticket lifecycle management with assignment and status controls.</p>
         </div>
-        <Button disabled={!canManage} onClick={() => setIsCreateOpen(true)} type="button">
+        <Button
+          disabled={!canManage}
+          onClick={() => {
+            setCreateTemplateId(defaultTemplateId);
+            setIsCreateOpen(true);
+          }}
+          type="button"
+        >
           Create Ticket
         </Button>
       </div>
@@ -837,6 +891,7 @@ export function TicketsPage() {
                           disabled={!canManage}
                           onClick={() => {
                             setEditTarget(ticket);
+                            setEditTemplateId(defaultTemplateId);
                             editForm.reset({
                               customer_id: String(ticket.customer_id),
                               title: ticket.title,
@@ -920,6 +975,7 @@ export function TicketsPage() {
         onOpenChange={(open) => {
           setIsCreateOpen(open);
           if (!open) {
+            setCreateTemplateId(defaultTemplateId);
             createForm.reset({
               customer_id: '',
               title: '',
@@ -943,13 +999,16 @@ export function TicketsPage() {
           </DialogHeader>
           <TicketFormFields
             activeCategories={activeCategoryConfigs}
-            activeCustomFields={activeCustomFieldConfigs}
+            activeCustomFields={createTemplateFields}
             activeQueues={activeQueueConfigs}
             activeTags={activeTagConfigs}
             customers={customers}
             form={createForm}
             formId="create-ticket-form"
             members={members}
+            selectedTemplateId={createTemplateId}
+            templates={activeTemplateConfigs}
+            onTemplateChange={setCreateTemplateId}
             onSubmit={(values) => createTicket.mutate(values)}
           />
           {createTicket.isError && <p className="text-xs text-destructive">{(createTicket.error as Error).message}</p>}
@@ -966,6 +1025,7 @@ export function TicketsPage() {
         onOpenChange={(open) => {
           if (!open) {
             setEditTarget(null);
+            setEditTemplateId(defaultTemplateId);
           }
         }}
         open={Boolean(editTarget)}
@@ -977,13 +1037,16 @@ export function TicketsPage() {
           </DialogHeader>
           <TicketFormFields
             activeCategories={activeCategoryConfigs}
-            activeCustomFields={activeCustomFieldConfigs}
+            activeCustomFields={editTemplateFields}
             activeQueues={activeQueueConfigs}
             activeTags={activeTagConfigs}
             customers={customers}
             form={editForm}
             formId="edit-ticket-form"
             members={members}
+            selectedTemplateId={editTemplateId}
+            templates={activeTemplateConfigs}
+            onTemplateChange={setEditTemplateId}
             onSubmit={(values) => {
               if (editTarget) {
                 updateTicket.mutate({ ticketId: editTarget.id, values });
@@ -1011,6 +1074,9 @@ function TicketFormFields({
   activeCategories,
   activeTags,
   activeCustomFields,
+  templates,
+  selectedTemplateId,
+  onTemplateChange,
   onSubmit,
   formId,
 }: {
@@ -1021,6 +1087,9 @@ function TicketFormFields({
   activeCategories: TicketCategoryConfig[];
   activeTags: TicketTagConfig[];
   activeCustomFields: TicketCustomFieldConfig[];
+  templates: TicketFormTemplateConfig[];
+  selectedTemplateId: string;
+  onTemplateChange: (templateId: string) => void;
   onSubmit: (values: TicketForm) => void;
   formId: string;
 }) {
@@ -1052,6 +1121,26 @@ function TicketFormFields({
           </SelectContent>
         </Select>
         <FieldError errors={[form.formState.errors.customer_id]} />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor={`${formId}-template`}>Form Template</FieldLabel>
+        <Select
+          onValueChange={(value) => onTemplateChange(value ?? 'none')}
+          value={selectedTemplateId}
+        >
+          <SelectTrigger id={`${formId}-template`}><SelectValue placeholder="All active fields" /></SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="none">All active fields</SelectItem>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={String(template.id)}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </Field>
 
       <Field>
