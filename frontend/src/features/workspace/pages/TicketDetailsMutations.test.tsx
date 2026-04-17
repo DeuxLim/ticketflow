@@ -364,6 +364,33 @@ describe('TicketDetailsPage mutations', () => {
               is_active: true,
               sort_order: 1,
             },
+            {
+              id: 12,
+              key: 'location_code',
+              label: 'Location Code',
+              field_type: 'text',
+              options: [],
+              is_required: false,
+              is_active: true,
+              sort_order: 2,
+            },
+          ],
+        } as never;
+      }
+
+      if (path === '/workspaces/acme/ticket-form-templates') {
+        return {
+          data: [
+            {
+              id: 99,
+              name: 'Incident Intake',
+              is_active: true,
+              is_default: true,
+              ticket_type_id: null,
+              field_schema: [{ key: 'asset_id', required: false }],
+              visibility_rules: [],
+              required_rules: [],
+            },
           ],
         } as never;
       }
@@ -394,6 +421,7 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.getByRole('button', { name: 'Save Changes' })).not.toBeNull();
     });
 
+    expect(screen.queryByLabelText('Location Code')).toBeNull();
     fireEvent.change(screen.getByLabelText('Asset ID'), { target: { value: 'VPN-443' } });
     fireEvent.change(screen.getByLabelText('Tags (comma separated)'), { target: { value: 'network,infra' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));

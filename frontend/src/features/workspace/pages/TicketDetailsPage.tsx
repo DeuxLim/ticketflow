@@ -39,10 +39,10 @@ import {
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/pages/ticketDetailsApi';
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
-import { listTicketCategories, listTicketCustomFields, listTicketQueues, listTicketTags } from '@/features/workspace/settings/settings-api';
+import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/settings/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldConfig, TicketCustomFieldValue } from '@/types/api';
+import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldConfig, TicketCustomFieldValue, TicketFormTemplateConfig } from '@/types/api';
 
 const commentSchema = z.object({
   body: z.string().min(2, 'Comment must not be empty'),
@@ -243,12 +243,37 @@ function buildCustomFieldPayload(
   }, {});
 }
 
+function templateFieldKeys(template: TicketFormTemplateConfig | null): Set<string> | null {
+  if (!template) {
+    return null;
+  }
+
+  const keys = template.field_schema
+    .map((entry) => (typeof entry.key === 'string' ? entry.key : null))
+    .filter((key): key is string => key !== null && key.length > 0);
+
+  return keys.length > 0 ? new Set(keys) : new Set<string>();
+}
+
+function filterCustomFieldsByTemplate(
+  fields: TicketCustomFieldConfig[],
+  template: TicketFormTemplateConfig | null,
+): TicketCustomFieldConfig[] {
+  const keys = templateFieldKeys(template);
+  if (keys === null) {
+    return fields;
+  }
+
+  return fields.filter((field) => keys.has(field.key));
+}
+
 export function TicketDetailsPage() {
   const { workspaceSlug, ticketId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editTemplateId, setEditTemplateId] = useState<string>('none');
   const [isRelatedOpen, setIsRelatedOpen] = useState(false);
   const [quickActionMessage, setQuickActionMessage] = useState<string | null>(null);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -337,6 +362,12 @@ export function TicketDetailsPage() {
   const customFieldConfigsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'],
     queryFn: () => listTicketCustomFields(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const templateConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-form-templates'],
+    queryFn: () => listTicketFormTemplates(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
@@ -430,7 +461,7 @@ export function TicketDetailsPage() {
         category: values.category || null,
         queue_key: values.queue_key || null,
         tags: parseTicketTags(values.tags),
-        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, scopedCustomFieldConfigs),
       }),
     onSuccess: () => {
       setIsEditOpen(false);
@@ -587,6 +618,13 @@ export function TicketDetailsPage() {
   const activeCustomFieldConfigs = (customFieldConfigsQuery.data?.data ?? [])
     .filter((field) => field.is_active)
     .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
+  const activeTemplateConfigs = (templateConfigsQuery.data?.data ?? [])
+    .filter((template) => template.is_active)
+    .sort((left, right) => Number(right.is_default) - Number(left.is_default) || left.id - right.id);
+  const defaultTemplateId = activeTemplateConfigs.length > 0 ? String(activeTemplateConfigs[0].id) : 'none';
+  const effectiveEditTemplateId = editTemplateId === 'none' && defaultTemplateId !== 'none' ? defaultTemplateId : editTemplateId;
+  const selectedTemplate = activeTemplateConfigs.find((template) => String(template.id) === effectiveEditTemplateId) ?? null;
+  const scopedCustomFieldConfigs = filterCustomFieldsByTemplate(activeCustomFieldConfigs, selectedTemplate);
   const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
   const relatedTicketsMeta = relatedTicketOptionsQuery.data?.meta;
   const relatedTicketsCoverageHint = selectorCoverageHint(relatedTicketOptions.length, relatedTicketsMeta?.total, 'tickets');
@@ -793,7 +831,16 @@ export function TicketDetailsPage() {
           >
             {selfWatcher ? 'Unfollow' : 'Follow'}
           </Button>
-          <Button disabled={!canManage} onClick={() => setIsEditOpen(true)} size="sm" type="button" variant="outline">
+          <Button
+            disabled={!canManage}
+            onClick={() => {
+              setEditTemplateId(defaultTemplateId);
+              setIsEditOpen(true);
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
             Edit Ticket
           </Button>
           <Button
@@ -1347,6 +1394,9 @@ export function TicketDetailsPage() {
 
       <Dialog
         onOpenChange={(open) => {
+          if (!open) {
+            setEditTemplateId(defaultTemplateId);
+          }
           setIsEditOpen(open);
         }}
         open={isEditOpen}
@@ -1399,6 +1449,26 @@ export function TicketDetailsPage() {
                     {members.map((member) => (
                       <SelectItem key={member.user.id} value={String(member.user.id)}>
                         {member.user.first_name} {member.user.last_name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="details-template">Form Template</Label>
+              <Select
+                onValueChange={(value) => setEditTemplateId(value ?? 'none')}
+                value={effectiveEditTemplateId}
+              >
+                <SelectTrigger id="details-template"><SelectValue placeholder="All active fields" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">All active fields</SelectItem>
+                    {activeTemplateConfigs.map((template) => (
+                      <SelectItem key={template.id} value={String(template.id)}>
+                        {template.name}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -1511,11 +1581,11 @@ export function TicketDetailsPage() {
               )}
             </div>
 
-            {activeCustomFieldConfigs.length > 0 && (
+            {scopedCustomFieldConfigs.length > 0 && (
               <div className="space-y-3 md:col-span-2">
                 <p className="text-sm font-medium">Dynamic Fields</p>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {activeCustomFieldConfigs.map((field) => {
+                  {scopedCustomFieldConfigs.map((field) => {
                     const fieldPath = `custom_fields.${field.key}` as const;
 
                     if (field.field_type === 'textarea') {
