@@ -21,16 +21,16 @@ Track workspace/admin frontend parity gaps against existing backend endpoints be
 
 - 2026-04-17: Tracker initialized with seven confirmed parity gaps.
 - 2026-04-17: Implemented API/type/UI/test coverage for PARITY-001 to PARITY-007 in frontend workspace/admin surfaces.
+- 2026-04-17: Completed post-parity frontend hardening for route-level code splitting and Geist font asset import cleanup.
 
 ## Verification Log
 
-- `cd frontend && npm run test` passed (65 tests).
+- `cd frontend && npm run test -- --run` passed (65 tests).
 - `cd frontend && npm run lint` passed.
-- `cd frontend && npm run build` passed (existing font/chunk warnings remain).
+- `cd frontend && npm run build` passed (chunk warnings resolved after route-level lazy loading; Geist font asset warnings resolved after entrypoint import adjustment).
 - `cd backend && php artisan test --filter=EnterprisePhaseTwoFlowsTest` passed (6 tests, 34 assertions).
 
 ## Resume From Here
 
 1. Decide whether to keep current admin JSON editors as-is or refine with structured forms.
-2. Address existing frontend build warnings (font resolution + large bundle chunking) as a separate optimization pass.
-3. Begin net-new feature enhancements now that parity baseline is complete.
+2. Begin net-new feature enhancements now that parity baseline is complete.
