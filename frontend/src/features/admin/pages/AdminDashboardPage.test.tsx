@@ -90,7 +90,7 @@ describe('AdminDashboardPage', () => {
       expect(screen.getByText('Control plane')).not.toBeNull();
     });
 
-    fireEvent.change(screen.getByDisplayValue('{"max_agents":5}'), { target: { value: '{"max_agents":10}' } });
+    fireEvent.change(screen.getByLabelText('Usage limits value'), { target: { value: '10' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save limits' }));
 
     await waitFor(() => {
@@ -100,7 +100,7 @@ describe('AdminDashboardPage', () => {
       });
     });
 
-    fireEvent.change(screen.getByDisplayValue('{"beta_dashboard":false}'), { target: { value: '{"beta_dashboard":true}' } });
+    fireEvent.change(screen.getByLabelText('Feature flags value'), { target: { value: 'true' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save feature flags' }));
 
     await waitFor(() => {

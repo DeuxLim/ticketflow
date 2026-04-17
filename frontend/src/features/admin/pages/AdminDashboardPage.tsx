@@ -23,12 +23,110 @@ type PaginatedEnvelope<T> = {
   meta: ApiPaginationMeta;
 };
 
+type DraftValueType = 'string' | 'number' | 'boolean';
+
+type DraftRow = {
+  id: number;
+  key: string;
+  type: DraftValueType;
+  value: string;
+};
+
+let nextDraftRowId = 1;
+
+function createEmptyDraftRow(): DraftRow {
+  return { id: nextDraftRowId++, key: '', type: 'string', value: '' };
+}
+
+function valueTypeFromUnknown(value: unknown): DraftValueType {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return 'number';
+  }
+
+  if (typeof value === 'boolean') {
+    return 'boolean';
+  }
+
+  return 'string';
+}
+
+function valueStringFromUnknown(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (value === null || typeof value === 'undefined') {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function createDraftRows(source: Record<string, unknown> | null | undefined): DraftRow[] {
+  const entries = Object.entries(source ?? {});
+
+  if (entries.length === 0) {
+    return [createEmptyDraftRow()];
+  }
+
+  return entries.map(([key, value]) => ({
+    id: nextDraftRowId++,
+    key,
+    type: valueTypeFromUnknown(value),
+    value: valueStringFromUnknown(value),
+  }));
+}
+
+function parseDraftRows(rows: DraftRow[]): { data?: Record<string, unknown>; error?: string } {
+  const parsed: Record<string, unknown> = {};
+
+  for (const row of rows) {
+    const key = row.key.trim();
+    if (!key) {
+      continue;
+    }
+
+    if (Object.hasOwn(parsed, key)) {
+      return { error: `Duplicate key "${key}" is not allowed.` };
+    }
+
+    if (row.type === 'number') {
+      const numericValue = Number(row.value);
+      if (!Number.isFinite(numericValue)) {
+        return { error: `Value for "${key}" must be a valid number.` };
+      }
+
+      parsed[key] = numericValue;
+      continue;
+    }
+
+    if (row.type === 'boolean') {
+      parsed[key] = row.value === 'true';
+      continue;
+    }
+
+    parsed[key] = row.value;
+  }
+
+  return { data: parsed };
+}
+
 export function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userSearch, setUserSearch] = useState('');
   const [workspaceSearch, setWorkspaceSearch] = useState('');
-  const [limitsDrafts, setLimitsDrafts] = useState<Record<number, string>>({});
-  const [featureFlagDrafts, setFeatureFlagDrafts] = useState<Record<number, string>>({});
+  const [limitsDrafts, setLimitsDrafts] = useState<Record<number, DraftRow[]>>({});
+  const [featureFlagDrafts, setFeatureFlagDrafts] = useState<Record<number, DraftRow[]>>({});
+  const [limitsErrors, setLimitsErrors] = useState<Record<number, string | null>>({});
+  const [featureFlagErrors, setFeatureFlagErrors] = useState<Record<number, string | null>>({});
 
   const usersPath = useMemo(
     () => `/admin/users?per_page=20&search=${encodeURIComponent(userSearch.trim())}`,
@@ -340,55 +438,61 @@ export function AdminDashboardPage() {
                                 </Button>
                               </div>
 
-                              <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
-                                <p className="text-xs font-medium text-muted-foreground">Usage limits JSON</p>
-                                <Input
-                                  value={limitsDrafts[workspace.id] ?? JSON.stringify(workspace.usage_limits ?? {})}
-                                  onChange={(event) => setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: event.target.value }))}
-                                />
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
-                                    const raw = limitsDrafts[workspace.id] ?? JSON.stringify(workspace.usage_limits ?? {});
-                                    try {
-                                      const parsed = JSON.parse(raw) as Record<string, unknown>;
-                                      updateWorkspaceLimits.mutate({ workspace, limits: parsed });
-                                    } catch {
-                                      // Ignore invalid JSON and keep editing.
-                                    }
-                                  }}
-                                >
-                                  Save limits
-                                </Button>
-                              </div>
+                              <WorkspaceObjectEditor
+                                title="Usage limits"
+                                rows={limitsDrafts[workspace.id] ?? createDraftRows(workspace.usage_limits)}
+                                errorMessage={limitsErrors[workspace.id] ?? null}
+                                disabled={workspaceActionPending}
+                                onChangeRows={(rows) => {
+                                  setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: rows }));
+                                  setLimitsErrors((previous) => ({ ...previous, [workspace.id]: null }));
+                                }}
+                                onReset={() => {
+                                  setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: createDraftRows(workspace.usage_limits) }));
+                                  setLimitsErrors((previous) => ({ ...previous, [workspace.id]: null }));
+                                }}
+                                onSave={(rows) => {
+                                  const parsed = parseDraftRows(rows);
+                                  if (!parsed.data) {
+                                    setLimitsErrors((previous) => ({
+                                      ...previous,
+                                      [workspace.id]: parsed.error ?? 'Unable to parse limits values.',
+                                    }));
+                                    return;
+                                  }
 
-                              <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
-                                <p className="text-xs font-medium text-muted-foreground">Feature flags JSON</p>
-                                <Input
-                                  value={featureFlagDrafts[workspace.id] ?? JSON.stringify(workspace.feature_flags ?? {})}
-                                  onChange={(event) => setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: event.target.value }))}
-                                />
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                  onClick={() => {
-                                    const raw = featureFlagDrafts[workspace.id] ?? JSON.stringify(workspace.feature_flags ?? {});
-                                    try {
-                                      const parsed = JSON.parse(raw) as Record<string, unknown>;
-                                      updateWorkspaceFeatureFlags.mutate({ workspace, featureFlags: parsed });
-                                    } catch {
-                                      // Ignore invalid JSON and keep editing.
-                                    }
-                                  }}
-                                >
-                                  Save feature flags
-                                </Button>
-                              </div>
+                                  updateWorkspaceLimits.mutate({ workspace, limits: parsed.data });
+                                }}
+                                saveButtonLabel="Save limits"
+                              />
+
+                              <WorkspaceObjectEditor
+                                title="Feature flags"
+                                rows={featureFlagDrafts[workspace.id] ?? createDraftRows(workspace.feature_flags)}
+                                errorMessage={featureFlagErrors[workspace.id] ?? null}
+                                disabled={workspaceActionPending}
+                                onChangeRows={(rows) => {
+                                  setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: rows }));
+                                  setFeatureFlagErrors((previous) => ({ ...previous, [workspace.id]: null }));
+                                }}
+                                onReset={() => {
+                                  setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: createDraftRows(workspace.feature_flags) }));
+                                  setFeatureFlagErrors((previous) => ({ ...previous, [workspace.id]: null }));
+                                }}
+                                onSave={(rows) => {
+                                  const parsed = parseDraftRows(rows);
+                                  if (!parsed.data) {
+                                    setFeatureFlagErrors((previous) => ({
+                                      ...previous,
+                                      [workspace.id]: parsed.error ?? 'Unable to parse feature-flag values.',
+                                    }));
+                                    return;
+                                  }
+
+                                  updateWorkspaceFeatureFlags.mutate({ workspace, featureFlags: parsed.data });
+                                }}
+                                saveButtonLabel="Save feature flags"
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -470,6 +574,110 @@ export function AdminDashboardPage() {
         </TabsContent>
       </Tabs>
     </section>
+  );
+}
+
+function WorkspaceObjectEditor({
+  title,
+  rows,
+  errorMessage,
+  disabled,
+  onChangeRows,
+  onSave,
+  onReset,
+  saveButtonLabel,
+}: {
+  title: string;
+  rows: DraftRow[];
+  errorMessage: string | null;
+  disabled: boolean;
+  onChangeRows: (rows: DraftRow[]) => void;
+  onSave: (rows: DraftRow[]) => void;
+  onReset: () => void;
+  saveButtonLabel: string;
+}) {
+  const updateRow = (targetRowId: number, updater: (row: DraftRow) => DraftRow) => {
+    onChangeRows(rows.map((row) => (row.id === targetRowId ? updater(row) : row)));
+  };
+
+  return (
+    <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
+      <p className="text-xs font-medium text-muted-foreground">{title}</p>
+      <div className="space-y-2">
+        {rows.map((row) => (
+          <div key={row.id} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_120px_1fr_auto]">
+            <Input
+              aria-label={`${title} key`}
+              placeholder="key"
+              value={row.key}
+              onChange={(event) => updateRow(row.id, (current) => ({ ...current, key: event.target.value }))}
+            />
+            <select
+              aria-label={`${title} type`}
+              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              value={row.type}
+              onChange={(event) =>
+                updateRow(row.id, (current) => ({
+                  ...current,
+                  type: event.target.value as DraftValueType,
+                  value: event.target.value === 'boolean' ? 'false' : current.value,
+                }))
+              }
+            >
+              <option value="string">string</option>
+              <option value="number">number</option>
+              <option value="boolean">boolean</option>
+            </select>
+            {row.type === 'boolean' ? (
+              <select
+                aria-label={`${title} value`}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                value={row.value}
+                onChange={(event) => updateRow(row.id, (current) => ({ ...current, value: event.target.value }))}
+              >
+                <option value="false">false</option>
+                <option value="true">true</option>
+              </select>
+            ) : (
+              <Input
+                aria-label={`${title} value`}
+                placeholder="value"
+                type={row.type === 'number' ? 'number' : 'text'}
+                value={row.value}
+                onChange={(event) => updateRow(row.id, (current) => ({ ...current, value: event.target.value }))}
+              />
+            )}
+            <Button
+              disabled={rows.length <= 1 || disabled}
+              size="sm"
+              type="button"
+              variant="ghost"
+              onClick={() => onChangeRows(rows.filter((candidate) => candidate.id !== row.id))}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+      </div>
+      {errorMessage && <p className="text-xs text-destructive">{errorMessage}</p>}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          disabled={disabled}
+          size="sm"
+          type="button"
+          variant="outline"
+          onClick={() => onChangeRows([...rows, createEmptyDraftRow()])}
+        >
+          Add entry
+        </Button>
+        <Button disabled={disabled} size="sm" type="button" variant="outline" onClick={() => onSave(rows)}>
+          {saveButtonLabel}
+        </Button>
+        <Button disabled={disabled} size="sm" type="button" variant="ghost" onClick={onReset}>
+          Reset
+        </Button>
+      </div>
+    </div>
   );
 }
 
