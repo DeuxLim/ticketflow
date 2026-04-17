@@ -22,12 +22,20 @@ import {
   listWorkspaceTickets,
   updateWorkspaceTicketById,
 } from '@/features/workspace/pages/ticketPageApi';
-import { createSavedView, deleteSavedView, listSavedViews } from '@/features/workspace/settings/settings-api';
+import {
+  createSavedView,
+  deleteSavedView,
+  listSavedViews,
+  listTicketCategories,
+  listTicketCustomFields,
+  listTicketQueues,
+  listTicketTags,
+} from '@/features/workspace/settings/settings-api';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
-import type { Customer, Ticket } from '@/types/api';
+import type { Customer, Ticket, TicketCategoryConfig, TicketCustomFieldConfig, TicketQueueConfig, TicketTagConfig } from '@/types/api';
 
 const ticketSchema = z.object({
   customer_id: z.string().min(1, 'Select a customer'),
@@ -36,6 +44,10 @@ const ticketSchema = z.object({
   status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   assigned_to_user_id: z.string().optional().or(z.literal('')),
+  category: z.string().optional().or(z.literal('')),
+  queue_key: z.string().optional().or(z.literal('')),
+  tags: z.string().optional().or(z.literal('')),
+  custom_fields: z.record(z.string(), z.string()).optional(),
 });
 
 type TicketForm = z.infer<typeof ticketSchema>;
@@ -58,10 +70,79 @@ function applyTicketFormFieldErrors(form: UseFormReturn<TicketForm>, error: unkn
   for (const [field, messages] of Object.entries(error.fieldErrors)) {
     if (!messages.length) continue;
 
-    if (field === 'customer_id' || field === 'title' || field === 'description' || field === 'status' || field === 'priority' || field === 'assigned_to_user_id') {
+    if (
+      field === 'customer_id' ||
+      field === 'title' ||
+      field === 'description' ||
+      field === 'status' ||
+      field === 'priority' ||
+      field === 'assigned_to_user_id' ||
+      field === 'category' ||
+      field === 'queue_key' ||
+      field === 'tags'
+    ) {
       form.setError(field, { type: 'server', message: messages[0] });
     }
   }
+}
+
+function parseTicketTags(value: string | undefined): string[] | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  return parsed.length > 0 ? parsed : null;
+}
+
+function customFieldOptions(field: TicketCustomFieldConfig): string[] {
+  return field.options
+    .map((option) => (typeof option === 'string' ? option : null))
+    .filter((option): option is string => option !== null);
+}
+
+function buildCustomFieldPayload(
+  values: Record<string, string> | undefined,
+  fieldConfigs: TicketCustomFieldConfig[],
+): Record<string, unknown> {
+  if (!values) {
+    return {};
+  }
+
+  return fieldConfigs.reduce<Record<string, unknown>>((payload, field) => {
+    const rawValue = values[field.key];
+    if (rawValue === undefined || rawValue === '') {
+      return payload;
+    }
+
+    if (field.field_type === 'number') {
+      const parsed = Number(rawValue);
+      if (Number.isFinite(parsed)) {
+        payload[field.key] = parsed;
+      }
+      return payload;
+    }
+
+    if (field.field_type === 'checkbox') {
+      payload[field.key] = rawValue === 'true';
+      return payload;
+    }
+
+    if (field.field_type === 'multiselect') {
+      payload[field.key] = rawValue
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+      return payload;
+    }
+
+    payload[field.key] = rawValue;
+    return payload;
+  }, {});
 }
 
 export function TicketsPage() {
@@ -97,6 +178,10 @@ export function TicketsPage() {
       status: 'open',
       priority: 'medium',
       assigned_to_user_id: '',
+      category: '',
+      queue_key: '',
+      tags: '',
+      custom_fields: {},
     },
   });
 
@@ -109,6 +194,10 @@ export function TicketsPage() {
       status: 'open',
       priority: 'medium',
       assigned_to_user_id: '',
+      category: '',
+      queue_key: '',
+      tags: '',
+      custom_fields: {},
     },
   });
 
@@ -143,6 +232,62 @@ export function TicketsPage() {
     enabled: Boolean(workspaceSlug && canView),
   });
 
+  const queueConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-queues'],
+    queryFn: () => listTicketQueues(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const categoryConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-categories'],
+    queryFn: () => listTicketCategories(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const tagConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-tags'],
+    queryFn: () => listTicketTags(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const customFieldConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'],
+    queryFn: () => listTicketCustomFields(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const activeQueueConfigs = useMemo(
+    () =>
+      (queueConfigsQuery.data?.data ?? [])
+        .filter((queue) => queue.is_active)
+        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
+    [queueConfigsQuery.data?.data],
+  );
+
+  const activeCategoryConfigs = useMemo(
+    () =>
+      (categoryConfigsQuery.data?.data ?? [])
+        .filter((category) => category.is_active)
+        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
+    [categoryConfigsQuery.data?.data],
+  );
+
+  const activeTagConfigs = useMemo(
+    () =>
+      (tagConfigsQuery.data?.data ?? [])
+        .filter((tag) => tag.is_active)
+        .sort((left, right) => left.name.localeCompare(right.name)),
+    [tagConfigsQuery.data?.data],
+  );
+
+  const activeCustomFieldConfigs = useMemo(
+    () =>
+      (customFieldConfigsQuery.data?.data ?? [])
+        .filter((field) => field.is_active)
+        .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id),
+    [customFieldConfigsQuery.data?.data],
+  );
+
   const createTicket = useMutation({
     mutationFn: (values: TicketForm) =>
       createWorkspaceTicket(workspaceSlug ?? '', {
@@ -152,6 +297,10 @@ export function TicketsPage() {
         status: values.status,
         priority: values.priority,
         assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
+        category: values.category || null,
+        queue_key: values.queue_key || null,
+        tags: parseTicketTags(values.tags),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
       }),
     onSuccess: () => {
       createForm.reset({
@@ -161,6 +310,10 @@ export function TicketsPage() {
         status: 'open',
         priority: 'medium',
         assigned_to_user_id: '',
+        category: '',
+        queue_key: '',
+        tags: '',
+        custom_fields: {},
       });
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
@@ -179,6 +332,10 @@ export function TicketsPage() {
         status: values.status,
         priority: values.priority,
         assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
+        category: values.category || null,
+        queue_key: values.queue_key || null,
+        tags: parseTicketTags(values.tags),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
       }),
     onSuccess: () => {
       setEditTarget(null);
@@ -637,6 +794,19 @@ export function TicketsPage() {
                               status: ticket.status,
                               priority: ticket.priority,
                               assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
+                              category: ticket.category ?? '',
+                              queue_key: ticket.queue_key ?? '',
+                              tags: (ticket.tags ?? []).join(', '),
+                              custom_fields: Object.fromEntries(
+                                (ticket.custom_fields ?? []).map((field) => [
+                                  field.key ?? String(field.ticket_custom_field_id),
+                                  field.value === null || field.value === undefined
+                                    ? ''
+                                    : Array.isArray(field.value)
+                                      ? field.value.join(', ')
+                                      : String(field.value),
+                                ]),
+                              ),
                             });
                           }}
                           size="sm"
@@ -707,6 +877,10 @@ export function TicketsPage() {
               status: 'open',
               priority: 'medium',
               assigned_to_user_id: '',
+              category: '',
+              queue_key: '',
+              tags: '',
+              custom_fields: {},
             });
           }
         }}
@@ -718,6 +892,10 @@ export function TicketsPage() {
             <DialogDescription>Create a ticket with status, priority, and assignee details.</DialogDescription>
           </DialogHeader>
           <TicketFormFields
+            activeCategories={activeCategoryConfigs}
+            activeCustomFields={activeCustomFieldConfigs}
+            activeQueues={activeQueueConfigs}
+            activeTags={activeTagConfigs}
             customers={customers}
             form={createForm}
             formId="create-ticket-form"
@@ -748,6 +926,10 @@ export function TicketsPage() {
             <DialogDescription>Update customer, assignee, status, priority, and details.</DialogDescription>
           </DialogHeader>
           <TicketFormFields
+            activeCategories={activeCategoryConfigs}
+            activeCustomFields={activeCustomFieldConfigs}
+            activeQueues={activeQueueConfigs}
+            activeTags={activeTagConfigs}
             customers={customers}
             form={editForm}
             formId="edit-ticket-form"
@@ -775,15 +957,28 @@ function TicketFormFields({
   form,
   customers,
   members,
+  activeQueues,
+  activeCategories,
+  activeTags,
+  activeCustomFields,
   onSubmit,
   formId,
 }: {
   form: UseFormReturn<TicketForm>;
   customers: Customer[];
   members: MemberOption[];
+  activeQueues: TicketQueueConfig[];
+  activeCategories: TicketCategoryConfig[];
+  activeTags: TicketTagConfig[];
+  activeCustomFields: TicketCustomFieldConfig[];
   onSubmit: (values: TicketForm) => void;
   formId: string;
 }) {
+  const queueValue = form.watch('queue_key') || 'none';
+  const categoryValue = form.watch('category') || 'none';
+  const hasLegacyQueueValue = queueValue !== 'none' && !activeQueues.some((queue) => queue.key === queueValue);
+  const hasLegacyCategoryValue = categoryValue !== 'none' && !activeCategories.some((category) => category.key === categoryValue);
+
   return (
     <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup className="grid gap-4 md:grid-cols-2">
@@ -853,6 +1048,48 @@ function TicketFormFields({
         </Select>
       </Field>
 
+      <Field>
+        <FieldLabel htmlFor={`${formId}-queue`}>Queue</FieldLabel>
+        <Select
+          onValueChange={(value) => form.setValue('queue_key', value === 'none' || value === null ? '' : value)}
+          value={queueValue}
+        >
+          <SelectTrigger id={`${formId}-queue`}><SelectValue placeholder="Default queue" /></SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="none">Default queue</SelectItem>
+              {activeQueues.map((queue) => (
+                <SelectItem key={queue.id} value={queue.key}>
+                  {queue.name}
+                </SelectItem>
+              ))}
+              {hasLegacyQueueValue && <SelectItem value={queueValue}>{queueValue} (legacy)</SelectItem>}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor={`${formId}-category`}>Category</FieldLabel>
+        <Select
+          onValueChange={(value) => form.setValue('category', value === 'none' || value === null ? '' : value)}
+          value={categoryValue}
+        >
+          <SelectTrigger id={`${formId}-category`}><SelectValue placeholder="No category" /></SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="none">No category</SelectItem>
+              {activeCategories.map((category) => (
+                <SelectItem key={category.id} value={category.key}>
+                  {category.name}
+                </SelectItem>
+              ))}
+              {hasLegacyCategoryValue && <SelectItem value={categoryValue}>{categoryValue} (legacy)</SelectItem>}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </Field>
+
       <Field data-invalid={Boolean(form.formState.errors.description)} className="md:col-span-2">
         <FieldLabel htmlFor={`${formId}-description`}>Description</FieldLabel>
         <Textarea id={`${formId}-description`} aria-invalid={Boolean(form.formState.errors.description)} {...form.register('description')} />
@@ -876,6 +1113,104 @@ function TicketFormFields({
           </SelectContent>
         </Select>
       </Field>
+
+      <Field className="md:col-span-2">
+        <FieldLabel htmlFor={`${formId}-tags`}>Tags (comma separated)</FieldLabel>
+        <Input id={`${formId}-tags`} list={`${formId}-tag-options`} placeholder="network, vpn" {...form.register('tags')} />
+        {activeTags.length > 0 && (
+          <>
+            <datalist id={`${formId}-tag-options`}>
+              {activeTags.map((tag) => (
+                <option key={tag.id} value={tag.name} />
+              ))}
+            </datalist>
+            <p className="text-xs text-muted-foreground">Available tags: {activeTags.map((tag) => tag.name).join(', ')}</p>
+          </>
+        )}
+      </Field>
+
+      {activeCustomFields.length > 0 && (
+        <div className="space-y-3 md:col-span-2">
+          <p className="text-sm font-medium">Custom Fields</p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {activeCustomFields.map((field) => {
+              const fieldPath = `custom_fields.${field.key}` as const;
+
+              if (field.field_type === 'textarea') {
+                return (
+                  <Field key={field.id} className="md:col-span-2">
+                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
+                    <Textarea id={`${formId}-custom-${field.key}`} {...form.register(fieldPath)} />
+                  </Field>
+                );
+              }
+
+              if (field.field_type === 'select') {
+                const options = customFieldOptions(field);
+                const currentValue = form.watch(fieldPath) ?? '';
+
+                return (
+                  <Field key={field.id}>
+                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue(fieldPath, value === 'none' || value === null ? '' : value)}
+                      value={currentValue || 'none'}
+                    >
+                      <SelectTrigger id={`${formId}-custom-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">Not set</SelectItem>
+                          {options.map((option) => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                );
+              }
+
+              if (field.field_type === 'checkbox') {
+                const currentValue = form.watch(fieldPath) ?? '';
+
+                return (
+                  <Field key={field.id}>
+                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
+                    <Select
+                      onValueChange={(value) => form.setValue(fieldPath, value === 'none' || value === null ? '' : value)}
+                      value={currentValue || 'none'}
+                    >
+                      <SelectTrigger id={`${formId}-custom-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">Not set</SelectItem>
+                          <SelectItem value="true">True</SelectItem>
+                          <SelectItem value="false">False</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                );
+              }
+
+              const inputType = field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text';
+              const placeholder = field.field_type === 'multiselect' ? 'Comma separated values' : undefined;
+
+              return (
+                <Field key={field.id}>
+                  <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
+                  <Input
+                    id={`${formId}-custom-${field.key}`}
+                    placeholder={placeholder}
+                    type={inputType}
+                    {...form.register(fieldPath)}
+                  />
+                </Field>
+              );
+            })}
+          </div>
+        </div>
+      )}
       </FieldGroup>
     </form>
   );

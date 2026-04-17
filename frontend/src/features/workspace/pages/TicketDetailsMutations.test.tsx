@@ -329,6 +329,94 @@ describe('TicketDetailsPage mutations', () => {
     });
   });
 
+  it('submits configured custom fields from ticket dictionaries', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+
+      if (path === '/workspaces/acme/tickets/123') {
+        if (init?.method === 'PATCH') {
+          return { data: buildTicket('open') } as never;
+        }
+
+        return { data: buildTicket('open') } as never;
+      }
+
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [{ id: 10, name: 'Acme' }], meta: { current_page: 1, last_page: 1, per_page: 200, total: 1 } } as never;
+      }
+
+      if (path.includes('/members/assignable')) {
+        return { data: [] } as never;
+      }
+
+      if (path === '/workspaces/acme/ticket-custom-fields') {
+        return {
+          data: [
+            {
+              id: 11,
+              key: 'asset_id',
+              label: 'Asset ID',
+              field_type: 'text',
+              options: [],
+              is_required: false,
+              is_active: true,
+              sort_order: 1,
+            },
+          ],
+        } as never;
+      }
+
+      if (path.includes('/tickets?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+
+      if (path.endsWith('/comments') || path.endsWith('/activity') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Ticket' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save Changes' })).not.toBeNull();
+    });
+
+    fireEvent.change(screen.getByLabelText('Asset ID'), { target: { value: 'VPN-443' } });
+    fireEvent.change(screen.getByLabelText('Tags (comma separated)'), { target: { value: 'network,infra' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/tickets/123', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          customer_id: 10,
+          title: 'Router down',
+          description: 'The branch router is offline.',
+          status: 'open',
+          priority: 'high',
+          assigned_to_user_id: null,
+          category: null,
+          queue_key: null,
+          tags: ['network', 'infra'],
+          custom_fields: { asset_id: 'VPN-443' },
+        }),
+      });
+    });
+  });
+
   it('shows watcher error when follow action fails', async () => {
     vi.mocked(apiRequest).mockImplementation(async (path: string, init?: RequestInit) => {
       if (path === '/auth/me') {

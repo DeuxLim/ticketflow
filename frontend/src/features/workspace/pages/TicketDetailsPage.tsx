@@ -39,9 +39,10 @@ import {
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/pages/ticketDetailsApi';
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
+import { listTicketCategories, listTicketCustomFields, listTicketQueues, listTicketTags } from '@/features/workspace/settings/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
+import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldConfig, TicketCustomFieldValue } from '@/types/api';
 
 const commentSchema = z.object({
   body: z.string().min(2, 'Comment must not be empty'),
@@ -183,6 +184,65 @@ function mutationErrorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Action failed. Please try again.';
 }
 
+function parseTicketTags(value: string | undefined): string[] | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
+  return parsed.length > 0 ? parsed : null;
+}
+
+function customFieldOptions(field: TicketCustomFieldConfig): string[] {
+  return field.options
+    .map((option) => (typeof option === 'string' ? option : null))
+    .filter((option): option is string => option !== null);
+}
+
+function buildCustomFieldPayload(
+  values: Record<string, string> | undefined,
+  fieldConfigs: TicketCustomFieldConfig[],
+): Record<string, unknown> {
+  if (!values) {
+    return {};
+  }
+
+  return fieldConfigs.reduce<Record<string, unknown>>((payload, field) => {
+    const rawValue = values[field.key];
+    if (rawValue === undefined || rawValue === '') {
+      return payload;
+    }
+
+    if (field.field_type === 'number') {
+      const parsed = Number(rawValue);
+      if (Number.isFinite(parsed)) {
+        payload[field.key] = parsed;
+      }
+      return payload;
+    }
+
+    if (field.field_type === 'checkbox') {
+      payload[field.key] = rawValue === 'true';
+      return payload;
+    }
+
+    if (field.field_type === 'multiselect') {
+      payload[field.key] = rawValue
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+      return payload;
+    }
+
+    payload[field.key] = rawValue;
+    return payload;
+  }, {});
+}
+
 export function TicketDetailsPage() {
   const { workspaceSlug, ticketId } = useParams();
   const navigate = useNavigate();
@@ -234,6 +294,7 @@ export function TicketDetailsPage() {
   const editAssigneeIdValue = useWatch({ control: editForm.control, name: 'assigned_to_user_id' });
   const editStatusValue = useWatch({ control: editForm.control, name: 'status' });
   const editPriorityValue = useWatch({ control: editForm.control, name: 'priority' });
+  const editCustomFieldsValue = useWatch({ control: editForm.control, name: 'custom_fields' });
   const relatedTicketIdValue = useWatch({ control: relatedTicketForm.control, name: 'related_ticket_id' });
   const relatedTicketRelationshipValue = useWatch({ control: relatedTicketForm.control, name: 'relationship_type' });
 
@@ -252,6 +313,30 @@ export function TicketDetailsPage() {
   const membersQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'members', 'for-ticket-details'],
     queryFn: () => listAssignableMembersForTickets(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const queueConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-queues'],
+    queryFn: () => listTicketQueues(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const categoryConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-categories'],
+    queryFn: () => listTicketCategories(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const tagConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-tags'],
+    queryFn: () => listTicketTags(workspaceSlug ?? ''),
+    enabled: Boolean(workspaceSlug && canManage),
+  });
+
+  const customFieldConfigsQuery = useQuery({
+    queryKey: ['workspace', workspaceSlug, 'ticket-custom-fields'],
+    queryFn: () => listTicketCustomFields(workspaceSlug ?? ''),
     enabled: Boolean(workspaceSlug && canManage),
   });
 
@@ -344,13 +429,8 @@ export function TicketDetailsPage() {
         assigned_to_user_id: values.assigned_to_user_id ? Number(values.assigned_to_user_id) : null,
         category: values.category || null,
         queue_key: values.queue_key || null,
-        tags: values.tags
-          ? values.tags
-              .split(',')
-              .map((tag) => tag.trim())
-              .filter(Boolean)
-          : null,
-        custom_fields: values.custom_fields ?? {},
+        tags: parseTicketTags(values.tags),
+        custom_fields: buildCustomFieldPayload(values.custom_fields, activeCustomFieldConfigs),
       }),
     onSuccess: () => {
       setIsEditOpen(false);
@@ -495,6 +575,18 @@ export function TicketDetailsPage() {
   const customers = customersQuery.data?.data ?? [];
   const customersMeta = customersQuery.data?.meta;
   const members = membersQuery.data?.data ?? [];
+  const activeQueueConfigs = (queueConfigsQuery.data?.data ?? [])
+    .filter((queue) => queue.is_active)
+    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
+  const activeCategoryConfigs = (categoryConfigsQuery.data?.data ?? [])
+    .filter((category) => category.is_active)
+    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
+  const activeTagConfigs = (tagConfigsQuery.data?.data ?? [])
+    .filter((tag) => tag.is_active)
+    .sort((left, right) => left.name.localeCompare(right.name));
+  const activeCustomFieldConfigs = (customFieldConfigsQuery.data?.data ?? [])
+    .filter((field) => field.is_active)
+    .sort((left, right) => left.sort_order - right.sort_order || left.id - right.id);
   const relatedTicketOptions = (relatedTicketOptionsQuery.data?.data ?? []).filter((option) => String(option.id) !== ticketId);
   const relatedTicketsMeta = relatedTicketOptionsQuery.data?.meta;
   const relatedTicketsCoverageHint = selectorCoverageHint(relatedTicketOptions.length, relatedTicketsMeta?.total, 'tickets');
@@ -508,6 +600,10 @@ export function TicketDetailsPage() {
   const stateSummary = ticket?.state_summary;
   const currentUserId = meQuery.data?.data.id;
   const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
+  const editQueueValue = useWatch({ control: editForm.control, name: 'queue_key' }) || 'none';
+  const editCategoryValue = useWatch({ control: editForm.control, name: 'category' }) || 'none';
+  const hasLegacyEditQueueValue = editQueueValue !== 'none' && !activeQueueConfigs.some((queue) => queue.key === editQueueValue);
+  const hasLegacyEditCategoryValue = editCategoryValue !== 'none' && !activeCategoryConfigs.some((category) => category.key === editCategoryValue);
   const watcherMutationError = addWatcher.error ?? removeWatcher.error;
   const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error ?? reorderChecklistItems.error;
   const relatedTicketMutationError = addRelatedTicket.error ?? deleteRelatedTicket.error;
@@ -589,6 +685,25 @@ export function TicketDetailsPage() {
   useEffect(() => {
     if (!ticket) return;
 
+    const activeConfigsForReset = (customFieldConfigsQuery.data?.data ?? []).filter((field) => field.is_active);
+
+    const persistedCustomFields = Object.fromEntries(
+      (ticket.custom_fields ?? []).map((field) => [
+        field.key ?? String(field.ticket_custom_field_id),
+        field.value === null || field.value === undefined
+          ? ''
+          : Array.isArray(field.value)
+            ? field.value.join(', ')
+            : String(field.value),
+      ]),
+    );
+
+    for (const config of activeConfigsForReset) {
+      if (!(config.key in persistedCustomFields)) {
+        persistedCustomFields[config.key] = '';
+      }
+    }
+
     editForm.reset({
       customer_id: String(ticket.customer_id),
       title: ticket.title,
@@ -599,9 +714,9 @@ export function TicketDetailsPage() {
       category: ticket.category ?? '',
       queue_key: ticket.queue_key ?? '',
       tags: (ticket.tags ?? []).join(', '),
-      custom_fields: Object.fromEntries((ticket.custom_fields ?? []).map((field) => [field.key ?? String(field.ticket_custom_field_id), field.value === null || field.value === undefined ? '' : customFieldValue(field.value)])),
+      custom_fields: persistedCustomFields,
     });
-  }, [ticket, editForm]);
+  }, [ticket, customFieldConfigsQuery.data?.data, editForm]);
 
   if (accessQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Checking access...</p>;
@@ -1335,12 +1450,44 @@ export function TicketDetailsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="details-category">Category</Label>
-              <Input id="details-category" placeholder="incident" {...editForm.register('category')} />
+              <Select
+                onValueChange={(value) => editForm.setValue('category', value === 'none' || value === null ? '' : value)}
+                value={editCategoryValue}
+              >
+                <SelectTrigger id="details-category"><SelectValue placeholder="No category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">No category</SelectItem>
+                    {activeCategoryConfigs.map((category) => (
+                      <SelectItem key={category.id} value={category.key}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                    {hasLegacyEditCategoryValue && <SelectItem value={editCategoryValue}>{editCategoryValue} (legacy)</SelectItem>}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="details-queue">Queue Key</Label>
-              <Input id="details-queue" placeholder="p1" {...editForm.register('queue_key')} />
+              <Label htmlFor="details-queue">Queue</Label>
+              <Select
+                onValueChange={(value) => editForm.setValue('queue_key', value === 'none' || value === null ? '' : value)}
+                value={editQueueValue}
+              >
+                <SelectTrigger id="details-queue"><SelectValue placeholder="Default queue" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="none">Default queue</SelectItem>
+                    {activeQueueConfigs.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.key}>
+                        {queue.name}
+                      </SelectItem>
+                    ))}
+                    {hasLegacyEditQueueValue && <SelectItem value={editQueueValue}>{editQueueValue} (legacy)</SelectItem>}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -1351,21 +1498,93 @@ export function TicketDetailsPage() {
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="details-tags">Tags (comma separated)</Label>
-              <Input id="details-tags" placeholder="network, vpn, urgent" {...editForm.register('tags')} />
+              <Input id="details-tags" list="details-tag-options" placeholder="network, vpn, urgent" {...editForm.register('tags')} />
+              {activeTagConfigs.length > 0 && (
+                <>
+                  <datalist id="details-tag-options">
+                    {activeTagConfigs.map((tag) => (
+                      <option key={tag.id} value={tag.name} />
+                    ))}
+                  </datalist>
+                  <p className="text-xs text-muted-foreground">Available tags: {activeTagConfigs.map((tag) => tag.name).join(', ')}</p>
+                </>
+              )}
             </div>
 
-            {customFields.length > 0 && (
+            {activeCustomFieldConfigs.length > 0 && (
               <div className="space-y-3 md:col-span-2">
                 <p className="text-sm font-medium">Dynamic Fields</p>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {customFields.map((field) => {
-                    const fieldKey = field.key ?? String(field.ticket_custom_field_id);
-                    const inputId = `custom-field-${fieldKey}`;
+                  {activeCustomFieldConfigs.map((field) => {
+                    const fieldPath = `custom_fields.${field.key}` as const;
+
+                    if (field.field_type === 'textarea') {
+                      return (
+                        <div key={field.id} className="space-y-2 md:col-span-2">
+                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
+                          <Textarea id={`custom-field-${field.key}`} {...editForm.register(fieldPath)} />
+                        </div>
+                      );
+                    }
+
+                    if (field.field_type === 'select') {
+                      const options = customFieldOptions(field);
+                      const value = editCustomFieldsValue?.[field.key] ?? '';
+                      return (
+                        <div key={field.id} className="space-y-2">
+                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
+                          <Select
+                            onValueChange={(nextValue) => editForm.setValue(fieldPath, nextValue === 'none' || nextValue === null ? '' : nextValue)}
+                            value={value || 'none'}
+                          >
+                            <SelectTrigger id={`custom-field-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="none">Not set</SelectItem>
+                                {options.map((option) => (
+                                  <SelectItem key={option} value={option}>{option}</SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      );
+                    }
+
+                    if (field.field_type === 'checkbox') {
+                      const value = editCustomFieldsValue?.[field.key] ?? '';
+                      return (
+                        <div key={field.id} className="space-y-2">
+                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
+                          <Select
+                            onValueChange={(nextValue) => editForm.setValue(fieldPath, nextValue === 'none' || nextValue === null ? '' : nextValue)}
+                            value={value || 'none'}
+                          >
+                            <SelectTrigger id={`custom-field-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectItem value="none">Not set</SelectItem>
+                                <SelectItem value="true">True</SelectItem>
+                                <SelectItem value="false">False</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      );
+                    }
+
+                    const inputType = field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text';
+                    const placeholder = field.field_type === 'multiselect' ? 'Comma separated values' : undefined;
 
                     return (
                       <div key={field.id} className="space-y-2">
-                        <Label htmlFor={inputId}>{field.label ?? fieldKey}</Label>
-                        <Input id={inputId} {...editForm.register(`custom_fields.${fieldKey}`)} />
+                        <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
+                        <Input
+                          id={`custom-field-${field.key}`}
+                          placeholder={placeholder}
+                          type={inputType}
+                          {...editForm.register(fieldPath)}
+                        />
                       </div>
                     );
                   })}
