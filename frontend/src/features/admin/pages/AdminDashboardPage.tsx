@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest } from '@/services/api/client';
+import { ApiError, apiRequest } from '@/services/api/client';
 import type {
   AdminDashboardStats,
   AdminUser,
@@ -119,6 +119,24 @@ function parseDraftRows(rows: DraftRow[]): { data?: Record<string, unknown>; err
   return { data: parsed };
 }
 
+function buildMutationErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof ApiError)) {
+    return fallback;
+  }
+
+  const fieldErrorEntries = Object.entries(error.fieldErrors);
+  if (fieldErrorEntries.length > 0) {
+    const [field, messages] = fieldErrorEntries[0];
+    const firstMessage = messages[0];
+
+    if (firstMessage) {
+      return `${field}: ${firstMessage}`;
+    }
+  }
+
+  return error.message || fallback;
+}
+
 export function AdminDashboardPage() {
   const queryClient = useQueryClient();
   const [userSearch, setUserSearch] = useState('');
@@ -221,9 +239,21 @@ export function AdminDashboardPage() {
         method: 'PATCH',
         body: JSON.stringify({ limits }),
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      setLimitsDrafts((previous) => {
+        const next = { ...previous };
+        delete next[variables.workspace.id];
+        return next;
+      });
+      setLimitsErrors((previous) => ({ ...previous, [variables.workspace.id]: null }));
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+    onError: (error, variables) => {
+      setLimitsErrors((previous) => ({
+        ...previous,
+        [variables.workspace.id]: buildMutationErrorMessage(error, 'Unable to update workspace limits.'),
+      }));
     },
   });
 
@@ -233,9 +263,21 @@ export function AdminDashboardPage() {
         method: 'PATCH',
         body: JSON.stringify({ feature_flags: featureFlags }),
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      setFeatureFlagDrafts((previous) => {
+        const next = { ...previous };
+        delete next[variables.workspace.id];
+        return next;
+      });
+      setFeatureFlagErrors((previous) => ({ ...previous, [variables.workspace.id]: null }));
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
+    },
+    onError: (error, variables) => {
+      setFeatureFlagErrors((previous) => ({
+        ...previous,
+        [variables.workspace.id]: buildMutationErrorMessage(error, 'Unable to update feature flags.'),
+      }));
     },
   });
 

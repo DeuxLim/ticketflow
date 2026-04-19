@@ -611,3 +611,28 @@ Verification:
 ## Resume From Here
 
 Start `ADMIN-UX-P1-T01` by mapping admin limits and feature-flags payloads to explicit form schemas, then implement structured forms in `T02` and `T03`.
+
+## 2026-04-19 21:32 +08:00 - Completed ADMIN-UX-P1 Admin Controls Refinement
+
+- Verified existing structured admin controls for workspace limits and feature flags already replaced raw JSON editors.
+- Added mutation error mapping so backend save failures are surfaced in both editors:
+  - `frontend/src/features/admin/pages/AdminDashboardPage.tsx`
+- Added/expanded admin regression coverage:
+  - duplicate-key parse validation for limits
+  - limits mutation failure visibility
+  - feature-flags mutation failure visibility
+  - `frontend/src/features/admin/pages/AdminDashboardPage.test.tsx`
+- Updated tracker state:
+  - `ADMIN-UX-P1` moved from `in_progress` to `complete`
+  - `ADMIN-UX-P1-T01` through `ADMIN-UX-P1-T05` moved to `complete`
+  - `current_focus` cleared pending next MVP selection
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run test -- --run` passed (19 files, 69 tests).
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run build` passed.
+
+## Resume From Here
+
+Admin controls refinement is complete. Pick the next MVP epic and initialize it in `project-state.yaml` before implementation.

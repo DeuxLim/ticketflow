@@ -1,19 +1,18 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-19T17:24:30+08:00"
+updated_at: "2026-04-19T21:32:51+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus:
-  - ADMIN-UX-P1
+current_focus: []
 items:
   - id: ADMIN-UX-P1
     title: Admin Workspace Controls UX Refinement
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Replace raw admin JSON editors for workspace limits and feature flags with structured forms that enforce safer input and clearer operator workflows.
@@ -27,28 +26,29 @@ items:
       - ALIGN-P1
     notes:
       - "2026-04-19: Initialized from roadmap and parity tracker resume notes to start net-new post-parity work."
+      - "2026-04-19: Confirmed structured key/value admin controls already existed for workspace limits and feature flags."
+      - "2026-04-19: Added mutation error mapping for limits/feature-flags update failures and cleared stale drafts/errors on successful save."
+      - "2026-04-19: Extended admin regression tests to cover duplicate-key parse validation and mutation failure visibility."
+      - "2026-04-19: Frontend verification passed (`npm run test -- --run`, `npm run lint`, `npm run build`)."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Finalize limits and feature-flag form schema decisions before implementation.
-      - Implement structured admin forms and remove raw JSON editors.
-      - Add frontend regression tests for admin update success and error paths.
+    next_actions: []
     tags:
       - admin
       - frontend
       - mvp
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: ADMIN-UX-P1-T01
     title: Define structured admin form schemas
     type: task
     parent_id: ADMIN-UX-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Map workspace limits and feature-flags payload shapes to explicit field groups and validation rules for admin operators.
@@ -58,27 +58,27 @@ items:
       - Mapping preserves existing API payload shape.
     dependencies:
       - ADMIN-UX-P1
-    notes: []
+    notes:
+      - "2026-04-19: Existing admin controls use typed key/value rows with explicit type selectors (`string`, `number`, `boolean`) and preserve API payload shape."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Confirm the current admin API payload keys used by update calls.
+    next_actions: []
     tags:
       - admin
       - ui
       - api-contract
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: ADMIN-UX-P1-T02
     title: Implement workspace limits structured form
     type: task
     parent_id: ADMIN-UX-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Replace limits JSON editor with grouped form inputs, validation feedback, and save flow using existing admin limits endpoint.
@@ -88,26 +88,27 @@ items:
       - Field and submit-level errors are rendered clearly.
     dependencies:
       - ADMIN-UX-P1-T01
-    notes: []
+    notes:
+      - "2026-04-19: Structured limits form submission path is active and preserves `/admin/workspaces/{slug}/limits` payload shape."
+      - "2026-04-19: Added explicit mutation error handling to surface backend failures in the limits editor."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Build controlled form state and payload serializer for limits values.
+    next_actions: []
     tags:
       - admin
       - ui
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: ADMIN-UX-P1-T03
     title: Implement feature flags structured form
     type: task
     parent_id: ADMIN-UX-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Replace feature-flags JSON editor with structured controls and submission flow using the existing admin feature-flags endpoint.
@@ -117,26 +118,27 @@ items:
       - Validation and mutation errors are visible to operators.
     dependencies:
       - ADMIN-UX-P1-T01
-    notes: []
+    notes:
+      - "2026-04-19: Structured feature-flags form submission path is active and preserves `/admin/workspaces/{slug}/feature-flags` payload shape."
+      - "2026-04-19: Added explicit mutation error handling to surface backend failures in the feature-flags editor."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Implement controls that reflect known boolean and typed flag values.
+    next_actions: []
     tags:
       - admin
       - ui
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: ADMIN-UX-P1-T04
     title: Add admin controls regression coverage
     type: test
     parent_id: ADMIN-UX-P1
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Add frontend regression tests for admin limits and feature-flags structured forms covering save success and error handling.
@@ -147,27 +149,27 @@ items:
     dependencies:
       - ADMIN-UX-P1-T02
       - ADMIN-UX-P1-T03
-    notes: []
+    notes:
+      - "2026-04-19: Added duplicate-key parse validation regression and server-error regression coverage in `AdminDashboardPage.test.tsx`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Add tests near admin page module alongside existing workspace/admin API tests.
+    next_actions: []
     tags:
       - tests
       - admin
       - frontend
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: ADMIN-UX-P1-T05
     title: Run verification and closeout for admin controls epic
     type: task
     parent_id: ADMIN-UX-P1
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Run frontend verification suite for admin controls and finalize epic status based on definition of done.
@@ -178,20 +180,23 @@ items:
       - Tracker notes include evidence for completion.
     dependencies:
       - ADMIN-UX-P1-T04
-    notes: []
+    notes:
+      - "2026-04-19: Verification passed for admin controls epic."
+      - "2026-04-19: `frontend` `npm run test -- --run` passed (19 files, 69 tests)."
+      - "2026-04-19: `frontend` `npm run lint` passed."
+      - "2026-04-19: `frontend` `npm run build` passed."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run verification commands after implementation and testing tasks complete.
+    next_actions: []
     tags:
       - verification
       - admin
       - release-readiness
     created_at: "2026-04-19T17:24:30+08:00"
-    updated_at: "2026-04-19T17:24:30+08:00"
-    changed_at: "2026-04-19T17:24:30+08:00"
+    updated_at: "2026-04-19T21:32:51+08:00"
+    changed_at: "2026-04-19T21:32:51+08:00"
     changed_source: codex
 
   - id: WSSET-P1
