@@ -4,9 +4,28 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- No active in-progress MVP items.
+- `ADMIN-UX-P1` Admin Workspace Controls UX Refinement
 
 ## MVP Items
+
+### `ADMIN-UX-P1` Admin Workspace Controls UX Refinement
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Replace admin limits and feature-flags raw JSON editors with structured forms while preserving existing backend API contracts.
+- Current state: epic initialized from post-parity resume notes; implementation not started yet.
+- Next actions:
+  - finalize field schemas and payload mapping for limits and feature flags.
+  - implement structured limits and feature-flag forms in admin workspace UI.
+  - add frontend regression tests for save success and failure paths.
+
+#### Child Items
+
+- `ADMIN-UX-P1-T01` Define structured admin form schemas - `planned`
+- `ADMIN-UX-P1-T02` Implement workspace limits structured form - `planned`
+- `ADMIN-UX-P1-T03` Implement feature flags structured form - `planned`
+- `ADMIN-UX-P1-T04` Add admin controls regression coverage - `planned`
+- `ADMIN-UX-P1-T05` Run verification and closeout for admin controls epic - `planned`
 
 ### `ALIGN-P1` Backend-Frontend Alignment Hardening
 
@@ -47,4 +66,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Alignment hardening is complete. Select the next MVP epic before additional implementation.
+Start `ADMIN-UX-P1-T01` by defining explicit field schemas and payload mappers for admin limits and feature flags, then implement `T02` and `T03` with regression coverage.

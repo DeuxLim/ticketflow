@@ -598,3 +598,16 @@ Verification:
 ## Resume From Here
 
 Alignment hardening is complete. Pick the next MVP epic and initialize it in `project-state.yaml` before implementation.
+
+## 2026-04-19 17:24 +08:00 - Initialized Next MVP Epic for Admin Controls UX
+
+- Selected and initialized new epic `ADMIN-UX-P1` (Admin Workspace Controls UX Refinement) as current focus.
+- Added child tasks `ADMIN-UX-P1-T01` through `ADMIN-UX-P1-T05` for schema definition, structured form implementation, regression coverage, and verification closeout.
+- Synchronized `roadmap.md` from `project-state.yaml` with the new active focus and execution sequence.
+
+Verification:
+- State sync only (tracker initialization). No backend/frontend code or test commands were run in this step.
+
+## Resume From Here
+
+Start `ADMIN-UX-P1-T01` by mapping admin limits and feature-flags payloads to explicit form schemas, then implement structured forms in `T02` and `T03`.
