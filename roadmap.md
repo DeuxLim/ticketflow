@@ -8,6 +8,21 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## MVP Items
 
+### `PERF-P1` Frontend Performance and Asset Reliability Hardening
+
+- Status: `complete`
+- Priority: high
+- Scope: Remove recurring frontend build warnings and reduce initial payload pressure by hardening font asset resolution and route-level code splitting.
+- Current state: baseline confirmed no unresolved font warnings, then settings-surface chunking was hardened by lazy-loading sections and mounting only the active tab. Verification is complete.
+- Next actions: none for this item.
+
+#### Child Items
+
+- `PERF-P1-T01` Baseline frontend build warnings and bundle hotspots - `complete`
+- `PERF-P1-T02` Resolve frontend font asset warnings - `complete`
+- `PERF-P1-T03` Introduce route-level code splitting for heavy workspace surfaces - `complete`
+- `PERF-P1-T04` Run verification and closeout for performance hardening epic - `complete`
+
 ### `ADMIN-UX-P1` Admin Workspace Controls UX Refinement
 
 - Status: `complete`
@@ -63,4 +78,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Admin controls refinement is complete. Select the next MVP epic before additional implementation.
+Performance hardening is complete. Select the next MVP epic before additional implementation.

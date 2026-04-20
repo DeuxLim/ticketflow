@@ -1,15 +1,29 @@
+import { Suspense, lazy, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { useParams } from 'react-router-dom';
-import { FormsSettingsSection } from '../settings/FormsSettingsSection';
-import { GeneralSettingsSection } from '../settings/GeneralSettingsSection';
-import { GovernanceSettingsSection } from '../settings/GovernanceSettingsSection';
-import { IntegrationsSettingsSection } from '../settings/IntegrationsSettingsSection';
-import { TicketingSettingsSection } from '../settings/TicketingSettingsSection';
-import { WorkflowAutomationSettingsSection } from '../settings/WorkflowAutomationSettingsSection';
+
+const FormsSettingsSection = lazy(() =>
+  import('../settings/FormsSettingsSection').then((module) => ({ default: module.FormsSettingsSection })),
+);
+const GeneralSettingsSection = lazy(() =>
+  import('../settings/GeneralSettingsSection').then((module) => ({ default: module.GeneralSettingsSection })),
+);
+const GovernanceSettingsSection = lazy(() =>
+  import('../settings/GovernanceSettingsSection').then((module) => ({ default: module.GovernanceSettingsSection })),
+);
+const IntegrationsSettingsSection = lazy(() =>
+  import('../settings/IntegrationsSettingsSection').then((module) => ({ default: module.IntegrationsSettingsSection })),
+);
+const TicketingSettingsSection = lazy(() =>
+  import('../settings/TicketingSettingsSection').then((module) => ({ default: module.TicketingSettingsSection })),
+);
+const WorkflowAutomationSettingsSection = lazy(() =>
+  import('../settings/WorkflowAutomationSettingsSection').then((module) => ({ default: module.WorkflowAutomationSettingsSection })),
+);
 
 const settingsPermissions = ['workspace.manage', 'tickets.manage', 'security.manage', 'integrations.manage', 'automation.manage'];
 
@@ -17,6 +31,23 @@ export function WorkspaceSettingsPage() {
   const { workspaceSlug } = useParams();
   const accessQuery = useWorkspaceAccess(workspaceSlug);
   const canOpenSettings = settingsPermissions.some((permission) => accessQuery.can(permission));
+  const availableTabs = {
+    general: accessQuery.can('workspace.manage'),
+    ticketing: accessQuery.can('tickets.manage'),
+    forms: accessQuery.can('tickets.manage'),
+    workflow: accessQuery.can('automation.manage') || accessQuery.can('tickets.manage'),
+    security: accessQuery.can('security.manage'),
+    integrations: accessQuery.can('integrations.manage'),
+  };
+  const [activeTab, setActiveTab] = useState<'general' | 'ticketing' | 'forms' | 'workflow' | 'security' | 'integrations'>('general');
+  const fallbackTab = (Object.entries(availableTabs).find(([, enabled]) => enabled)?.[0] ?? 'ticketing') as
+    | 'general'
+    | 'ticketing'
+    | 'forms'
+    | 'workflow'
+    | 'security'
+    | 'integrations';
+  const resolvedActiveTab = availableTabs[activeTab] ? activeTab : fallbackTab;
 
   if (accessQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Checking settings access...</p>;
@@ -43,35 +74,57 @@ export function WorkspaceSettingsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue={accessQuery.can('workspace.manage') ? 'general' : 'ticketing'} className="flex flex-col gap-5">
+      <Tabs value={resolvedActiveTab} onValueChange={setActiveTab} className="flex flex-col gap-5">
         <TabsList variant="line" className="flex h-auto w-full flex-wrap justify-start gap-2">
-          {accessQuery.can('workspace.manage') && <TabsTrigger value="general">General</TabsTrigger>}
-          {accessQuery.can('tickets.manage') && <TabsTrigger value="ticketing">Ticketing</TabsTrigger>}
-          {accessQuery.can('tickets.manage') && <TabsTrigger value="forms">Forms</TabsTrigger>}
-          {(accessQuery.can('automation.manage') || accessQuery.can('tickets.manage')) && (
-            <TabsTrigger value="workflow">Workflow & Automation</TabsTrigger>
-          )}
-          {accessQuery.can('security.manage') && <TabsTrigger value="security">Security & Access</TabsTrigger>}
-          {accessQuery.can('integrations.manage') && <TabsTrigger value="integrations">Integrations</TabsTrigger>}
+          {availableTabs.general && <TabsTrigger value="general">General</TabsTrigger>}
+          {availableTabs.ticketing && <TabsTrigger value="ticketing">Ticketing</TabsTrigger>}
+          {availableTabs.forms && <TabsTrigger value="forms">Forms</TabsTrigger>}
+          {availableTabs.workflow && <TabsTrigger value="workflow">Workflow & Automation</TabsTrigger>}
+          {availableTabs.security && <TabsTrigger value="security">Security & Access</TabsTrigger>}
+          {availableTabs.integrations && <TabsTrigger value="integrations">Integrations</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general" className="flex-none">
-          <GeneralSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'general' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading general settings...</p>}>
+              <GeneralSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
         <TabsContent value="ticketing" className="flex-none">
-          <TicketingSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'ticketing' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading ticketing settings...</p>}>
+              <TicketingSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
         <TabsContent value="forms" className="flex-none">
-          <FormsSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'forms' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading form settings...</p>}>
+              <FormsSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
         <TabsContent value="workflow" className="flex-none">
-          <WorkflowAutomationSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'workflow' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading workflow settings...</p>}>
+              <WorkflowAutomationSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
         <TabsContent value="security" className="flex-none">
-          <GovernanceSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'security' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading security settings...</p>}>
+              <GovernanceSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
         <TabsContent value="integrations" className="flex-none">
-          <IntegrationsSettingsSection workspaceSlug={workspaceSlug} />
+          {resolvedActiveTab === 'integrations' ? (
+            <Suspense fallback={<p className="text-sm text-muted-foreground">Loading integrations...</p>}>
+              <IntegrationsSettingsSection workspaceSlug={workspaceSlug} />
+            </Suspense>
+          ) : null}
         </TabsContent>
       </Tabs>
 

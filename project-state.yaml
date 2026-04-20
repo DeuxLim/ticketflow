@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-19T21:32:51+08:00"
+updated_at: "2026-04-19T22:34:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -8,6 +8,179 @@ source_files:
   progress_log: changelog/progress-log.md
 current_focus: []
 items:
+  - id: PERF-P1
+    title: Frontend Performance and Asset Reliability Hardening
+    type: epic
+    parent_id: null
+    status: complete
+    priority: high
+    mvp: true
+    description: Remove recurring frontend build warnings and reduce initial page payload by hardening font asset resolution and route-level code splitting.
+    definition_of_done:
+      - Frontend build no longer reports unresolved font asset warnings.
+      - High-traffic workspace routes use intentional code splitting with stable loading states.
+      - Initial payload pressure is reduced and verified with before/after build output notes.
+      - Frontend test, lint, and build verification pass after the hardening work.
+    dependencies:
+      - ALIGN-P1
+      - ADMIN-UX-P1
+    notes:
+      - "2026-04-19: Initialized as next MVP epic after admin controls closeout."
+      - "2026-04-19: Existing progress log repeatedly reports unresolved Geist font warnings and large chunk warnings in frontend builds."
+      - "2026-04-19: Baseline build no longer emits unresolved font warnings; font assets are emitted as `dist/assets/geist-*.woff2`."
+      - "2026-04-19: Route-level lazy loading is already present across `src/app/router.tsx`, `src/routes/workspace-routes.tsx`, `src/routes/auth-routes.tsx`, and `src/routes/admin-routes.tsx`."
+      - "2026-04-19: Attempted broad manual chunking in `vite.config.ts`; reverted after build comparison because resulting vendor chunk profile did not show clear payload-pressure improvement."
+      - "2026-04-19: Implemented settings-surface code-splitting by lazy-loading settings sections and only mounting the active tab in `WorkspaceSettingsPage.tsx`."
+      - "2026-04-19: Build comparison improved settings route payload shape: `WorkspaceSettingsPage` chunk reduced from 53.40 kB baseline to 7.17 kB with section chunks split (`GeneralSettingsSection`, `TicketingSettingsSection`, `FormsSettingsSection`, `WorkflowAutomationSettingsSection`, `GovernanceSettingsSection`, `IntegrationsSettingsSection`)."
+      - "2026-04-19: Closeout verification passed (`npm run test -- --run`, `npm run lint`, `npm run build`)."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - performance
+      - build
+      - mvp
+    created_at: "2026-04-19T22:08:00+08:00"
+    updated_at: "2026-04-19T22:34:00+08:00"
+    changed_at: "2026-04-19T22:34:00+08:00"
+    changed_source: codex
+
+  - id: PERF-P1-T01
+    title: Baseline frontend build warnings and bundle hotspots
+    type: task
+    parent_id: PERF-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Capture a concrete before-state for unresolved font warnings and largest frontend chunks to guide targeted hardening.
+    definition_of_done:
+      - Current unresolved font warning sources are identified to file/component level.
+      - Current top frontend bundle chunks and entrypoints are documented from build output.
+      - Baseline notes are stored in tracker notes for later before/after comparison.
+    dependencies:
+      - PERF-P1
+    notes:
+      - "2026-04-19: Baseline build captured via `frontend` `npm run build`."
+      - "2026-04-19: Unresolved font warning lines: none."
+      - "2026-04-19: Largest emitted JS chunks from baseline: `index-DYdwSLtK.js` (229.09 kB), `chunk-QFMPRPBF-BG4vWqpa.js` (92.54 kB), `schemas-4JstJCYp.js` (88.46 kB), `WorkspaceSettingsPage-CY8psWcw.js` (53.40 kB), `select-B5KuyYx9.js` (41.01 kB)."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - build
+      - diagnostics
+    created_at: "2026-04-19T22:08:00+08:00"
+    updated_at: "2026-04-19T22:18:00+08:00"
+    changed_at: "2026-04-19T22:18:00+08:00"
+    changed_source: codex
+
+  - id: PERF-P1-T02
+    title: Resolve frontend font asset warnings
+    type: task
+    parent_id: PERF-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Fix unresolved font references in the frontend build pipeline with deterministic local or hosted font loading.
+    definition_of_done:
+      - Frontend build no longer emits unresolved font reference warnings.
+      - Font loading remains visually consistent across workspace routes.
+      - Implementation keeps existing design tokens and typography intent intact.
+    dependencies:
+      - PERF-P1-T01
+    notes:
+      - "2026-04-19: Baseline build does not reproduce unresolved font warnings, indicating prior warning state may already be fixed."
+      - "2026-04-19: `@fontsource-variable/geist/index.css` is imported in `src/main.tsx` and emits resolved `geist-*.woff2` files in build output."
+      - "2026-04-19: Typography wiring sanity checks confirmed `src/index.css` maps `--font-sans` to `Geist Variable` and global `body` applies `font-sans`."
+      - "2026-04-19: Follow-up build check still shows no unresolved font warning lines."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - typography
+      - build
+    created_at: "2026-04-19T22:08:00+08:00"
+    updated_at: "2026-04-19T22:27:00+08:00"
+    changed_at: "2026-04-19T22:27:00+08:00"
+    changed_source: codex
+
+  - id: PERF-P1-T03
+    title: Introduce route-level code splitting for heavy workspace surfaces
+    type: refactor
+    parent_id: PERF-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Reduce initial bundle pressure by splitting heavy workspace pages into lazy chunks with controlled loading behavior.
+    definition_of_done:
+      - High-traffic workspace routes are lazy-loaded via route-level splitting.
+      - Existing loading/empty/error UI behavior remains stable.
+      - Build output shows reduced initial chunk pressure versus baseline.
+    dependencies:
+      - PERF-P1-T01
+    notes:
+      - "2026-04-19: Route-level lazy loading is already implemented for high-traffic workspace surfaces in `src/routes/workspace-routes.tsx`."
+      - "2026-04-19: Remaining work is reducing large shared chunks identified in baseline build output."
+      - "2026-04-19: Broad manual chunk strategy was tested and reverted because it did not provide a clear improvement signal for payload pressure."
+      - "2026-04-19: `WorkspaceSettingsPage` now lazy-loads settings sections and mounts only the active tab; build output shows route chunk reduction from 53.40 kB baseline to 7.17 kB."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - performance
+      - routing
+    created_at: "2026-04-19T22:08:00+08:00"
+    updated_at: "2026-04-19T22:34:00+08:00"
+    changed_at: "2026-04-19T22:34:00+08:00"
+    changed_source: codex
+
+  - id: PERF-P1-T04
+    title: Run verification and closeout for performance hardening epic
+    type: task
+    parent_id: PERF-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Execute frontend verification and finalize epic status based on warning elimination and payload hardening evidence.
+    definition_of_done:
+      - "frontend npm run test -- --run passes."
+      - "frontend npm run lint passes."
+      - "frontend npm run build passes with warning status explicitly recorded."
+      - Tracker notes capture before/after warning and chunk observations.
+    dependencies:
+      - PERF-P1-T02
+      - PERF-P1-T03
+    notes:
+      - "2026-04-19: `frontend` `npm run test -- --run` passed (19 files, 69 tests)."
+      - "2026-04-19: `frontend` `npm run lint` passed."
+      - "2026-04-19: `frontend` `npm run build` passed."
+      - "2026-04-19: Build output confirms no unresolved font warning lines and includes split settings section chunks after optimization."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - verification
+      - frontend
+      - release-readiness
+    created_at: "2026-04-19T22:08:00+08:00"
+    updated_at: "2026-04-19T22:34:00+08:00"
+    changed_at: "2026-04-19T22:34:00+08:00"
+    changed_source: codex
+
   - id: ADMIN-UX-P1
     title: Admin Workspace Controls UX Refinement
     type: epic
@@ -174,9 +347,9 @@ items:
     mvp: true
     description: Run frontend verification suite for admin controls and finalize epic status based on definition of done.
     definition_of_done:
-      - `npm run test -- --run` passes for frontend.
-      - `npm run lint` passes for frontend.
-      - `npm run build` passes for frontend.
+      - "npm run test -- --run passes for frontend."
+      - "npm run lint passes for frontend."
+      - "npm run build passes for frontend."
       - Tracker notes include evidence for completion.
     dependencies:
       - ADMIN-UX-P1-T04
