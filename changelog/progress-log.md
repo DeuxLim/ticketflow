@@ -281,6 +281,30 @@ Verification:
 ## Resume From Here
 
 Start `UX-OVERHAUL-P1-W2` by auditing ticket detail and workspace settings surfaces for always-on controls, unlabeled fields, and opportunities to move secondary actions into dialogs or sheets.
+
+## 2026-04-20 23:32 +08:00 - Started UX Overhaul Wave 2 with Ticket Details Decluttering
+
+- Reworked `frontend/src/features/workspace/pages/TicketDetailsPage.tsx` so the route defaults to a calmer reading surface:
+  - ticket summary remains visible
+  - conversation remains visible
+  - activity timeline remains visible
+  - ticket editing now opens in a right-side sheet
+  - checklist, attachments, watchers, and related tickets now open in focused dialogs instead of living inline on the page
+- Added a compact "Ticket Tools" rail so secondary work is discoverable without dominating the viewport.
+- Preserved SLA and custom field visibility in the side rail for quick operational context.
+- Updated `frontend/src/features/workspace/pages/TicketDetailsMutations.test.tsx` to match the new overlay-first flows.
+- Fixed related-ticket delete error visibility after moving that surface into a dialog.
+- Updated `project-state.yaml` and `roadmap.md` to move `UX-OVERHAUL-P1-W2` from `planned` to `in_progress`.
+
+Verification:
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run src/features/workspace/pages/TicketDetailsMutations.test.tsx src/features/workspace/pages/TicketRoutePermissions.test.tsx` passed.
+- `frontend`: `npm run test -- --run` passed (19 files, 69 tests).
+- `frontend`: `npm run build` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1-W2` with the workspace settings tabs, prioritizing sections that still expose dense always-on forms and secondary controls inline.
 - `frontend`: `npm run build` passed (existing Vite font/chunk warnings only).
 
 ## Resume From Here

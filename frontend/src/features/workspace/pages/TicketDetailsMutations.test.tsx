@@ -129,7 +129,7 @@ describe('TicketDetailsPage mutations', () => {
   });
 
   it('shows upload error when attachment upload fails', async () => {
-    const view = renderWithProviders(
+    renderWithProviders(
       <Routes>
         <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
       </Routes>,
@@ -139,7 +139,12 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
-    const fileInput = view.container.querySelector('input[type="file"]') as HTMLInputElement | null;
+    fireEvent.click(screen.getByRole('button', { name: 'Open Attachments' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Upload' })).not.toBeNull();
+    });
+
+    const fileInput = document.body.querySelector('input[type="file"]') as HTMLInputElement | null;
     expect(fileInput).not.toBeNull();
     const file = new File(['test-content'], 'error.txt', { type: 'text/plain' });
     fireEvent.change(fileInput!, { target: { files: [file] } });
@@ -489,6 +494,7 @@ describe('TicketDetailsPage mutations', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Follow' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open Watchers' }));
 
     await waitFor(() => {
       expect(screen.getByText('Unable to follow this ticket right now.')).not.toBeNull();
@@ -538,7 +544,12 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
-    fireEvent.change(screen.getByPlaceholderText('Add an operator task…'), {
+    fireEvent.click(screen.getByRole('button', { name: 'Open Checklist' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Add Task' })).not.toBeNull();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('Add an operator task...'), {
       target: { value: 'Escalate to NOC' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Add Task' }));
@@ -608,6 +619,11 @@ describe('TicketDetailsPage mutations', () => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Open Related Tickets' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Remove' })).not.toBeNull();
+    });
+
     fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
 
     await waitFor(() => {
@@ -664,6 +680,11 @@ describe('TicketDetailsPage mutations', () => {
 
     await waitFor(() => {
       expect(screen.queryAllByText('Ticket Summary').length).toBeGreaterThan(0);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Checklist' }));
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: 'Down' }).length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Down' })[0]);

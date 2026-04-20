@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -273,6 +274,9 @@ export function TicketDetailsPage() {
   const queryClient = useQueryClient();
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
+  const [isWatchersOpen, setIsWatchersOpen] = useState(false);
   const [editTemplateId, setEditTemplateId] = useState<string>('none');
   const [isRelatedOpen, setIsRelatedOpen] = useState(false);
   const [quickActionMessage, setQuickActionMessage] = useState<string | null>(null);
@@ -637,6 +641,7 @@ export function TicketDetailsPage() {
   const customFields = ticket?.custom_fields ?? [];
   const stateSummary = ticket?.state_summary;
   const currentUserId = meQuery.data?.data.id;
+  const ticketLevelAttachments = attachments.filter((attachment) => attachment.comment_id === null);
   const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
   const editQueueValue = useWatch({ control: editForm.control, name: 'queue_key' }) || 'none';
   const editCategoryValue = useWatch({ control: editForm.control, name: 'category' }) || 'none';
@@ -678,11 +683,6 @@ export function TicketDetailsPage() {
       })),
     );
   };
-
-  const assignmentHistory = useMemo(
-    () => activityLogs.filter((event) => event.action === 'ticket.assignee_changed' || event.action === 'ticket.bulk_updated'),
-    [activityLogs],
-  );
 
   const slaSignals = useMemo(() => {
     if (!ticket) return [] as Array<{ key: string; label: string; time: string | null; severity: 'warning' | 'info' }>;
@@ -797,6 +797,9 @@ export function TicketDetailsPage() {
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{ticket.title}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{ticket.description}</p>
+        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
+          Keep the thread readable by leaving summary and activity in view, then open focused panels when you need to edit metadata or manage supporting work.
+        </p>
 
         {quickActionMessage && <p className="text-xs text-muted-foreground">{quickActionMessage}</p>}
 
@@ -885,7 +888,7 @@ export function TicketDetailsPage() {
         <Card className="shadow-none">
           <CardHeader>
             <CardTitle>Comments</CardTitle>
-            <CardDescription>Customer-visible and internal notes.</CardDescription>
+            <CardDescription>Conversation stays visible so handoffs and context are easy to follow.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {(commentsQuery.data?.data ?? []).map((comment) => (
@@ -1003,63 +1006,17 @@ export function TicketDetailsPage() {
 
         <Card className="shadow-none">
           <CardHeader>
-            <CardTitle>Checklist</CardTitle>
-            <CardDescription>Small tasks required before closing.</CardDescription>
+            <CardTitle>Activity Timeline</CardTitle>
+            <CardDescription>State changes, automation, and assignment events in one running history.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {checklistItems.map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                <label className="flex min-w-0 items-center gap-3 text-sm">
-                  <Checkbox
-                    checked={item.is_completed}
-                    disabled={!canManage || updateChecklistItem.isPending}
-                    onCheckedChange={(checked) => updateChecklistItem.mutate({ itemId: item.id, values: { is_completed: checked === true } })}
-                  />
-                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
-                  {canManage && (
-                    <>
-                      <Button
-                        disabled={reorderChecklistItems.isPending || checklistItems[0]?.id === item.id}
-                        onClick={() => moveChecklistItem(item.id, 'up')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Up
-                      </Button>
-                      <Button
-                        disabled={reorderChecklistItems.isPending || checklistItems[checklistItems.length - 1]?.id === item.id}
-                        onClick={() => moveChecklistItem(item.id, 'down')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Down
-                      </Button>
-                    </>
-                  )}
-                  {canManage && (
-                    <Button disabled={deleteChecklistItem.isPending} onClick={() => deleteChecklistItem.mutate(item.id)} size="sm" type="button" variant="outline">
-                      Delete
-                    </Button>
-                  )}
-                </div>
+          <CardContent className="flex flex-col gap-2">
+            {activityLogs.map((event) => (
+              <div key={event.id} className="rounded-md border border-border p-3 text-sm">
+                <p className="font-medium">{humanizeAction(event.action)}</p>
+                <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatDate(event.created_at)}</p>
               </div>
             ))}
-            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
-            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit((values) => addChecklistItem.mutate(values))}>
-              <Input disabled={!canManage} placeholder="Add an operator task…" {...checklistForm.register('title')} />
-              <Button disabled={!canManage || addChecklistItem.isPending} type="submit">
-                {addChecklistItem.isPending ? 'Adding…' : 'Add Task'}
-              </Button>
-            </form>
-            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
-            {(addChecklistItem.isError || updateChecklistItem.isError || deleteChecklistItem.isError) && (
-              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
-            )}
+            {!activityLogs.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
           </CardContent>
         </Card>
         </div>
@@ -1089,87 +1046,40 @@ export function TicketDetailsPage() {
 
         <Card className="shadow-none">
           <CardHeader>
-            <CardTitle>Assignment History</CardTitle>
+            <CardTitle>Ticket Tools</CardTitle>
+            <CardDescription>Open focused panels instead of stacking every operator task on the page.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            {assignmentHistory.map((event) => {
-              const from = event.meta?.from ?? event.meta?.assigned_to_user_id ?? null;
-              const to = event.meta?.to ?? event.meta?.assigned_to_user_id ?? null;
-
-              return (
-                <div key={event.id} className="rounded-md border border-border p-3 text-sm">
-                  <p className="font-medium">{humanizeAction(event.action)}</p>
-                  {(from !== null || to !== null) && (
-                    <p className="text-xs text-muted-foreground">From: {String(from ?? 'Unassigned')} · To: {String(to ?? 'Unassigned')}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">{fullName(event.user)} · {formatDate(event.created_at)}</p>
-                </div>
-              );
-            })}
-            {!assignmentHistory.length && <p className="text-sm text-muted-foreground">No assignment changes yet.</p>}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Watchers</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
-              {watchers.map((watcher) => (
-                <Badge key={watcher.id} variant="secondary">
-                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
-                </Badge>
-              ))}
+            <div className="rounded-md border border-border p-3 text-sm">
+              <p className="font-medium">Checklist</p>
+              <p className="text-xs text-muted-foreground">{checklistItems.length} task{checklistItems.length === 1 ? '' : 's'} tracked</p>
             </div>
-            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
-            {(addWatcher.isError || removeWatcher.isError) && (
-              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Related Tickets</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {relatedTickets.map((link) => (
-              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    {link.ticket ? (
-                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
-                        {link.ticket.ticket_number}
-                      </Link>
-                    ) : (
-                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
-                    )}
-                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
-                  </div>
-                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
-                </div>
-                {canManage && (
-                  <Button
-                    className="mt-2"
-                    disabled={deleteRelatedTicket.isPending}
-                    onClick={() => deleteRelatedTicket.mutate(link.id)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
-            <Button disabled={!canManage} onClick={() => setIsRelatedOpen(true)} size="sm" type="button" variant="outline">
-              Link Ticket
-            </Button>
-            {(addRelatedTicket.isError || deleteRelatedTicket.isError) && (
-              <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
-            )}
+            <div className="rounded-md border border-border p-3 text-sm">
+              <p className="font-medium">Attachments</p>
+              <p className="text-xs text-muted-foreground">{ticketLevelAttachments.length} ticket-level file{ticketLevelAttachments.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="rounded-md border border-border p-3 text-sm">
+              <p className="font-medium">Watchers</p>
+              <p className="text-xs text-muted-foreground">{watchers.length} follower{watchers.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="rounded-md border border-border p-3 text-sm">
+              <p className="font-medium">Related Tickets</p>
+              <p className="text-xs text-muted-foreground">{relatedTickets.length} linked ticket{relatedTickets.length === 1 ? '' : 's'}</p>
+            </div>
+            <div className="flex flex-col gap-2 pt-1">
+              <Button onClick={() => setIsChecklistOpen(true)} size="sm" type="button" variant="outline">
+                Open Checklist
+              </Button>
+              <Button onClick={() => setIsAttachmentsOpen(true)} size="sm" type="button" variant="outline">
+                Open Attachments
+              </Button>
+              <Button onClick={() => setIsWatchersOpen(true)} size="sm" type="button" variant="outline">
+                Open Watchers
+              </Button>
+              <Button onClick={() => setIsRelatedOpen(true)} size="sm" type="button" variant="outline">
+                Open Related Tickets
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -1184,81 +1094,6 @@ export function TicketDetailsPage() {
             {!customFields.length && <p className="text-sm text-muted-foreground">No dynamic fields configured for this ticket.</p>}
           </CardContent>
         </Card>
-
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Attachments</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                accept="*/*"
-                onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
-                type="file"
-              />
-              <Button
-                disabled={!canComment || !attachmentFile || uploadAttachment.isPending}
-                onClick={() => uploadAttachment.mutate()}
-                size="sm"
-                type="button"
-              >
-                {uploadAttachment.isPending ? 'Uploading...' : 'Upload'}
-              </Button>
-            </div>
-            {uploadAttachment.isError && <p className="text-xs text-destructive">{(uploadAttachment.error as Error).message}</p>}
-
-            {attachments.filter((attachment) => attachment.comment_id === null).map((attachment) => (
-              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
-                <div>
-                  <p className="font-medium">{attachment.original_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatDate(attachment.created_at)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    disabled={!canManage || deleteAttachment.isPending}
-                    onClick={() => {
-                      const ok = window.confirm(`Delete ${attachment.original_name}?`);
-                      if (ok) deleteAttachment.mutate(attachment.id);
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {!attachments.some((attachment) => attachment.comment_id === null) && (
-              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none">
-        <CardHeader>
-          <CardTitle>Activity Timeline</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          {activityLogs.map((event) => (
-            <div key={event.id} className="rounded-md border border-border p-3 text-sm">
-              <p className="font-medium">{humanizeAction(event.action)}</p>
-              <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatDate(event.created_at)}</p>
-            </div>
-          ))}
-          {!activityLogs.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
-        </CardContent>
-      </Card>
         </aside>
       </div>
 
@@ -1319,6 +1154,176 @@ export function TicketDetailsPage() {
 
       <Dialog
         onOpenChange={(open) => {
+          setIsChecklistOpen(open);
+          if (!open) {
+            checklistForm.reset({ title: '' });
+          }
+        }}
+        open={isChecklistOpen}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Checklist</DialogTitle>
+            <DialogDescription>Track the operator tasks that still block closure or handoff.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            {checklistItems.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
+                <label className="flex min-w-0 items-center gap-3 text-sm">
+                  <Checkbox
+                    checked={item.is_completed}
+                    disabled={!canManage || updateChecklistItem.isPending}
+                    onCheckedChange={(checked) => updateChecklistItem.mutate({ itemId: item.id, values: { is_completed: checked === true } })}
+                  />
+                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
+                  {canManage && (
+                    <>
+                      <Button
+                        disabled={reorderChecklistItems.isPending || checklistItems[0]?.id === item.id}
+                        onClick={() => moveChecklistItem(item.id, 'up')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Up
+                      </Button>
+                      <Button
+                        disabled={reorderChecklistItems.isPending || checklistItems[checklistItems.length - 1]?.id === item.id}
+                        onClick={() => moveChecklistItem(item.id, 'down')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Down
+                      </Button>
+                      <Button disabled={deleteChecklistItem.isPending} onClick={() => deleteChecklistItem.mutate(item.id)} size="sm" type="button" variant="outline">
+                        Delete
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
+
+            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit((values) => addChecklistItem.mutate(values))}>
+              <Input disabled={!canManage} placeholder="Add an operator task..." {...checklistForm.register('title')} />
+              <Button disabled={!canManage || addChecklistItem.isPending} type="submit">
+                {addChecklistItem.isPending ? 'Adding...' : 'Add Task'}
+              </Button>
+            </form>
+            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
+            {(addChecklistItem.isError || updateChecklistItem.isError || deleteChecklistItem.isError) && (
+              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={setIsWatchersOpen}
+        open={isWatchersOpen}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Watchers</DialogTitle>
+            <DialogDescription>See who is following the ticket and keeping up with updates.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              {watchers.map((watcher) => (
+                <Badge key={watcher.id} variant="secondary">
+                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
+                </Badge>
+              ))}
+            </div>
+            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
+            {(addWatcher.isError || removeWatcher.isError) && (
+              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          setIsAttachmentsOpen(open);
+          if (!open) {
+            setAttachmentFile(null);
+          }
+        }}
+        open={isAttachmentsOpen}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Attachments</DialogTitle>
+            <DialogDescription>Upload or review files without pushing upload controls into the main ticket view.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                accept="*/*"
+                onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
+                type="file"
+              />
+              <Button
+                disabled={!canComment || !attachmentFile || uploadAttachment.isPending}
+                onClick={() => uploadAttachment.mutate()}
+                size="sm"
+                type="button"
+              >
+                {uploadAttachment.isPending ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+            {uploadAttachment.isError && <p className="text-xs text-destructive">{(uploadAttachment.error as Error).message}</p>}
+
+            {ticketLevelAttachments.map((attachment) => (
+              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
+                <div>
+                  <p className="font-medium">{attachment.original_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatDate(attachment.created_at)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    disabled={!canManage || deleteAttachment.isPending}
+                    onClick={() => {
+                      const ok = window.confirm(`Delete ${attachment.original_name}?`);
+                      if (ok) deleteAttachment.mutate(attachment.id);
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {!ticketLevelAttachments.length && (
+              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
           setIsRelatedOpen(open);
           if (!open) {
             relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
@@ -1328,9 +1333,42 @@ export function TicketDetailsPage() {
       >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Link Related Ticket</DialogTitle>
-            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work.</DialogDescription>
+            <DialogTitle>Related Tickets</DialogTitle>
+            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work from one focused panel.</DialogDescription>
           </DialogHeader>
+
+          <div className="mb-4 flex flex-col gap-3">
+            {relatedTickets.map((link) => (
+              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    {link.ticket ? (
+                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
+                        {link.ticket.ticket_number}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
+                    )}
+                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
+                  </div>
+                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
+                </div>
+                {canManage && (
+                  <Button
+                    className="mt-2"
+                    disabled={deleteRelatedTicket.isPending}
+                    onClick={() => deleteRelatedTicket.mutate(link.id)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
+          </div>
 
           <form className="space-y-3" id="related-ticket-form" onSubmit={relatedTicketForm.handleSubmit((values) => addRelatedTicket.mutate(values))}>
             <div className="space-y-2">
@@ -1377,7 +1415,7 @@ export function TicketDetailsPage() {
             </div>
           </form>
 
-          {addRelatedTicket.isError && (
+          {(addRelatedTicket.isError || deleteRelatedTicket.isError) && (
             <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
           )}
 
@@ -1392,7 +1430,7 @@ export function TicketDetailsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <Sheet
         onOpenChange={(open) => {
           if (!open) {
             setEditTemplateId(defaultTemplateId);
@@ -1401,11 +1439,11 @@ export function TicketDetailsPage() {
         }}
         open={isEditOpen}
       >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Ticket</DialogTitle>
-            <DialogDescription>Update assignment, priority, status, and operational metadata.</DialogDescription>
-          </DialogHeader>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+          <SheetHeader>
+            <SheetTitle>Edit Ticket</SheetTitle>
+            <SheetDescription>Update assignment, priority, status, and operational metadata without losing sight of the ticket.</SheetDescription>
+          </SheetHeader>
 
           <form className="grid gap-4 md:grid-cols-2" id="edit-ticket-details-form" onSubmit={editForm.handleSubmit((values) => updateTicket.mutate(values))}>
             <div className="space-y-2">
@@ -1665,16 +1703,16 @@ export function TicketDetailsPage() {
 
           {updateTicket.isError && <p className="text-xs text-destructive">{(updateTicket.error as Error).message}</p>}
 
-          <DialogFooter>
+          <SheetFooter className="border-t pt-4">
             <Button onClick={() => setIsEditOpen(false)} type="button" variant="outline">
               Cancel
             </Button>
             <Button disabled={updateTicket.isPending || editForm.formState.isSubmitting} form="edit-ticket-details-form" type="submit">
               {updateTicket.isPending ? 'Saving...' : 'Save Changes'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </section>
   );
 }

@@ -14,15 +14,15 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
-- Current state: workspace CRUD hardening is complete and verified; Wave 2 is queued for ticket detail and workspace settings surfaces.
+- Current state: workspace CRUD hardening is complete and verified; Wave 2 is now in progress after the ticket details surface was decluttered and moved to focused overlays.
 - Next actions:
-  - Start ticket detail and workspace settings information-architecture refinements.
+  - Continue Wave 2 with workspace settings information-architecture refinements.
   - Audit remaining auth and admin surfaces for inline editing, missing labels, and overexposed controls.
 
 #### Child Items
 
 - `UX-OVERHAUL-P1-W1` Workspace CRUD UX Hardening - `complete`
-- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement - `planned`
+- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement - `in_progress`
 - `UX-OVERHAUL-P1-W1-T01` Harden Invitations page action clarity - `complete`
 - `UX-OVERHAUL-P1-W1-T02` Harden Customers page action clarity - `complete`
 - `UX-OVERHAUL-P1-W1-T03` Reduce Tickets page inline control noise - `complete`
@@ -98,4 +98,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Start `UX-OVERHAUL-P1-W2` by auditing the ticket detail route and workspace settings tabs for always-on controls that should become clearer grouped sections, dialogs, or sheets.
+Continue `UX-OVERHAUL-P1-W2` by auditing workspace settings tabs for always-on controls that should become clearer grouped sections, dialogs, or sheets.
