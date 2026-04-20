@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
   cancelWorkspaceInvitation,
@@ -17,7 +18,6 @@ import {
   listWorkspaceRoles,
 } from '@/features/workspace/pages/invitationsApi';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ApiError } from '@/services/api/client';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -119,6 +119,9 @@ export function InvitationsPage() {
         <div>
           <Badge variant="secondary">Invitations</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Invite Teammates</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Keep access rollout focused by inviting people with the right starting role instead of exposing membership controls on the page.
+          </p>
         </div>
         <Button onClick={() => setIsInviteOpen(true)} type="button">
           Send Invite
@@ -128,13 +131,15 @@ export function InvitationsPage() {
       <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Invitation Queue</CardTitle>
-          <CardDescription>{invitationsQuery.data?.data.length ?? 0} invitations</CardDescription>
+          <CardDescription>Track pending invites, role assignments, and cancellations in one place.</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
           {invitationsQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading invitations...</p>
           ) : invitationsQuery.isError ? (
             <p className="text-sm text-destructive">{(invitationsQuery.error as Error).message}</p>
+          ) : (invitationsQuery.data?.data ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">No invitations yet. Use "Send Invite" to bring in the next teammate.</p>
           ) : (
             <div className="overflow-x-auto">
             <Table className="min-w-[720px]">
@@ -163,7 +168,7 @@ export function InvitationsPage() {
                           disabled={cancelInvitation.isPending}
                           type="button"
                         >
-                          Cancel
+                          Cancel invite
                         </Button>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -194,21 +199,23 @@ export function InvitationsPage() {
           </DialogHeader>
 
           <form className="grid gap-4" id="invite-form" onSubmit={handleSubmit((v) => createInvitation.mutate(v))}>
-            <div className="space-y-2">
-              <Label htmlFor="invite-email">Email</Label>
-              <Input id="invite-email" type="email" {...register('email')} />
-              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-            </div>
+            <FieldGroup>
+            <Field data-invalid={Boolean(errors.email)}>
+              <FieldLabel htmlFor="invite-email">Invitee email</FieldLabel>
+              <Input id="invite-email" type="email" placeholder="teammate@company.com" {...register('email')} />
+              <FieldDescription>We will send the invitation to this address.</FieldDescription>
+              <FieldError errors={[errors.email]} />
+            </Field>
 
-            <div className="space-y-2">
-              <Label>Role</Label>
+            <Field data-invalid={Boolean(errors.role_id)}>
+              <FieldLabel htmlFor="invite-role">Starting role</FieldLabel>
               <Select
                 value={roleId}
                 onValueChange={(value) =>
                   setValue('role_id', value ?? '', { shouldValidate: true })
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" id="invite-role">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -219,8 +226,10 @@ export function InvitationsPage() {
                   </SelectGroup>
                 </SelectContent>
               </Select>
-              {errors.role_id && <p className="text-xs text-destructive">{errors.role_id.message}</p>}
-            </div>
+              <FieldDescription>Choose the access level the teammate should have as soon as they accept.</FieldDescription>
+              <FieldError errors={[errors.role_id]} />
+            </Field>
+            </FieldGroup>
           </form>
 
           <DialogFooter>

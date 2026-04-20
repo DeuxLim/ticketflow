@@ -133,6 +133,14 @@ describe('TicketsPage interactions', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'network outage' } });
+    const controlsButton = screen
+      .getAllByRole('button', { name: /Views & Filters/i })
+      .find((button) => button.textContent?.includes('(1)'));
+    if (!controlsButton) throw new Error('Views & Filters trigger not found');
+    fireEvent.click(controlsButton);
+    await waitFor(() => {
+      expect(screen.getByLabelText('New view name')).not.toBeNull();
+    });
     fireEvent.change(screen.getByLabelText('New view name'), { target: { value: 'Network incidents' } });
     const saveButton = screen.getAllByRole('button', { name: 'Save current filters' }).find((button) => !button.hasAttribute('disabled'));
     if (!saveButton) throw new Error('Save current filters button not enabled');

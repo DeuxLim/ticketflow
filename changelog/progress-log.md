@@ -258,6 +258,29 @@ Add frontend regression tests for `ALIGN-P1-T06` large-dataset selector behavior
 Verification:
 - `frontend`: `npm run test` passed (4 files, 11 tests).
 - `frontend`: `npm run lint` passed.
+
+## 2026-04-20 22:28 +08:00 - Completed UX Overhaul Wave 1 Workspace CRUD Hardening
+
+- Updated the workspace CRUD surfaces to follow a calmer modal-first pattern:
+  - `frontend/src/features/workspace/pages/InvitationsPage.tsx`
+  - `frontend/src/features/workspace/pages/CustomersPage.tsx`
+  - `frontend/src/features/workspace/pages/MembersPage.tsx`
+  - `frontend/src/features/workspace/pages/TicketsPage.tsx`
+- Invitations now explain invite intent and role selection more clearly with explicit field labels, helper text, and calmer queue wording.
+- Customers now use labeled search, clearer CRUD dialog framing, and fully labeled customer form inputs.
+- Members now have stronger page orientation and an explicit empty state.
+- Tickets now keep search inline while moving saved views, advanced filters, and bulk actions into a dedicated sheet to reduce default viewport clutter.
+- Updated regression coverage in `frontend/src/features/workspace/pages/TicketsPageInteractions.test.tsx` for the new ticket controls flow.
+- Updated `project-state.yaml` and `roadmap.md` to mark `UX-OVERHAUL-P1-W1` complete and queue `UX-OVERHAUL-P1-W2` as the next UX wave.
+
+Verification:
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (19 files, 69 tests).
+- `frontend`: `npm run build` passed.
+
+## Resume From Here
+
+Start `UX-OVERHAUL-P1-W2` by auditing ticket detail and workspace settings surfaces for always-on controls, unlabeled fields, and opportunities to move secondary actions into dialogs or sheets.
 - `frontend`: `npm run build` passed (existing Vite font/chunk warnings only).
 
 ## Resume From Here
@@ -736,3 +759,26 @@ Verification:
 ## Resume From Here
 
 Performance hardening is complete. Pick the next MVP epic and initialize it in `project-state.yaml` before implementation.
+
+## 2026-04-20 10:05 +08:00 - Initialized App-Wide UX Overhaul Tracking
+
+- Created new umbrella epic `UX-OVERHAUL-P1` for the full-application experience redesign.
+- Created first implementation wave `UX-OVERHAUL-P1-W1` for workspace CRUD surfaces.
+- Added first-wave tasks for:
+  - invitations action clarity
+  - customers action clarity
+  - tickets list clutter reduction
+  - members orientation cleanup
+- Recorded selected UX defaults in tracker notes:
+  - modal-first interaction model
+  - phased progress tracking
+  - balanced-team audience
+  - broader frontend workflow rethink within existing backend/API contracts
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- State sync only (tracker initialization). No frontend code or verification commands were run in this step.
+
+## Resume From Here
+
+Start `UX-OVERHAUL-P1-W1` with invitations and customers, then reduce tickets-page inline control noise before continuing to the next UX wave.

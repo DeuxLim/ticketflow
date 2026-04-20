@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   createWorkspaceCustomer,
   deleteWorkspaceCustomer,
@@ -140,7 +140,7 @@ export function CustomersPage() {
         <div>
           <Badge variant="secondary">Workspace Customers</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Customer Directory</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Search, update, and manage customer records in this workspace.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Search, review, and update customer records without mixing the directory view with editing work.</p>
         </div>
         <Button disabled={!canManage} onClick={() => setIsCreateOpen(true)} type="button">
           Add Customer
@@ -150,23 +150,26 @@ export function CustomersPage() {
       <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Customers</CardTitle>
-          <CardDescription>{customers.length} records</CardDescription>
+          <CardDescription>Use the directory to scan records quickly, then open focused dialogs when you need to change details.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-4">
-          <div className="max-w-sm">
+          <Field className="max-w-sm">
+            <FieldLabel htmlFor="customer-search">Search customers</FieldLabel>
             <Input
+              id="customer-search"
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by name, email, or company…"
+              placeholder="Search by name, email, or company..."
               value={search}
             />
-          </div>
+            <FieldDescription>Search works across name, email, and company.</FieldDescription>
+          </Field>
 
           {customersQuery.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading customers...</p>
           ) : customersQuery.isError ? (
             <p className="text-sm text-destructive">{(customersQuery.error as Error).message}</p>
           ) : customers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No customers found.</p>
+            <p className="text-sm text-muted-foreground">No customers match the current search. Try a broader term or add a new customer.</p>
           ) : (
             <div className="overflow-x-auto">
             <Table className="min-w-[760px]">
@@ -241,7 +244,7 @@ export function CustomersPage() {
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Add Customer</DialogTitle>
-            <DialogDescription>Create a customer record for faster ticket association.</DialogDescription>
+            <DialogDescription>Create a reusable customer record so ticket assignment and history stay attached to the right account.</DialogDescription>
           </DialogHeader>
 
           <form
@@ -249,7 +252,7 @@ export function CustomersPage() {
             id="create-customer-form"
             onSubmit={createForm.handleSubmit((values) => createCustomer.mutate(values))}
           >
-            <CustomerFormFields errors={createForm.formState.errors} register={createForm.register} />
+            <CustomerFormFields errors={createForm.formState.errors} formId="create-customer" register={createForm.register} />
           </form>
 
           {createCustomer.isError && (
@@ -280,7 +283,7 @@ export function CustomersPage() {
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Edit Customer</DialogTitle>
-            <DialogDescription>Update customer details used by ticket workflows.</DialogDescription>
+            <DialogDescription>Update the record used by ticket search, routing, and reporting.</DialogDescription>
           </DialogHeader>
 
           <form
@@ -292,7 +295,7 @@ export function CustomersPage() {
               }
             })}
           >
-            <CustomerFormFields errors={editForm.formState.errors} register={editForm.register} />
+            <CustomerFormFields errors={editForm.formState.errors} formId="edit-customer" register={editForm.register} />
           </form>
 
           {updateCustomer.isError && (
@@ -356,33 +359,36 @@ export function CustomersPage() {
 function CustomerFormFields({
   register,
   errors,
+  formId,
 }: {
   register: UseFormRegister<CustomerForm>;
   errors: FieldErrors<CustomerForm>;
+  formId: string;
 }) {
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="customer-name">Name</Label>
-        <Input id="customer-name" {...register('name')} />
-        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-      </div>
+      <Field data-invalid={Boolean(errors.name)}>
+        <FieldLabel htmlFor={`${formId}-name`}>Customer name</FieldLabel>
+        <Input id={`${formId}-name`} {...register('name')} />
+        <FieldError errors={[errors.name]} />
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="customer-email">Email</Label>
-        <Input id="customer-email" type="email" {...register('email')} />
-        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-      </div>
+      <Field data-invalid={Boolean(errors.email)}>
+        <FieldLabel htmlFor={`${formId}-email`}>Email address</FieldLabel>
+        <Input id={`${formId}-email`} type="email" placeholder="ops@acme.com" {...register('email')} />
+        <FieldDescription>Optional, but useful for matching incoming ticket requests.</FieldDescription>
+        <FieldError errors={[errors.email]} />
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="customer-company">Company</Label>
-        <Input id="customer-company" {...register('company')} />
-      </div>
+      <Field>
+        <FieldLabel htmlFor={`${formId}-company`}>Company</FieldLabel>
+        <Input id={`${formId}-company`} placeholder="Acme Inc." {...register('company')} />
+      </Field>
 
-      <div className="space-y-2">
-        <Label htmlFor="customer-phone">Phone</Label>
-        <Input id="customer-phone" {...register('phone')} />
-      </div>
+      <Field>
+        <FieldLabel htmlFor={`${formId}-phone`}>Phone</FieldLabel>
+        <Input id={`${formId}-phone`} placeholder="+63 917 000 0000" {...register('phone')} />
+      </Field>
     </>
   );
 }

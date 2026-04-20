@@ -4,9 +4,29 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- No active in-progress MVP items.
+- `UX-OVERHAUL-P1` App-Wide UX Overhaul
+- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement
 
 ## MVP Items
+
+### `UX-OVERHAUL-P1` App-Wide UX Overhaul
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
+- Current state: workspace CRUD hardening is complete and verified; Wave 2 is queued for ticket detail and workspace settings surfaces.
+- Next actions:
+  - Start ticket detail and workspace settings information-architecture refinements.
+  - Audit remaining auth and admin surfaces for inline editing, missing labels, and overexposed controls.
+
+#### Child Items
+
+- `UX-OVERHAUL-P1-W1` Workspace CRUD UX Hardening - `complete`
+- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement - `planned`
+- `UX-OVERHAUL-P1-W1-T01` Harden Invitations page action clarity - `complete`
+- `UX-OVERHAUL-P1-W1-T02` Harden Customers page action clarity - `complete`
+- `UX-OVERHAUL-P1-W1-T03` Reduce Tickets page inline control noise - `complete`
+- `UX-OVERHAUL-P1-W1-T04` Tighten Members page orientation - `complete`
 
 ### `PERF-P1` Frontend Performance and Asset Reliability Hardening
 
@@ -78,4 +98,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Performance hardening is complete. Select the next MVP epic before additional implementation.
+Start `UX-OVERHAUL-P1-W2` by auditing the ticket detail route and workspace settings tabs for always-on controls that should become clearer grouped sections, dialogs, or sheets.

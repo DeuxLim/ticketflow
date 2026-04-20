@@ -1,13 +1,236 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-19T22:34:00+08:00"
+updated_at: "2026-04-20T22:28:40+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus: []
+current_focus:
+  - UX-OVERHAUL-P1
+  - UX-OVERHAUL-P1-W2
 items:
+  - id: UX-OVERHAUL-P1
+    title: App-Wide UX Overhaul
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
+    definition_of_done:
+      - Core workspace CRUD, ticket workflows, settings, admin, and auth surfaces follow a consistent modal-first interaction model.
+      - Primary pages are oriented around review and action, not permanently exposed edit forms.
+      - Required inputs have visible labels and non-obvious fields include helper text.
+      - Frontend verification passes after each wave and on epic closeout.
+      - Progress is tracked in the canonical roadmap and progress log throughout the rollout.
+    dependencies:
+      - PERF-P1
+    notes:
+      - "2026-04-20: Initialized from UX audit and implementation plan for a full-app experience overhaul."
+      - "2026-04-20: Selected design defaults: modal-first interactions, phased tracking, full product rethink within existing backend/API contracts, optimized for balanced teams."
+      - "2026-04-20: Completed Wave 1 workspace CRUD hardening across invitations, customers, members, and tickets after frontend lint, test, and build verification."
+    incomplete_reason: "Wave 1 is complete; later UX waves for ticket detail, settings, auth, and admin surfaces remain."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Start ticket detail and workspace settings information-architecture refinements as Wave 2.
+      - Audit remaining auth and admin surfaces for inline editing, missing labels, and overexposed controls.
+    tags:
+      - frontend
+      - ux
+      - mvp
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W1
+    title: Workspace CRUD UX Hardening
+    type: epic
+    parent_id: UX-OVERHAUL-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Reduce clutter and improve clarity across workspace list/detail CRUD surfaces by moving secondary editing into overlays and tightening labels, helper text, and action hierarchy.
+    definition_of_done:
+      - Invitations, customers, members, and tickets list surfaces are calmer and easier to scan.
+      - Create/edit/configure flows use dialogs or sheets where that reduces page noise.
+      - Search and filter controls remain inline only when they help orientation.
+      - Regression coverage and frontend verification pass for touched flows.
+    dependencies:
+      - UX-OVERHAUL-P1
+    notes:
+      - "2026-04-20: First implementation wave chosen because workspace CRUD surfaces are the fastest path to visible UX improvement."
+      - "2026-04-20: Verified calmer CRUD surfaces by moving ticket controls into a sheet, strengthening invitation and customer field labels, and tightening member-page orientation."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ux
+      - workspace
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W2
+    title: Ticket Detail and Settings IA Refinement
+    type: epic
+    parent_id: UX-OVERHAUL-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Continue the modal-first UX overhaul across ticket detail and workspace settings surfaces by reducing dense always-on controls, clarifying labels, and improving action hierarchy.
+    definition_of_done:
+      - Ticket detail workflows foreground reading and decision-making before editing.
+      - Workspace settings tabs expose dense configuration through clearer grouping and focused overlays where appropriate.
+      - Missing or ambiguous field labels are resolved on touched surfaces.
+      - Frontend verification passes after the wave ships.
+    dependencies:
+      - UX-OVERHAUL-P1
+    notes:
+      - "2026-04-20: Queued as the next UX wave after verified completion of workspace CRUD hardening."
+    incomplete_reason: "Queued as the next UX wave after Wave 1 closeout."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Audit ticket detail for inline edits, dense sidebars, and unclear field semantics.
+      - Audit workspace settings tabs for forms that should move into dialogs, sheets, or tighter grouped sections.
+    tags:
+      - frontend
+      - ux
+      - tickets
+      - settings
+    created_at: "2026-04-20T22:28:40+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W1-T01
+    title: Harden Invitations page action clarity
+    type: task
+    parent_id: UX-OVERHAUL-P1-W1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Improve invitation creation and queue scanning with explicit helper text, calmer section structure, and stronger action semantics.
+    definition_of_done:
+      - Invitation queue remains readable at a glance.
+      - Invite dialog explains role selection clearly.
+      - Empty, loading, and error states remain stable.
+    dependencies:
+      - UX-OVERHAUL-P1-W1
+    notes:
+      - "2026-04-20: Added clearer invitation framing, explicit helper text, and calmer queue empty-state/action wording."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ux
+      - invitations
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W1-T02
+    title: Harden Customers page action clarity
+    type: task
+    parent_id: UX-OVERHAUL-P1-W1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Give customer search a visible label, tighten table actions, and improve create/edit/delete modal framing.
+    definition_of_done:
+      - Customer search is explicitly labeled.
+      - CRUD dialogs explain intent and required fields more clearly.
+      - Table actions remain compact and predictable.
+    dependencies:
+      - UX-OVERHAUL-P1-W1
+    notes:
+      - "2026-04-20: Added explicit customer search labeling, stronger dialog framing, and form-level field semantics for create/edit flows."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ux
+      - customers
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W1-T03
+    title: Reduce Tickets page inline control noise
+    type: task
+    parent_id: UX-OVERHAUL-P1-W1
+    status: complete
+    priority: high
+    mvp: true
+    description: Move advanced filters and bulk controls toward a more focused overlay or collapsed pattern while keeping ticket scanning fast.
+    definition_of_done:
+      - Tickets page foregrounds the list and primary actions.
+      - Advanced filtering and bulk editing no longer dominate the default viewport.
+      - Search and saved-view controls remain discoverable.
+    dependencies:
+      - UX-OVERHAUL-P1-W1
+    notes:
+      - "2026-04-20: Moved saved views, advanced filters, and bulk actions into a dedicated sheet while keeping search and queue scanning inline."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ux
+      - tickets
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
+  - id: UX-OVERHAUL-P1-W1-T04
+    title: Tighten Members page orientation
+    type: task
+    parent_id: UX-OVERHAUL-P1-W1
+    status: complete
+    priority: low
+    mvp: true
+    description: Improve membership scanning and supporting copy so the page feels consistent with the calmer workspace CRUD model.
+    definition_of_done:
+      - Member list headings and supporting text are concise and explicit.
+      - Empty and loading states remain aligned with the rest of the wave.
+    dependencies:
+      - UX-OVERHAUL-P1-W1
+    notes:
+      - "2026-04-20: Tightened page orientation copy and empty-state guidance so membership scanning matches the calmer workspace CRUD pattern."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - ux
+      - members
+    created_at: "2026-04-20T10:05:00+08:00"
+    updated_at: "2026-04-20T22:28:40+08:00"
+    changed_at: "2026-04-20T22:28:40+08:00"
+    changed_source: codex
+
   - id: PERF-P1
     title: Frontend Performance and Asset Reliability Hardening
     type: epic

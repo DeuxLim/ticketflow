@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
 import { ApiError } from '@/services/api/client';
@@ -33,6 +33,7 @@ import {
   listTicketTags,
 } from '@/features/workspace/settings/settings-api';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
@@ -187,6 +188,7 @@ export function TicketsPage() {
   const [savedViewName, setSavedViewName] = useState('');
   const [savedViewShared, setSavedViewShared] = useState(false);
   const [selectedSavedViewId, setSelectedSavedViewId] = useState<string>('none');
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Ticket | null>(null);
@@ -462,10 +464,26 @@ export function TicketsPage() {
   const pagination = ticketsQuery.data?.meta;
   const ticketIds = new Set(tickets.map((ticket) => ticket.id));
   const selectedVisibleTicketIds = selectedTicketIds.filter((id) => ticketIds.has(id));
+  const activeFilterCount = [statusFilter, priorityFilter, queueFilter, categoryFilter, customerFilter, assigneeFilter]
+    .filter((value) => value !== 'all').length + (search.trim().length > 0 ? 1 : 0);
 
   const resetPageAndSelection = () => {
     setPage(1);
     setSelectedTicketIds([]);
+  };
+
+  const resetAllControls = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setQueueFilter('all');
+    setCategoryFilter('all');
+    setCustomerFilter('all');
+    setAssigneeFilter('all');
+    setSelectedSavedViewId('none');
+    setSavedViewName('');
+    setSavedViewShared(false);
+    resetPageAndSelection();
   };
 
   const applySavedFilters = (filters: Record<string, unknown>) => {
@@ -515,97 +533,37 @@ export function TicketsPage() {
         <div>
           <Badge variant="secondary">Tickets</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Ticket Queue</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Full ticket lifecycle management with assignment and status controls.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Scan the queue first, then open focused controls for saved views, filtering, and bulk updates when you need them.</p>
         </div>
-        <Button
-          disabled={!canManage}
-          onClick={() => {
-            setCreateTemplateId(defaultTemplateId);
-            setIsCreateOpen(true);
-          }}
-          type="button"
-        >
-          Create Ticket
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => setIsControlsOpen(true)} type="button" variant="outline">
+            {selectedVisibleTicketIds.length > 0
+              ? `Views & Filters (${selectedVisibleTicketIds.length} selected)`
+              : activeFilterCount > 0
+                ? `Views & Filters (${activeFilterCount})`
+                : 'Views & Filters'}
+          </Button>
+          <Button
+            disabled={!canManage}
+            onClick={() => {
+              setCreateTemplateId(defaultTemplateId);
+              setIsCreateOpen(true);
+            }}
+            type="button"
+          >
+            Create Ticket
+          </Button>
+        </div>
       </div>
 
       <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Ticket List</CardTitle>
-          <CardDescription>{tickets.length} records</CardDescription>
+          <CardDescription>Keep the queue readable by leaving search inline and moving heavier control work into a dedicated panel.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-4">
-          <div className="flex flex-wrap items-end gap-3 rounded-md border p-3">
-            <Field className="min-w-[220px] flex-1">
-              <FieldLabel htmlFor="saved-view-select">Saved view</FieldLabel>
-              <Select value={selectedSavedViewId} onValueChange={(value) => {
-                const next = value ?? 'none';
-                setSelectedSavedViewId(next);
-                if (next === 'none') return;
-                const selected = savedViews.find((view) => String(view.id) === next);
-                if (selected) {
-                  applySavedFilters(selected.filters);
-                }
-              }}>
-                <SelectTrigger id="saved-view-select"><SelectValue placeholder="Select a saved view" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">None</SelectItem>
-                    {savedViews.map((view) => (
-                      <SelectItem key={view.id} value={String(view.id)}>
-                        {view.name}{view.is_shared ? ' (shared)' : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field className="min-w-[200px]">
-              <FieldLabel htmlFor="saved-view-name">New view name</FieldLabel>
-              <Input
-                id="saved-view-name"
-                value={savedViewName}
-                onChange={(event) => setSavedViewName(event.target.value)}
-                placeholder="My open high-priority tickets"
-              />
-            </Field>
-
-            <label className="flex items-center gap-2 pb-2 text-xs">
-              <input
-                checked={savedViewShared}
-                onChange={(event) => setSavedViewShared(event.target.checked)}
-                type="checkbox"
-              />
-              <span>Shared</span>
-            </label>
-
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              disabled={!canSaveView || saveView.isPending}
-              onClick={() => saveView.mutate()}
-            >
-              {saveView.isPending ? 'Saving...' : 'Save current filters'}
-            </Button>
-
-            <Button
-              size="sm"
-              type="button"
-              variant="outline"
-              disabled={selectedSavedViewId === 'none' || removeSavedView.isPending}
-              onClick={() => {
-                if (selectedSavedViewId === 'none') return;
-                removeSavedView.mutate(Number(selectedSavedViewId));
-              }}
-            >
-              {removeSavedView.isPending ? 'Deleting...' : 'Delete view'}
-            </Button>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-8">
-            <Field className="md:col-span-2">
+          <div className="flex flex-wrap items-end gap-3">
+            <Field className="min-w-[240px] flex-1">
               <FieldLabel htmlFor="ticket-search">Search</FieldLabel>
               <Input
                 id="ticket-search"
@@ -616,204 +574,23 @@ export function TicketsPage() {
                 placeholder="Ticket number, title, or description…"
                 value={search}
               />
+              <FieldDescription>Use search for quick narrowing, then open "Views & Filters" for deeper queue controls.</FieldDescription>
             </Field>
-
-            <Field>
-              <FieldLabel htmlFor="status-filter">Status</FieldLabel>
-              <Select value={statusFilter} onValueChange={(value) => {
-                setStatusFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="status-filter"><SelectValue placeholder="All status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All status</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="priority-filter">Priority</FieldLabel>
-              <Select value={priorityFilter} onValueChange={(value) => {
-                setPriorityFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="priority-filter"><SelectValue placeholder="All priority" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="queue-filter">Queue</FieldLabel>
-              <Select value={queueFilter} onValueChange={(value) => {
-                setQueueFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="queue-filter"><SelectValue placeholder="All queues" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All queues</SelectItem>
-                    {activeQueueConfigs.map((queue) => (
-                      <SelectItem key={queue.id} value={queue.key}>
-                        {queue.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="category-filter">Category</FieldLabel>
-              <Select value={categoryFilter} onValueChange={(value) => {
-                setCategoryFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="category-filter"><SelectValue placeholder="All categories" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {activeCategoryConfigs.map((category) => (
-                      <SelectItem key={category.id} value={category.key}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="customer-filter">Customer</FieldLabel>
-              <Select value={customerFilter} onValueChange={(value) => {
-                setCustomerFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="customer-filter"><SelectValue placeholder="All customers" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All customers</SelectItem>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={String(customer.id)}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {customerCoverageHint && (
-                <p className="mt-1 text-xs text-muted-foreground">{customerCoverageHint}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {selectedSavedViewId !== 'none' && (
+                <Badge variant="outline">
+                  Saved view: {savedViews.find((view) => String(view.id) === selectedSavedViewId)?.name ?? 'Custom'}
+                </Badge>
               )}
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="assignee-filter">Assignee</FieldLabel>
-              <Select value={assigneeFilter} onValueChange={(value) => {
-                setAssigneeFilter(value ?? 'all');
-                resetPageAndSelection();
-              }}>
-                <SelectTrigger className="w-full" id="assignee-filter"><SelectValue placeholder="All assignees" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All assignees</SelectItem>
-                    {members.map((member) => (
-                      <SelectItem key={member.user.id} value={String(member.user.id)}>
-                        {member.user.first_name} {member.user.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              onClick={() => {
-                setSearch('');
-                setStatusFilter('all');
-                setPriorityFilter('all');
-                setQueueFilter('all');
-                setCategoryFilter('all');
-                setCustomerFilter('all');
-                setAssigneeFilter('all');
-                setPage(1);
-              }}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              Reset filters
-            </Button>
-
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <Select value={bulkStatus} onValueChange={(value) => setBulkStatus((value ?? 'none') as 'none' | TicketForm['status'])}>
-                <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Bulk status" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">Keep status</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Select value={bulkPriority} onValueChange={(value) => setBulkPriority((value ?? 'none') as 'none' | TicketForm['priority'])}>
-                <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Bulk priority" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">Keep priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Select value={bulkAssignee} onValueChange={(value) => setBulkAssignee(value ?? 'none')}>
-                <SelectTrigger className="h-8 w-[180px]"><SelectValue placeholder="Bulk assignee" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">Keep assignee</SelectItem>
-                    <SelectItem value="">Unassigned</SelectItem>
-                    {members.map((member) => (
-                      <SelectItem key={member.user.id} value={String(member.user.id)}>
-                        {member.user.first_name} {member.user.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-
-              <Button
-                disabled={
-                  !canManage ||
-                  selectedVisibleTicketIds.length === 0 ||
-                  (bulkStatus === 'none' && bulkPriority === 'none' && bulkAssignee === 'none') ||
-                  bulkUpdateTickets.isPending
-                }
-                onClick={() => bulkUpdateTickets.mutate()}
-                size="sm"
-                type="button"
-              >
-                {bulkUpdateTickets.isPending ? 'Applying...' : `Apply to ${selectedVisibleTicketIds.length}`}
-              </Button>
+              {activeFilterCount > 0 && <Badge variant="outline">{activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}</Badge>}
+              {selectedVisibleTicketIds.length > 0 && (
+                <Badge variant="secondary">{selectedVisibleTicketIds.length} selected</Badge>
+              )}
+              {(activeFilterCount > 0 || selectedSavedViewId !== 'none') && (
+                <Button onClick={resetAllControls} size="sm" type="button" variant="outline">
+                  Reset
+                </Button>
+              )}
             </div>
           </div>
 
@@ -970,6 +747,294 @@ export function TicketsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Sheet open={isControlsOpen} onOpenChange={setIsControlsOpen}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Views, Filters, and Bulk Actions</SheetTitle>
+            <SheetDescription>Use this panel for queue shaping and multi-ticket changes without crowding the list.</SheetDescription>
+          </SheetHeader>
+
+          <div className="flex flex-1 flex-col gap-6 px-4 pb-4">
+            <div className="rounded-md border p-4">
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="saved-view-select">Saved view</FieldLabel>
+                  <Select value={selectedSavedViewId} onValueChange={(value) => {
+                    const next = value ?? 'none';
+                    setSelectedSavedViewId(next);
+                    if (next === 'none') return;
+                    const selected = savedViews.find((view) => String(view.id) === next);
+                    if (selected) {
+                      applySavedFilters(selected.filters);
+                    }
+                  }}>
+                    <SelectTrigger id="saved-view-select"><SelectValue placeholder="Select a saved view" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">None</SelectItem>
+                        {savedViews.map((view) => (
+                          <SelectItem key={view.id} value={String(view.id)}>
+                            {view.name}{view.is_shared ? ' (shared)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldDescription>Apply a saved queue setup or capture the current filter combination as a reusable view.</FieldDescription>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="saved-view-name">New view name</FieldLabel>
+                  <Input
+                    id="saved-view-name"
+                    value={savedViewName}
+                    onChange={(event) => setSavedViewName(event.target.value)}
+                    placeholder="My open high-priority tickets"
+                  />
+                </Field>
+
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    checked={savedViewShared}
+                    onChange={(event) => setSavedViewShared(event.target.checked)}
+                    type="checkbox"
+                  />
+                  <span>Make this saved view shared</span>
+                </label>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    disabled={!canSaveView || saveView.isPending}
+                    onClick={() => saveView.mutate()}
+                  >
+                    {saveView.isPending ? 'Saving...' : 'Save current filters'}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                    disabled={selectedSavedViewId === 'none' || removeSavedView.isPending}
+                    onClick={() => {
+                      if (selectedSavedViewId === 'none') return;
+                      removeSavedView.mutate(Number(selectedSavedViewId));
+                    }}
+                  >
+                    {removeSavedView.isPending ? 'Deleting...' : 'Delete view'}
+                  </Button>
+                </div>
+              </FieldGroup>
+            </div>
+
+            <div className="rounded-md border p-4">
+              <FieldGroup>
+                <Field className="md:col-span-2">
+                  <FieldLabel htmlFor="status-filter">Status</FieldLabel>
+                  <Select value={statusFilter} onValueChange={(value) => {
+                    setStatusFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="status-filter"><SelectValue placeholder="All status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All status</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="priority-filter">Priority</FieldLabel>
+                  <Select value={priorityFilter} onValueChange={(value) => {
+                    setPriorityFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="priority-filter"><SelectValue placeholder="All priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="queue-filter">Queue</FieldLabel>
+                  <Select value={queueFilter} onValueChange={(value) => {
+                    setQueueFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="queue-filter"><SelectValue placeholder="All queues" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All queues</SelectItem>
+                        {activeQueueConfigs.map((queue) => (
+                          <SelectItem key={queue.id} value={queue.key}>
+                            {queue.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="category-filter">Category</FieldLabel>
+                  <Select value={categoryFilter} onValueChange={(value) => {
+                    setCategoryFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="category-filter"><SelectValue placeholder="All categories" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {activeCategoryConfigs.map((category) => (
+                          <SelectItem key={category.id} value={category.key}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="customer-filter">Customer</FieldLabel>
+                  <Select value={customerFilter} onValueChange={(value) => {
+                    setCustomerFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="customer-filter"><SelectValue placeholder="All customers" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All customers</SelectItem>
+                        {customers.map((customer) => (
+                          <SelectItem key={customer.id} value={String(customer.id)}>
+                            {customer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {customerCoverageHint && (
+                    <FieldDescription>{customerCoverageHint}</FieldDescription>
+                  )}
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="assignee-filter">Assignee</FieldLabel>
+                  <Select value={assigneeFilter} onValueChange={(value) => {
+                    setAssigneeFilter(value ?? 'all');
+                    resetPageAndSelection();
+                  }}>
+                    <SelectTrigger className="w-full" id="assignee-filter"><SelectValue placeholder="All assignees" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="all">All assignees</SelectItem>
+                        {members.map((member) => (
+                          <SelectItem key={member.user.id} value={String(member.user.id)}>
+                            {member.user.first_name} {member.user.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </FieldGroup>
+            </div>
+
+            <div className="rounded-md border p-4">
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="bulk-status">Bulk status</FieldLabel>
+                  <Select value={bulkStatus} onValueChange={(value) => setBulkStatus((value ?? 'none') as 'none' | TicketForm['status'])}>
+                    <SelectTrigger className="w-full" id="bulk-status"><SelectValue placeholder="Keep status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">Keep status</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="bulk-priority">Bulk priority</FieldLabel>
+                  <Select value={bulkPriority} onValueChange={(value) => setBulkPriority((value ?? 'none') as 'none' | TicketForm['priority'])}>
+                    <SelectTrigger className="w-full" id="bulk-priority"><SelectValue placeholder="Keep priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">Keep priority</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="bulk-assignee">Bulk assignee</FieldLabel>
+                  <Select value={bulkAssignee} onValueChange={(value) => setBulkAssignee(value ?? 'none')}>
+                    <SelectTrigger className="w-full" id="bulk-assignee"><SelectValue placeholder="Keep assignee" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="none">Keep assignee</SelectItem>
+                        <SelectItem value="">Unassigned</SelectItem>
+                        {members.map((member) => (
+                          <SelectItem key={member.user.id} value={String(member.user.id)}>
+                            {member.user.first_name} {member.user.last_name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <FieldDescription>{selectedVisibleTicketIds.length > 0 ? `${selectedVisibleTicketIds.length} visible ticket${selectedVisibleTicketIds.length === 1 ? '' : 's'} selected.` : 'Select tickets in the list before applying a bulk edit.'}</FieldDescription>
+                </Field>
+
+                <Button
+                  disabled={
+                    !canManage ||
+                    selectedVisibleTicketIds.length === 0 ||
+                    (bulkStatus === 'none' && bulkPriority === 'none' && bulkAssignee === 'none') ||
+                    bulkUpdateTickets.isPending
+                  }
+                  onClick={() => bulkUpdateTickets.mutate()}
+                  size="sm"
+                  type="button"
+                >
+                  {bulkUpdateTickets.isPending ? 'Applying...' : `Apply to ${selectedVisibleTicketIds.length}`}
+                </Button>
+              </FieldGroup>
+            </div>
+          </div>
+
+          <SheetFooter className="border-t">
+            <Button onClick={resetAllControls} type="button" variant="outline">
+              Reset controls
+            </Button>
+            <Button onClick={() => setIsControlsOpen(false)} type="button">
+              Done
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <Dialog
         onOpenChange={(open) => {

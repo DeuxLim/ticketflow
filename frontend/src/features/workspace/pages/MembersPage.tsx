@@ -48,18 +48,23 @@ export function MembersPage() {
       <div>
         <Badge variant="secondary">Membership</Badge>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Workspace Members</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Review who has access to the workspace and which roles shape what they can do.
+        </p>
       </div>
 
       <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Members</CardTitle>
-          <CardDescription>{members.length} active members</CardDescription>
+          <CardDescription>Scan workspace access quickly without opening separate management forms.</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
           {query.isLoading ? (
             <p className="text-sm text-muted-foreground">Loading members...</p>
           ) : query.isError ? (
             <p className="text-sm text-destructive">{(query.error as Error).message}</p>
+          ) : members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No active members are assigned to this workspace yet.</p>
           ) : (
             <div className="overflow-x-auto">
             <Table className="min-w-[680px]">
