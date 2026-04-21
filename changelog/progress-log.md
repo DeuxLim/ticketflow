@@ -850,3 +850,26 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1-W2` by sweeping auth surfaces for missing labels, onboarding clarity, and overexposed controls, then run Wave 2 closeout verification.
+
+## 2026-04-21 22:35 +08:00 - Completed UX Overhaul Wave 2 with Auth and Onboarding Cleanup
+
+- Tightened auth/onboarding UX in:
+  - `frontend/src/layouts/AuthLayout.tsx`
+  - `frontend/src/features/workspace/pages/WorkspaceOnboardingPage.tsx`
+- Auth layout now shows seeded local demo credentials in development instead of relying on unclear form placeholders, while production builds keep generic workspace sign-in copy.
+- First-workspace onboarding now uses shared shadcn `Field` components, explicit helper text, accessible invalid states, and clearer submit/footer copy.
+- Added regression coverage for the onboarding field explanations, generated slug behavior, create request, and post-create navigation:
+  - `frontend/src/features/workspace/pages/WorkspaceOnboardingPage.test.tsx`
+- Closed `UX-OVERHAUL-P1-W2` in `project-state.yaml` and synchronized `roadmap.md` after full frontend verification.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/pages/WorkspaceOnboardingPage.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (20 files, 70 tests).
+- `frontend`: `npm run build` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1` with an app-wide UX QA pass in the browser, then apply any final polish fixes and close the epic after verification.

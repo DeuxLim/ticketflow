@@ -6,9 +6,9 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { createWorkspace as createWorkspaceRequest, listUserWorkspaces } from '@/features/workspace/pages/workspaceOnboardingApi';
 import { getLastWorkspaceSlug, setLastWorkspaceSlug } from '@/lib/workspace-session';
 import { ApiError } from '@/services/api/client';
@@ -98,34 +98,51 @@ export function WorkspaceOnboardingPage() {
           <Badge variant="secondary" className="w-fit">Onboarding</Badge>
           <CardTitle className="mt-2 text-2xl">Create your first workspace</CardTitle>
           <CardDescription>
-            Workspace context drives tenant isolation for customers, tickets, and memberships.
+            Set the support hub your team will use for customers, tickets, members, and settings.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit((values) => createWorkspace.mutate(values))}>
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name">Workspace name</Label>
-              <Input id="workspace-name" placeholder="Acme Support" {...register('name')} />
-              {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-            </div>
+          <form id="workspace-onboarding-form" onSubmit={handleSubmit((values) => createWorkspace.mutate(values))}>
+            <FieldGroup>
+              <Field data-invalid={Boolean(errors.name)}>
+                <FieldLabel htmlFor="workspace-name">Workspace name</FieldLabel>
+                <Input
+                  aria-invalid={Boolean(errors.name)}
+                  autoComplete="organization"
+                  id="workspace-name"
+                  placeholder="Acme Support"
+                  {...register('name')}
+                />
+                <FieldDescription>This is the human-friendly name shown in navigation and settings.</FieldDescription>
+                <FieldError errors={[errors.name]} />
+              </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="workspace-slug">Workspace slug</Label>
-              <Input id="workspace-slug" placeholder="acme-support" {...register('slug')} />
-              {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
-            </div>
+              <Field data-invalid={Boolean(errors.slug)}>
+                <FieldLabel htmlFor="workspace-slug">Workspace URL slug</FieldLabel>
+                <Input
+                  aria-invalid={Boolean(errors.slug)}
+                  autoComplete="off"
+                  id="workspace-slug"
+                  placeholder="acme-support"
+                  spellCheck={false}
+                  {...register('slug')}
+                />
+                <FieldDescription>Used in the workspace URL. Use lowercase letters, numbers, and hyphens.</FieldDescription>
+                <FieldError errors={[errors.slug]} />
+              </Field>
 
-            {createWorkspace.isError && (
-              <p className="text-xs text-destructive">
-                {(createWorkspace.error as Error).message}
-              </p>
-            )}
-
-            <Button disabled={isSubmitting || createWorkspace.isPending} type="submit">
-              {createWorkspace.isPending ? 'Creating workspace...' : 'Create Workspace'}
-            </Button>
+              {createWorkspace.isError && <FieldError>{(createWorkspace.error as Error).message}</FieldError>}
+            </FieldGroup>
           </form>
         </CardContent>
+        <CardFooter className="flex flex-col items-stretch gap-2">
+          <Button disabled={isSubmitting || createWorkspace.isPending} form="workspace-onboarding-form" type="submit">
+            {createWorkspace.isPending ? 'Creating workspace...' : 'Create workspace'}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            You can invite teammates, configure ticket types, and adjust branding after the workspace is created.
+          </p>
+        </CardFooter>
       </Card>
     </section>
   );

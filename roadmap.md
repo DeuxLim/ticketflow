@@ -5,7 +5,6 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 ## Current Focus
 
 - `UX-OVERHAUL-P1` App-Wide UX Overhaul
-- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement
 
 ## MVP Items
 
@@ -14,15 +13,15 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
-- Current state: workspace CRUD hardening is complete and verified; Wave 2 has now decluttered ticket details, ticketing/forms settings sections, and admin workspace configuration editors.
+- Current state: workspace CRUD hardening is complete and verified; Wave 2 is complete after ticket detail, settings, admin workspace configuration, and auth/onboarding cleanup.
 - Next actions:
-  - Sweep auth surfaces for missing labels, onboarding clarity, and overexposed controls.
-  - Run Wave 2 closeout verification after the remaining UX surfaces are cleaned up.
+  - Run an app-wide UX QA pass in the browser to catch remaining polish gaps and edge surfaces.
+  - Close the UX overhaul epic after any final QA fixes and verification.
 
 #### Child Items
 
 - `UX-OVERHAUL-P1-W1` Workspace CRUD UX Hardening - `complete`
-- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement - `in_progress`
+- `UX-OVERHAUL-P1-W2` Ticket Detail and Settings IA Refinement - `complete`
 - `UX-OVERHAUL-P1-W1-T01` Harden Invitations page action clarity - `complete`
 - `UX-OVERHAUL-P1-W1-T02` Harden Customers page action clarity - `complete`
 - `UX-OVERHAUL-P1-W1-T03` Reduce Tickets page inline control noise - `complete`
@@ -98,4 +97,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `UX-OVERHAUL-P1-W2` by sweeping auth surfaces for missing labels, onboarding clarity, and overexposed controls.
+Continue `UX-OVERHAUL-P1` with an app-wide UX QA pass in the browser, then apply any final polish fixes and close the epic after verification.

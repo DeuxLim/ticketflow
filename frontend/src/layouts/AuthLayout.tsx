@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
 export function AuthLayout() {
+  const showDemoCredentials = import.meta.env.DEV;
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[0.9fr_1.1fr]">
@@ -19,11 +21,24 @@ export function AuthLayout() {
           </p>
           <Separator className="my-8 max-w-sm" />
           <Card className="max-w-md bg-card/70 shadow-none">
-            <CardContent className="grid gap-5 p-5">
-              <div>
-                <p className="text-sm font-medium">Demo workspace</p>
-                <p className="mt-1 text-sm text-muted-foreground">Use the seeded account to explore the app locally.</p>
-              </div>
+            <CardContent className="flex flex-col gap-5 p-5">
+              {showDemoCredentials ? (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium">Local demo accounts</p>
+                    <p className="text-sm text-muted-foreground">Use a seeded account to explore the app in development.</p>
+                  </div>
+                  <div className="grid gap-2 rounded-lg border border-border/70 p-3 text-sm">
+                    <Credential label="Workspace user" email="user@ticketing.local" password="User@12345" />
+                    <Credential label="Platform admin" email="admin@ticketing.local" password="Admin@12345" />
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium">Workspace access</p>
+                  <p className="text-sm text-muted-foreground">Sign in with the account your workspace admin provided.</p>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <Stat label="Customers" value="1" />
                 <Stat label="Tickets" value="1" />
@@ -43,9 +58,19 @@ export function AuthLayout() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="flex flex-col gap-1">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 font-medium">{value}</p>
+      <p className="font-medium">{value}</p>
+    </div>
+  );
+}
+
+function Credential({ label, email, password }: { label: string; email: string; password: string }) {
+  return (
+    <div className="grid gap-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="font-mono text-xs">{email}</p>
+      <p className="font-mono text-xs">{password}</p>
     </div>
   );
 }
