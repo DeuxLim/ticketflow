@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +27,8 @@ import {
 type TicketingSettingsSectionProps = {
   workspaceSlug: string;
 };
+
+type DictionaryKind = 'categories' | 'types' | 'tags';
 
 function slugify(value: string): string {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -116,6 +119,7 @@ export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSec
   const queryClient = useQueryClient();
   const [ticketNumberFormatDraft, setTicketNumberFormatDraft] = useState<string | null>(null);
   const [assignmentStrategyDraft, setAssignmentStrategyDraft] = useState<WorkspaceTicketingSettings['assignment_strategy'] | null>(null);
+  const [activeDictionary, setActiveDictionary] = useState<DictionaryKind | null>(null);
   const [categoryName, setCategoryName] = useState('');
   const [typeName, setTypeName] = useState('');
   const [tagName, setTagName] = useState('');
@@ -334,61 +338,9 @@ export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSec
       <Card className="shadow-none">
         <CardHeader>
           <CardTitle>Config dictionaries</CardTitle>
-          <CardDescription>Owner-managed terms that power forms, routing, and automation.</CardDescription>
+          <CardDescription>Review owner-managed terms first, then open the focused manager for changes.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <div className="grid gap-3 md:grid-cols-3">
-            <InlineCreate label="Category" value={categoryName} onChange={setCategoryName} onSubmit={() => createCategory.mutate()} disabled={!categoryName || createCategory.isPending} />
-            <InlineCreate label="Ticket type" value={typeName} onChange={setTypeName} onSubmit={() => createType.mutate()} disabled={!typeName || createType.isPending} />
-            <InlineCreate label="Tag" value={tagName} onChange={setTagName} onSubmit={() => createTag.mutate()} disabled={!tagName || createTag.isPending} />
-          </div>
-
-          <DictionaryEditor
-            title="Categories"
-            rows={categories}
-            selectedId={selectedCategoryId}
-            setSelectedId={setSelectedCategoryId}
-            nameDraft={categoryNameDraft}
-            setNameDraft={setCategoryNameDraft}
-            keyDraft={categoryKeyDraft}
-            setKeyDraft={setCategoryKeyDraft}
-            onSelect={hydrateCategoryDrafts}
-            onSave={() => updateCategory.mutate()}
-            onToggle={() => toggleCategory.mutate()}
-            isSaving={updateCategory.isPending || toggleCategory.isPending}
-            errorMessage={dictionaryError}
-          />
-
-          <DictionaryEditor
-            title="Ticket types"
-            rows={types}
-            selectedId={selectedTypeId}
-            setSelectedId={setSelectedTypeId}
-            nameDraft={typeNameDraft}
-            setNameDraft={setTypeNameDraft}
-            keyDraft={typeKeyDraft}
-            setKeyDraft={setTypeKeyDraft}
-            onSelect={hydrateTypeDrafts}
-            onSave={() => updateType.mutate()}
-            onToggle={() => toggleType.mutate()}
-            isSaving={updateType.isPending || toggleType.isPending}
-            errorMessage={dictionaryError}
-          />
-
-          <DictionaryEditor
-            title="Tags"
-            rows={tags}
-            selectedId={selectedTagId}
-            setSelectedId={setSelectedTagId}
-            nameDraft={tagNameDraft}
-            setNameDraft={setTagNameDraft}
-            onSelect={hydrateTagDrafts}
-            onSave={() => updateTag.mutate()}
-            onToggle={() => toggleTag.mutate()}
-            isSaving={updateTag.isPending || toggleTag.isPending}
-            errorMessage={dictionaryError}
-          />
-
           <div className="rounded-lg border">
             <Table>
               <TableHeader>
@@ -407,8 +359,135 @@ export function TicketingSettingsSection({ workspaceSlug }: TicketingSettingsSec
               </TableBody>
             </Table>
           </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            <DictionarySummary
+              description="Routing and reporting labels."
+              label="Categories"
+              onOpen={() => setActiveDictionary('categories')}
+              total={categories.length}
+            />
+            <DictionarySummary
+              description="Intake and template grouping."
+              label="Ticket types"
+              onOpen={() => setActiveDictionary('types')}
+              total={types.length}
+            />
+            <DictionarySummary
+              description="Lightweight ticket markers."
+              label="Tags"
+              onOpen={() => setActiveDictionary('tags')}
+              total={tags.length}
+            />
+          </div>
         </CardContent>
       </Card>
+
+      <Dialog open={activeDictionary === 'categories'} onOpenChange={(open) => setActiveDictionary(open ? 'categories' : null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Manage Categories</DialogTitle>
+            <DialogDescription>Create or update ticket categories without crowding the settings overview.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <InlineCreate label="Category" value={categoryName} onChange={setCategoryName} onSubmit={() => createCategory.mutate()} disabled={!categoryName || createCategory.isPending} />
+            <DictionaryEditor
+              title="Categories"
+              rows={categories}
+              selectedId={selectedCategoryId}
+              setSelectedId={setSelectedCategoryId}
+              nameDraft={categoryNameDraft}
+              setNameDraft={setCategoryNameDraft}
+              keyDraft={categoryKeyDraft}
+              setKeyDraft={setCategoryKeyDraft}
+              onSelect={hydrateCategoryDrafts}
+              onSave={() => updateCategory.mutate()}
+              onToggle={() => toggleCategory.mutate()}
+              isSaving={updateCategory.isPending || toggleCategory.isPending}
+              errorMessage={dictionaryError}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={activeDictionary === 'types'} onOpenChange={(open) => setActiveDictionary(open ? 'types' : null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Manage Ticket Types</DialogTitle>
+            <DialogDescription>Create or update intake types used by templates and routing.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <InlineCreate label="Ticket type" value={typeName} onChange={setTypeName} onSubmit={() => createType.mutate()} disabled={!typeName || createType.isPending} />
+            <DictionaryEditor
+              title="Ticket types"
+              rows={types}
+              selectedId={selectedTypeId}
+              setSelectedId={setSelectedTypeId}
+              nameDraft={typeNameDraft}
+              setNameDraft={setTypeNameDraft}
+              keyDraft={typeKeyDraft}
+              setKeyDraft={setTypeKeyDraft}
+              onSelect={hydrateTypeDrafts}
+              onSave={() => updateType.mutate()}
+              onToggle={() => toggleType.mutate()}
+              isSaving={updateType.isPending || toggleType.isPending}
+              errorMessage={dictionaryError}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={activeDictionary === 'tags'} onOpenChange={(open) => setActiveDictionary(open ? 'tags' : null)}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Manage Tags</DialogTitle>
+            <DialogDescription>Create or update lightweight tags used to mark and filter tickets.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <InlineCreate label="Tag" value={tagName} onChange={setTagName} onSubmit={() => createTag.mutate()} disabled={!tagName || createTag.isPending} />
+            <DictionaryEditor
+              title="Tags"
+              rows={tags}
+              selectedId={selectedTagId}
+              setSelectedId={setSelectedTagId}
+              nameDraft={tagNameDraft}
+              setNameDraft={setTagNameDraft}
+              onSelect={hydrateTagDrafts}
+              onSave={() => updateTag.mutate()}
+              onToggle={() => toggleTag.mutate()}
+              isSaving={updateTag.isPending || toggleTag.isPending}
+              errorMessage={dictionaryError}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function DictionarySummary({
+  description,
+  label,
+  onOpen,
+  total,
+}: {
+  description: string;
+  label: string;
+  onOpen: () => void;
+  total: number;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border p-4">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Badge variant="outline" className="w-fit">
+        {total} records
+      </Badge>
+      <Button type="button" variant="outline" onClick={onOpen}>
+        Manage {label.toLowerCase()}
+      </Button>
     </div>
   );
 }

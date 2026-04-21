@@ -58,6 +58,11 @@ describe('FormsSettingsSection', () => {
   it('creates template with nullable ticket type when Any type is selected', async () => {
     renderWithQueryClient(<FormsSettingsSection workspaceSlug="acme" />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Manage templates' }));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Template name')).not.toBeNull();
+    });
+
     fireEvent.change(screen.getByLabelText('Template name'), { target: { value: 'Default Intake' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add template' }));
 

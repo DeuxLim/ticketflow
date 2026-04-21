@@ -806,3 +806,25 @@ Verification:
 ## Resume From Here
 
 Start `UX-OVERHAUL-P1-W1` with invitations and customers, then reduce tickets-page inline control noise before continuing to the next UX wave.
+
+## 2026-04-21 21:27 +08:00 - Continued UX Overhaul Wave 2 with Settings Dialog Managers
+
+- Reworked dense workspace settings sections so users review current configuration before editing:
+  - `frontend/src/features/workspace/settings/TicketingSettingsSection.tsx`
+  - `frontend/src/features/workspace/settings/FormsSettingsSection.tsx`
+- Ticketing settings now keeps behavior settings and dictionary counts visible, while category/type/tag create-edit controls open in focused dialogs.
+- Forms settings now keeps custom-field and template tables visible, while field/template creation and editing open in focused dialogs.
+- Updated focused regression tests for the new dialog-first paths:
+  - `frontend/src/features/workspace/settings/TicketingSettingsSection.test.tsx`
+  - `frontend/src/features/workspace/settings/FormsSettingsSection.test.tsx`
+- Updated `project-state.yaml` and `roadmap.md` so Wave 2 progress reflects ticket details plus ticketing/forms settings cleanup.
+
+Verification:
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run src/features/workspace/settings/TicketingSettingsSection.test.tsx src/features/workspace/settings/FormsSettingsSection.test.tsx` passed.
+- `frontend`: `npm run test -- --run` passed (19 files, 69 tests).
+- `frontend`: `npm run build` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1-W2` by sweeping auth and admin surfaces for inline editing, missing labels, and overexposed controls.

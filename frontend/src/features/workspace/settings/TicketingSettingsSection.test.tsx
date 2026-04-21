@@ -74,8 +74,13 @@ describe('TicketingSettingsSection', () => {
       expect(screen.getByText('Config dictionaries')).not.toBeNull();
     });
 
+    fireEvent.click(screen.getByRole('button', { name: 'Manage categories' }));
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Category name')).not.toBeNull();
+    });
+
     fireEvent.change(screen.getByPlaceholderText('Category name'), { target: { value: 'Finance Billing' } });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
 
     await waitFor(() => {
       expect(createTicketCategory).toHaveBeenCalledWith('acme', expect.objectContaining({

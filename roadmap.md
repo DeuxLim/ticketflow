@@ -14,10 +14,10 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
-- Current state: workspace CRUD hardening is complete and verified; Wave 2 is now in progress after the ticket details surface was decluttered and moved to focused overlays.
+- Current state: workspace CRUD hardening is complete and verified; Wave 2 has now decluttered ticket details plus the ticketing/forms settings sections.
 - Next actions:
-  - Continue Wave 2 with workspace settings information-architecture refinements.
-  - Audit remaining auth and admin surfaces for inline editing, missing labels, and overexposed controls.
+  - Sweep auth and admin surfaces for inline editing, missing labels, and overexposed controls.
+  - Run Wave 2 closeout verification after the remaining UX surfaces are cleaned up.
 
 #### Child Items
 
@@ -98,4 +98,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `UX-OVERHAUL-P1-W2` by auditing workspace settings tabs for always-on controls that should become clearer grouped sections, dialogs, or sheets.
+Continue `UX-OVERHAUL-P1-W2` by sweeping auth and admin surfaces for inline editing, missing labels, and overexposed controls.
