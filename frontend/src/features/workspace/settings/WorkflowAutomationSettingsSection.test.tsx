@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkflowAutomationSettingsSection } from './WorkflowAutomationSettingsSection';
 import {
   activateWorkflow,
@@ -95,13 +95,20 @@ describe('WorkflowAutomationSettingsSection', () => {
     vi.mocked(rejectApproval).mockResolvedValue({ data: { id: 1 } } as never);
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('creates a workflow using form inputs', async () => {
     renderWithQueryClient(<WorkflowAutomationSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.change(screen.getByPlaceholderText('Workflow name'), { target: { value: 'Escalation Flow' } });
-    fireEvent.change(screen.getByPlaceholderText('From status'), { target: { value: 'open' } });
-    fireEvent.change(screen.getByPlaceholderText('To status'), { target: { value: 'in_progress' } });
-    fireEvent.click(getEnabledButtonByName('Create workflow'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create workflow' }));
+
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Workflow name'), { target: { value: 'Escalation Flow' } });
+    fireEvent.change(dialog.getByLabelText('From status'), { target: { value: 'open' } });
+    fireEvent.change(dialog.getByLabelText('To status'), { target: { value: 'in_progress' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create workflow' }));
 
     await waitFor(() => {
       expect(createWorkflow).toHaveBeenCalledWith('acme', expect.objectContaining({
@@ -110,13 +117,33 @@ describe('WorkflowAutomationSettingsSection', () => {
     });
   });
 
+  it('creates an automation rule from a focused dialog', async () => {
+    renderWithQueryClient(<WorkflowAutomationSettingsSection workspaceSlug="acme" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create rule' }));
+
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Rule name'), { target: { value: 'Notify on ticket' } });
+    fireEvent.change(dialog.getByLabelText('Event type'), { target: { value: 'ticket.created' } });
+    fireEvent.change(dialog.getByLabelText('Priority'), { target: { value: '50' } });
+    fireEvent.change(dialog.getByLabelText('Conditions JSON'), { target: { value: '[]' } });
+    fireEvent.change(dialog.getByLabelText('Actions JSON'), { target: { value: '[{"type":"notify"}]' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create rule' }));
+
+    await waitFor(() => {
+      expect(createAutomationRule).toHaveBeenCalledWith('acme', expect.objectContaining({
+        name: 'Notify on ticket',
+        event_type: 'ticket.created',
+        priority: 50,
+      }));
+    });
+  });
+
   it('simulates a workflow transition and shows result', async () => {
     renderWithQueryClient(<WorkflowAutomationSettingsSection workspaceSlug="acme" />);
 
-    const ticketIdInputs = screen.getAllByPlaceholderText('Ticket ID');
-    fireEvent.change(ticketIdInputs[0], { target: { value: '123' } });
-    const targetStatusInputs = screen.getAllByPlaceholderText('Target status');
-    fireEvent.change(targetStatusInputs[0], { target: { value: 'resolved' } });
+    fireEvent.change(screen.getByLabelText('Ticket ID'), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText('Target status'), { target: { value: 'resolved' } });
     fireEvent.click(getEnabledButtonByName('Simulate transition'));
 
     await waitFor(() => {

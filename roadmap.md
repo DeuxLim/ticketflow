@@ -13,9 +13,9 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
-- Current state: workspace CRUD hardening is complete and verified; Wave 2 is complete after ticket detail, settings, admin workspace configuration, and auth/onboarding cleanup.
+- Current state: workspace CRUD hardening is complete and verified; Wave 2 is complete after ticket detail, settings, admin workspace configuration, and auth/onboarding cleanup. App-wide QA has also cleaned up workflow automation creation flows.
 - Next actions:
-  - Run an app-wide UX QA pass in the browser to catch remaining polish gaps and edge surfaces.
+  - Continue app-wide UX QA on remaining settings surfaces such as governance/security and integrations edge states.
   - Close the UX overhaul epic after any final QA fixes and verification.
 
 #### Child Items
@@ -97,4 +97,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `UX-OVERHAUL-P1` with an app-wide UX QA pass in the browser, then apply any final polish fixes and close the epic after verification.
+Continue `UX-OVERHAUL-P1` with app-wide UX QA on remaining settings surfaces such as governance/security and integrations edge states, then apply final polish and close the epic after verification.

@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -53,6 +55,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   });
 
   const [workflowName, setWorkflowName] = useState('');
+  const [isCreateWorkflowDialogOpen, setIsCreateWorkflowDialogOpen] = useState(false);
   const [workflowIsDefault, setWorkflowIsDefault] = useState(false);
   const [transitionFromStatus, setTransitionFromStatus] = useState('open');
   const [transitionToStatus, setTransitionToStatus] = useState('in_progress');
@@ -66,6 +69,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
 
   const [automationRuleName, setAutomationRuleName] = useState('');
+  const [isCreateRuleDialogOpen, setIsCreateRuleDialogOpen] = useState(false);
   const [automationEventType, setAutomationEventType] = useState('ticket.created');
   const [automationPriority, setAutomationPriority] = useState(100);
   const [automationConditionsJson, setAutomationConditionsJson] = useState('[]');
@@ -102,6 +106,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
       setTransitionToStatus('in_progress');
       setTransitionRequiredPermission('tickets.manage');
       setTransitionRequiresApproval(false);
+      setIsCreateWorkflowDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'workflows'] });
     },
   });
@@ -138,6 +143,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
       setAutomationPriority(100);
       setAutomationConditionsJson('[]');
       setAutomationActionsJson('[{"type":"notify"}]');
+      setIsCreateRuleDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'automation-rules'] });
     },
   });
@@ -179,42 +185,24 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   const canCreateAutomationRule = automationRuleName.trim().length > 0 && automationActionsJson.trim().length > 0;
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
-      <Card className="shadow-none">
-        <CardHeader>
-          <Badge variant="secondary" className="w-fit">Workflow</Badge>
-          <CardTitle>Workflow lifecycle</CardTitle>
-          <CardDescription>Create, update, activate, and simulate workflow transitions.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="space-y-2 rounded-md border p-3">
-            <p className="text-sm font-medium">Create workflow</p>
-            <Input placeholder="Workflow name" value={workflowName} onChange={(event) => setWorkflowName(event.target.value)} />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Input placeholder="From status" value={transitionFromStatus} onChange={(event) => setTransitionFromStatus(event.target.value)} />
-              <Input placeholder="To status" value={transitionToStatus} onChange={(event) => setTransitionToStatus(event.target.value)} />
+    <>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card className="shadow-none">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-2">
+                <Badge variant="secondary" className="w-fit">Workflow</Badge>
+                <div className="flex flex-col gap-1">
+                  <CardTitle>Workflow lifecycle</CardTitle>
+                  <CardDescription>Create, update, activate, and simulate workflow transitions.</CardDescription>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsCreateWorkflowDialogOpen(true)}>
+                Create workflow
+              </Button>
             </div>
-            <Input
-              placeholder="Required permission (optional)"
-              value={transitionRequiredPermission}
-              onChange={(event) => setTransitionRequiredPermission(event.target.value)}
-            />
-            <label className="flex items-center gap-2 text-xs">
-              <Checkbox checked={transitionRequiresApproval} onCheckedChange={(checked) => setTransitionRequiresApproval(checked === true)} />
-              <span>Transition requires approval</span>
-            </label>
-            <label className="flex items-center gap-2 text-xs">
-              <Checkbox checked={workflowIsDefault} onCheckedChange={(checked) => setWorkflowIsDefault(checked === true)} />
-              <span>Set as default workflow</span>
-            </label>
-            {createWorkflowMutation.isError && (
-              <p className="text-xs text-destructive">{(createWorkflowMutation.error as Error).message}</p>
-            )}
-            <Button size="sm" variant="outline" disabled={!canCreateWorkflow || createWorkflowMutation.isPending} onClick={() => createWorkflowMutation.mutate()}>
-              {createWorkflowMutation.isPending ? 'Creating...' : 'Create workflow'}
-            </Button>
-          </div>
-
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
           {workflows.map((workflow) => {
             const nameDraft = workflowUpdateNameDrafts[workflow.id] ?? workflow.name;
             const activeDraft = workflowUpdateActiveDrafts[workflow.id] ?? workflow.is_active;
@@ -257,25 +245,34 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
 
           <Separator />
 
-          <div className="space-y-2 rounded-md border p-3">
+          <div className="flex flex-col gap-2 rounded-md border p-3">
             <p className="text-sm font-medium">Simulate transition</p>
-            <Input
-              placeholder="Ticket ID"
-              type="number"
-              value={simulationTicketId}
-              onChange={(event) => setSimulationTicketId(event.target.value)}
-            />
-            <Input
-              list="workflow-target-statuses"
-              placeholder="Target status"
-              value={simulationTargetStatus}
-              onChange={(event) => setSimulationTargetStatus(event.target.value)}
-            />
-            <datalist id="workflow-target-statuses">
-              {statusOptions.map((status) => (
-                <option key={status} value={status} />
-              ))}
-            </datalist>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="workflow-simulation-ticket-id">Ticket ID</FieldLabel>
+                <Input
+                  id="workflow-simulation-ticket-id"
+                  type="number"
+                  value={simulationTicketId}
+                  onChange={(event) => setSimulationTicketId(event.target.value)}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="workflow-simulation-target-status">Target status</FieldLabel>
+                <Input
+                  id="workflow-simulation-target-status"
+                  list="workflow-target-statuses"
+                  value={simulationTargetStatus}
+                  onChange={(event) => setSimulationTargetStatus(event.target.value)}
+                />
+                <FieldDescription>Choose the status to test against the active workflow.</FieldDescription>
+                <datalist id="workflow-target-statuses">
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status} />
+                  ))}
+                </datalist>
+              </Field>
+            </FieldGroup>
             {simulateWorkflow.isError && (
               <p className="text-xs text-destructive">{(simulateWorkflow.error as Error).message}</p>
             )}
@@ -299,7 +296,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
 
           <Separator />
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">Pending approvals</p>
             {approvals.length === 0 && <p className="text-xs text-muted-foreground">No pending approvals.</p>}
             {approvals.map((approval) => (
@@ -319,37 +316,26 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card className="shadow-none">
-        <CardHeader>
-          <Badge variant="secondary" className="w-fit">Automation</Badge>
-          <CardTitle>Rules and execution logs</CardTitle>
-          <CardDescription>Create, update, test, and toggle automation rules.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="space-y-2 rounded-md border p-3">
-            <p className="text-sm font-medium">Create rule</p>
-            <Input placeholder="Rule name" value={automationRuleName} onChange={(event) => setAutomationRuleName(event.target.value)} />
-            <Input list="automation-event-types" placeholder="Event type" value={automationEventType} onChange={(event) => setAutomationEventType(event.target.value)} />
-            <datalist id="automation-event-types">
-              {eventTypeOptions.map((eventType) => (
-                <option key={eventType} value={eventType} />
-              ))}
-            </datalist>
-            <Input type="number" placeholder="Priority" value={automationPriority} onChange={(event) => setAutomationPriority(Number(event.target.value) || 0)} />
-            <Input placeholder="Conditions JSON" value={automationConditionsJson} onChange={(event) => setAutomationConditionsJson(event.target.value)} />
-            <Input placeholder="Actions JSON" value={automationActionsJson} onChange={(event) => setAutomationActionsJson(event.target.value)} />
-            {createRuleMutation.isError && (
-              <p className="text-xs text-destructive">{(createRuleMutation.error as Error).message}</p>
-            )}
-            <Button size="sm" variant="outline" disabled={!canCreateAutomationRule || createRuleMutation.isPending} onClick={() => createRuleMutation.mutate()}>
-              {createRuleMutation.isPending ? 'Creating...' : 'Create rule'}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
+        <Card className="shadow-none">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-col gap-2">
+                <Badge variant="secondary" className="w-fit">Automation</Badge>
+                <div className="flex flex-col gap-1">
+                  <CardTitle>Rules and execution logs</CardTitle>
+                  <CardDescription>Create, update, test, and toggle automation rules.</CardDescription>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsCreateRuleDialogOpen(true)}>
+                Create rule
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {rules.map((rule) => {
               const nameDraft = automationNameDrafts[rule.id] ?? rule.name;
               const priorityDraft = automationPriorityDrafts[rule.id] ?? rule.priority;
@@ -414,7 +400,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
 
           <Separator />
 
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">Recent executions</p>
             {executions.slice(0, 10).map((execution) => (
               <div key={execution.id} className="rounded-md border p-3 text-xs">
@@ -428,8 +414,151 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+      <Dialog open={isCreateWorkflowDialogOpen} onOpenChange={setIsCreateWorkflowDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Workflow</DialogTitle>
+            <DialogDescription>
+              Define the first transition for a workflow. Additional transition editing can happen after creation.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="create-workflow-form" onSubmit={(event) => {
+            event.preventDefault();
+            createWorkflowMutation.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="workflow-name">Workflow name</FieldLabel>
+                <Input id="workflow-name" value={workflowName} onChange={(event) => setWorkflowName(event.target.value)} />
+              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="workflow-from-status">From status</FieldLabel>
+                  <Input id="workflow-from-status" value={transitionFromStatus} onChange={(event) => setTransitionFromStatus(event.target.value)} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="workflow-to-status">To status</FieldLabel>
+                  <Input id="workflow-to-status" value={transitionToStatus} onChange={(event) => setTransitionToStatus(event.target.value)} />
+                </Field>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="workflow-required-permission">Required permission (optional)</FieldLabel>
+                <Input
+                  id="workflow-required-permission"
+                  value={transitionRequiredPermission}
+                  onChange={(event) => setTransitionRequiredPermission(event.target.value)}
+                />
+                <FieldDescription>Leave blank when the transition should not require a specific permission.</FieldDescription>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="workflow-requires-approval"
+                  checked={transitionRequiresApproval}
+                  onCheckedChange={(checked) => setTransitionRequiresApproval(checked === true)}
+                />
+                <FieldLabel htmlFor="workflow-requires-approval">Transition requires approval</FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="workflow-default"
+                  checked={workflowIsDefault}
+                  onCheckedChange={(checked) => setWorkflowIsDefault(checked === true)}
+                />
+                <FieldLabel htmlFor="workflow-default">Set as default workflow</FieldLabel>
+              </Field>
+              {createWorkflowMutation.isError && (
+                <p className="text-xs text-destructive">{(createWorkflowMutation.error as Error).message}</p>
+              )}
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCreateWorkflowDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!canCreateWorkflow || createWorkflowMutation.isPending}
+              form="create-workflow-form"
+              type="submit"
+            >
+              {createWorkflowMutation.isPending ? 'Creating...' : 'Create workflow'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateRuleDialogOpen} onOpenChange={setIsCreateRuleDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Automation Rule</DialogTitle>
+            <DialogDescription>
+              Start with a named event trigger, priority, and JSON conditions/actions for the rule engine.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="create-automation-rule-form" onSubmit={(event) => {
+            event.preventDefault();
+            createRuleMutation.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="automation-rule-name">Rule name</FieldLabel>
+                <Input id="automation-rule-name" value={automationRuleName} onChange={(event) => setAutomationRuleName(event.target.value)} />
+              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="automation-event-type">Event type</FieldLabel>
+                  <Input
+                    id="automation-event-type"
+                    list="automation-event-types"
+                    value={automationEventType}
+                    onChange={(event) => setAutomationEventType(event.target.value)}
+                  />
+                  <datalist id="automation-event-types">
+                    {eventTypeOptions.map((eventType) => (
+                      <option key={eventType} value={eventType} />
+                    ))}
+                  </datalist>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="automation-priority">Priority</FieldLabel>
+                  <Input
+                    id="automation-priority"
+                    type="number"
+                    value={automationPriority}
+                    onChange={(event) => setAutomationPriority(Number(event.target.value) || 0)}
+                  />
+                </Field>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="automation-conditions">Conditions JSON</FieldLabel>
+                <Input id="automation-conditions" value={automationConditionsJson} onChange={(event) => setAutomationConditionsJson(event.target.value)} />
+                <FieldDescription>Use an empty array when every matching event should run the rule.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="automation-actions">Actions JSON</FieldLabel>
+                <Input id="automation-actions" value={automationActionsJson} onChange={(event) => setAutomationActionsJson(event.target.value)} />
+              </Field>
+              {createRuleMutation.isError && (
+                <p className="text-xs text-destructive">{(createRuleMutation.error as Error).message}</p>
+              )}
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsCreateRuleDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!canCreateAutomationRule || createRuleMutation.isPending}
+              form="create-automation-rule-form"
+              type="submit"
+            >
+              {createRuleMutation.isPending ? 'Creating...' : 'Create rule'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

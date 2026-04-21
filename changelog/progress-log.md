@@ -873,3 +873,27 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1` with an app-wide UX QA pass in the browser, then apply any final polish fixes and close the epic after verification.
+
+## 2026-04-21 22:57 +08:00 - Continued UX QA with Workflow Automation Dialogs
+
+- App-wide UX QA found workflow automation settings still had always-visible create controls that relied on placeholders instead of visible field labels.
+- Reworked workflow automation settings in:
+  - `frontend/src/features/workspace/settings/WorkflowAutomationSettingsSection.tsx`
+- Workflow creation now opens in a focused dialog with labeled workflow, transition, permission, approval, and default-workflow fields.
+- Automation rule creation now opens in a focused dialog with labeled event, priority, conditions, and actions fields.
+- Transition simulation now uses visible field labels and helper text instead of placeholder-only inputs.
+- Updated regression coverage for the dialog-first workflow/rule creation paths and labeled simulation flow:
+  - `frontend/src/features/workspace/settings/WorkflowAutomationSettingsSection.test.tsx`
+- Updated `project-state.yaml` and `roadmap.md` so the remaining UX-overhaul work points to final app-wide QA surfaces.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/settings/WorkflowAutomationSettingsSection.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (20 files, 71 tests).
+- `frontend`: `npm run build` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1` with app-wide UX QA on remaining settings surfaces such as governance/security and integrations edge states, then apply final polish and close the epic after verification.
