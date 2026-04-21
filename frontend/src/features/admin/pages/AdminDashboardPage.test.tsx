@@ -35,14 +35,14 @@ function renderWithProviders(ui: ReactElement) {
 }
 
 describe('AdminDashboardPage', () => {
-  const getEditor = (title: 'Usage limits' | 'Feature flags') => {
-    const header = screen.getByText(title);
-    const container = header.closest('div');
-    if (!container) {
-      throw new Error(`${title} editor container not found.`);
-    }
+  const openWorkspaceEditor = async (buttonName: 'Manage limits' | 'Manage feature flags') => {
+    fireEvent.click(screen.getByRole('button', { name: buttonName }));
 
-    return within(container);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).not.toBeNull();
+    });
+
+    return within(screen.getByRole('dialog'));
   };
 
   beforeEach(() => {
@@ -108,8 +108,9 @@ describe('AdminDashboardPage', () => {
       expect(screen.getAllByText('Control plane').length).toBeGreaterThan(0);
     });
 
-    fireEvent.change(screen.getByLabelText('Usage limits value'), { target: { value: '10' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save limits' }));
+    const limitsDialog = await openWorkspaceEditor('Manage limits');
+    fireEvent.change(limitsDialog.getByLabelText('Usage limits value'), { target: { value: '10' } });
+    fireEvent.click(limitsDialog.getByRole('button', { name: 'Save limits' }));
 
     await waitFor(() => {
       expect(apiRequest).toHaveBeenCalledWith('/admin/workspaces/acme/limits', {
@@ -118,8 +119,9 @@ describe('AdminDashboardPage', () => {
       });
     });
 
-    fireEvent.change(screen.getByLabelText('Feature flags value'), { target: { value: 'true' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save feature flags' }));
+    const flagsDialog = await openWorkspaceEditor('Manage feature flags');
+    fireEvent.change(flagsDialog.getByLabelText('Feature flags value'), { target: { value: 'true' } });
+    fireEvent.click(flagsDialog.getByRole('button', { name: 'Save feature flags' }));
 
     await waitFor(() => {
       expect(apiRequest).toHaveBeenCalledWith('/admin/workspaces/acme/feature-flags', {
@@ -136,12 +138,13 @@ describe('AdminDashboardPage', () => {
       expect(screen.getAllByText('Control plane').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(getEditor('Usage limits').getByRole('button', { name: 'Add entry' }));
+    const limitsDialog = await openWorkspaceEditor('Manage limits');
+    fireEvent.click(limitsDialog.getByRole('button', { name: 'Add entry' }));
 
-    const keyInputs = getEditor('Usage limits').getAllByLabelText('Usage limits key');
+    const keyInputs = limitsDialog.getAllByLabelText('Usage limits key');
     fireEvent.change(keyInputs[1], { target: { value: 'max_agents' } });
 
-    fireEvent.click(getEditor('Usage limits').getByRole('button', { name: 'Save limits' }));
+    fireEvent.click(limitsDialog.getByRole('button', { name: 'Save limits' }));
 
     await waitFor(() => {
       expect(screen.getByText('Duplicate key "max_agents" is not allowed.')).not.toBeNull();
@@ -218,7 +221,8 @@ describe('AdminDashboardPage', () => {
       expect(screen.getAllByText('Control plane').length).toBeGreaterThan(0);
     });
 
-    fireEvent.click(getEditor('Usage limits').getByRole('button', { name: 'Save limits' }));
+    const limitsDialog = await openWorkspaceEditor('Manage limits');
+    fireEvent.click(limitsDialog.getByRole('button', { name: 'Save limits' }));
 
     await waitFor(() => {
       expect(apiRequest).toHaveBeenCalledWith('/admin/workspaces/acme/limits', {
@@ -228,13 +232,20 @@ describe('AdminDashboardPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/max agents limit|validation failed|unable to update workspace limits/i)).not.toBeNull();
+      expect(limitsDialog.getByText(/max agents limit|validation failed|unable to update workspace limits/i)).not.toBeNull();
     });
 
-    fireEvent.click(getEditor('Feature flags').getByRole('button', { name: 'Save feature flags' }));
+    fireEvent.click(limitsDialog.getByRole('button', { name: 'Done' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Feature flags update failed.')).not.toBeNull();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    const flagsDialog = await openWorkspaceEditor('Manage feature flags');
+    fireEvent.click(flagsDialog.getByRole('button', { name: 'Save feature flags' }));
+
+    await waitFor(() => {
+      expect(flagsDialog.getByText('Feature flags update failed.')).not.toBeNull();
     });
   });
 });

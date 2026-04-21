@@ -828,3 +828,25 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1-W2` by sweeping auth and admin surfaces for inline editing, missing labels, and overexposed controls.
+
+## 2026-04-21 22:20 +08:00 - Continued UX Overhaul Wave 2 with Admin Workspace Dialog Editors
+
+- Reworked admin workspace configuration so dense editors no longer live inline in every table row:
+  - `frontend/src/features/admin/pages/AdminDashboardPage.tsx`
+- Workspace rows now stay scannable with compact counts plus focused actions for usage limits and feature flags.
+- Usage limit and feature-flag editing now opens in shadcn dialogs with explicit titles, descriptions, reset/save controls, and preserved server-side validation feedback.
+- Updated admin regression coverage for dialog-first limits and feature-flag save/error flows:
+  - `frontend/src/features/admin/pages/AdminDashboardPage.test.tsx`
+- Updated `project-state.yaml` and `roadmap.md` so Wave 2 progress reflects the admin workspace cleanup.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/admin/pages/AdminDashboardPage.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (19 files, 69 tests).
+- `frontend`: `npm run build` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1-W2` by sweeping auth surfaces for missing labels, onboarding clarity, and overexposed controls, then run Wave 2 closeout verification.

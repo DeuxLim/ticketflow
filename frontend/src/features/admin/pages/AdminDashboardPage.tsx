@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +32,8 @@ type DraftRow = {
   type: DraftValueType;
   value: string;
 };
+
+type WorkspaceEditorKind = 'limits' | 'featureFlags';
 
 let nextDraftRowId = 1;
 
@@ -145,6 +148,10 @@ export function AdminDashboardPage() {
   const [featureFlagDrafts, setFeatureFlagDrafts] = useState<Record<number, DraftRow[]>>({});
   const [limitsErrors, setLimitsErrors] = useState<Record<number, string | null>>({});
   const [featureFlagErrors, setFeatureFlagErrors] = useState<Record<number, string | null>>({});
+  const [workspaceEditor, setWorkspaceEditor] = useState<{
+    workspace: AdminWorkspace;
+    kind: WorkspaceEditorKind;
+  } | null>(null);
 
   const usersPath = useMemo(
     () => `/admin/users?per_page=20&search=${encodeURIComponent(userSearch.trim())}`,
@@ -169,6 +176,24 @@ export function AdminDashboardPage() {
     queryKey: ['admin', 'workspaces', workspaceSearch],
     queryFn: () => apiRequest<PaginatedEnvelope<AdminWorkspace>>(workspacesPath),
   });
+
+  const openWorkspaceEditor = (workspace: AdminWorkspace, kind: WorkspaceEditorKind) => {
+    if (kind === 'limits') {
+      setLimitsDrafts((previous) => ({
+        ...previous,
+        [workspace.id]: previous[workspace.id] ?? createDraftRows(workspace.usage_limits),
+      }));
+      setLimitsErrors((previous) => ({ ...previous, [workspace.id]: null }));
+    } else {
+      setFeatureFlagDrafts((previous) => ({
+        ...previous,
+        [workspace.id]: previous[workspace.id] ?? createDraftRows(workspace.feature_flags),
+      }));
+      setFeatureFlagErrors((previous) => ({ ...previous, [workspace.id]: null }));
+    }
+
+    setWorkspaceEditor({ workspace, kind });
+  };
 
   const suspendWorkspace = useMutation({
     mutationFn: (workspace: AdminWorkspace) =>
@@ -246,6 +271,7 @@ export function AdminDashboardPage() {
         return next;
       });
       setLimitsErrors((previous) => ({ ...previous, [variables.workspace.id]: null }));
+      setWorkspaceEditor(null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
     },
@@ -270,6 +296,7 @@ export function AdminDashboardPage() {
         return next;
       });
       setFeatureFlagErrors((previous) => ({ ...previous, [variables.workspace.id]: null }));
+      setWorkspaceEditor(null);
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'workspaces'] });
     },
@@ -480,61 +507,32 @@ export function AdminDashboardPage() {
                                 </Button>
                               </div>
 
-                              <WorkspaceObjectEditor
-                                title="Usage limits"
-                                rows={limitsDrafts[workspace.id] ?? createDraftRows(workspace.usage_limits)}
-                                errorMessage={limitsErrors[workspace.id] ?? null}
-                                disabled={workspaceActionPending}
-                                onChangeRows={(rows) => {
-                                  setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: rows }));
-                                  setLimitsErrors((previous) => ({ ...previous, [workspace.id]: null }));
-                                }}
-                                onReset={() => {
-                                  setLimitsDrafts((previous) => ({ ...previous, [workspace.id]: createDraftRows(workspace.usage_limits) }));
-                                  setLimitsErrors((previous) => ({ ...previous, [workspace.id]: null }));
-                                }}
-                                onSave={(rows) => {
-                                  const parsed = parseDraftRows(rows);
-                                  if (!parsed.data) {
-                                    setLimitsErrors((previous) => ({
-                                      ...previous,
-                                      [workspace.id]: parsed.error ?? 'Unable to parse limits values.',
-                                    }));
-                                    return;
-                                  }
-
-                                  updateWorkspaceLimits.mutate({ workspace, limits: parsed.data });
-                                }}
-                                saveButtonLabel="Save limits"
-                              />
-
-                              <WorkspaceObjectEditor
-                                title="Feature flags"
-                                rows={featureFlagDrafts[workspace.id] ?? createDraftRows(workspace.feature_flags)}
-                                errorMessage={featureFlagErrors[workspace.id] ?? null}
-                                disabled={workspaceActionPending}
-                                onChangeRows={(rows) => {
-                                  setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: rows }));
-                                  setFeatureFlagErrors((previous) => ({ ...previous, [workspace.id]: null }));
-                                }}
-                                onReset={() => {
-                                  setFeatureFlagDrafts((previous) => ({ ...previous, [workspace.id]: createDraftRows(workspace.feature_flags) }));
-                                  setFeatureFlagErrors((previous) => ({ ...previous, [workspace.id]: null }));
-                                }}
-                                onSave={(rows) => {
-                                  const parsed = parseDraftRows(rows);
-                                  if (!parsed.data) {
-                                    setFeatureFlagErrors((previous) => ({
-                                      ...previous,
-                                      [workspace.id]: parsed.error ?? 'Unable to parse feature-flag values.',
-                                    }));
-                                    return;
-                                  }
-
-                                  updateWorkspaceFeatureFlags.mutate({ workspace, featureFlags: parsed.data });
-                                }}
-                                saveButtonLabel="Save feature flags"
-                              />
+                              <div className="flex flex-col items-end gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
+                                <p className="text-xs text-muted-foreground">
+                                  {Object.keys(workspace.usage_limits ?? {}).length} limits /{' '}
+                                  {Object.keys(workspace.feature_flags ?? {}).length} flags
+                                </p>
+                                <div className="flex flex-wrap justify-end gap-2">
+                                  <Button
+                                    disabled={workspaceActionPending}
+                                    onClick={() => openWorkspaceEditor(workspace, 'limits')}
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    Manage limits
+                                  </Button>
+                                  <Button
+                                    disabled={workspaceActionPending}
+                                    onClick={() => openWorkspaceEditor(workspace, 'featureFlags')}
+                                    size="sm"
+                                    type="button"
+                                    variant="outline"
+                                  >
+                                    Manage feature flags
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -615,6 +613,102 @@ export function AdminDashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={workspaceEditor?.kind === 'limits'} onOpenChange={(open) => !open && setWorkspaceEditor(null)}>
+        {workspaceEditor?.kind === 'limits' && (
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Manage Usage Limits</DialogTitle>
+              <DialogDescription>
+                Edit quota keys and values for {workspaceEditor.workspace.name} ({workspaceEditor.workspace.slug}).
+              </DialogDescription>
+            </DialogHeader>
+            <WorkspaceObjectEditor
+              title="Usage limits"
+              rows={limitsDrafts[workspaceEditor.workspace.id] ?? createDraftRows(workspaceEditor.workspace.usage_limits)}
+              errorMessage={limitsErrors[workspaceEditor.workspace.id] ?? null}
+              disabled={workspaceActionPending}
+              onChangeRows={(rows) => {
+                setLimitsDrafts((previous) => ({ ...previous, [workspaceEditor.workspace.id]: rows }));
+                setLimitsErrors((previous) => ({ ...previous, [workspaceEditor.workspace.id]: null }));
+              }}
+              onReset={() => {
+                setLimitsDrafts((previous) => ({
+                  ...previous,
+                  [workspaceEditor.workspace.id]: createDraftRows(workspaceEditor.workspace.usage_limits),
+                }));
+                setLimitsErrors((previous) => ({ ...previous, [workspaceEditor.workspace.id]: null }));
+              }}
+              onSave={(rows) => {
+                const parsed = parseDraftRows(rows);
+                if (!parsed.data) {
+                  setLimitsErrors((previous) => ({
+                    ...previous,
+                    [workspaceEditor.workspace.id]: parsed.error ?? 'Unable to parse limits values.',
+                  }));
+                  return;
+                }
+
+                updateWorkspaceLimits.mutate({ workspace: workspaceEditor.workspace, limits: parsed.data });
+              }}
+              saveButtonLabel="Save limits"
+            />
+            <DialogFooter>
+              <Button disabled={workspaceActionPending} onClick={() => setWorkspaceEditor(null)} type="button" variant="outline">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      <Dialog open={workspaceEditor?.kind === 'featureFlags'} onOpenChange={(open) => !open && setWorkspaceEditor(null)}>
+        {workspaceEditor?.kind === 'featureFlags' && (
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Manage Feature Flags</DialogTitle>
+              <DialogDescription>
+                Edit enabled experiences and rollout switches for {workspaceEditor.workspace.name} ({workspaceEditor.workspace.slug}).
+              </DialogDescription>
+            </DialogHeader>
+            <WorkspaceObjectEditor
+              title="Feature flags"
+              rows={featureFlagDrafts[workspaceEditor.workspace.id] ?? createDraftRows(workspaceEditor.workspace.feature_flags)}
+              errorMessage={featureFlagErrors[workspaceEditor.workspace.id] ?? null}
+              disabled={workspaceActionPending}
+              onChangeRows={(rows) => {
+                setFeatureFlagDrafts((previous) => ({ ...previous, [workspaceEditor.workspace.id]: rows }));
+                setFeatureFlagErrors((previous) => ({ ...previous, [workspaceEditor.workspace.id]: null }));
+              }}
+              onReset={() => {
+                setFeatureFlagDrafts((previous) => ({
+                  ...previous,
+                  [workspaceEditor.workspace.id]: createDraftRows(workspaceEditor.workspace.feature_flags),
+                }));
+                setFeatureFlagErrors((previous) => ({ ...previous, [workspaceEditor.workspace.id]: null }));
+              }}
+              onSave={(rows) => {
+                const parsed = parseDraftRows(rows);
+                if (!parsed.data) {
+                  setFeatureFlagErrors((previous) => ({
+                    ...previous,
+                    [workspaceEditor.workspace.id]: parsed.error ?? 'Unable to parse feature-flag values.',
+                  }));
+                  return;
+                }
+
+                updateWorkspaceFeatureFlags.mutate({ workspace: workspaceEditor.workspace, featureFlags: parsed.data });
+              }}
+              saveButtonLabel="Save feature flags"
+            />
+            <DialogFooter>
+              <Button disabled={workspaceActionPending} onClick={() => setWorkspaceEditor(null)} type="button" variant="outline">
+                Done
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </section>
   );
 }
@@ -643,9 +737,9 @@ function WorkspaceObjectEditor({
   };
 
   return (
-    <div className="w-full space-y-2 rounded border border-border/70 p-2 text-left">
+    <div className="flex w-full flex-col gap-2 rounded border border-border/70 p-2 text-left">
       <p className="text-xs font-medium text-muted-foreground">{title}</p>
-      <div className="space-y-2">
+      <div className="flex flex-col gap-2">
         {rows.map((row) => (
           <div key={row.id} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_120px_1fr_auto]">
             <Input
