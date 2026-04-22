@@ -78,7 +78,7 @@ export function LoginPage() {
                 aria-invalid={Boolean(errors.email)}
                 autoComplete="email"
                 id="email"
-                placeholder="user@ticketing.local"
+                placeholder="you@example.com"
                 spellCheck={false}
                 type="email"
                 {...register('email')}
@@ -92,7 +92,7 @@ export function LoginPage() {
                 aria-invalid={Boolean(errors.password)}
                 autoComplete="current-password"
                 id="password"
-                placeholder="User@12345"
+                placeholder="Enter your password"
                 type="password"
                 {...register('password')}
               />
