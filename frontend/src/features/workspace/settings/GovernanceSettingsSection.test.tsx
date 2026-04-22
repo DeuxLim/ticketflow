@@ -206,13 +206,28 @@ describe('GovernanceSettingsSection', () => {
     });
   });
 
+  it('requests break-glass access from a focused dialog', async () => {
+    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Request access' }));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Reason'), { target: { value: 'Investigating Sev1 outage.' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Request access' }));
+
+    await waitFor(() => {
+      expect(createBreakGlassRequest).toHaveBeenCalledWith('acme', 'Investigating Sev1 outage.', 60);
+    });
+  });
+
   it('creates an SLA policy', async () => {
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.change(screen.getAllByPlaceholderText('Policy name')[0], { target: { value: 'P1 SLA' } });
-    fireEvent.change(screen.getAllByPlaceholderText('First response (minutes)')[0], { target: { value: '20' } });
-    fireEvent.change(screen.getAllByPlaceholderText('Resolution (minutes)')[0], { target: { value: '180' } });
-    fireEvent.click(getEnabledButtonByName('Create SLA policy'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create SLA policy' }));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Policy name'), { target: { value: 'P1 SLA' } });
+    fireEvent.change(dialog.getByLabelText('First response (minutes)'), { target: { value: '20' } });
+    fireEvent.change(dialog.getByLabelText('Resolution (minutes)'), { target: { value: '180' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create SLA policy' }));
 
     await waitFor(() => {
       expect(createSlaPolicy).toHaveBeenCalledWith('acme', {

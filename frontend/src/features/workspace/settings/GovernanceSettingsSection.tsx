@@ -50,7 +50,9 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [commentsDaysDraft, setCommentsDaysDraft] = useState<number | null>(null);
   const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
   const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
+  const [isBreakGlassDialogOpen, setIsBreakGlassDialogOpen] = useState(false);
   const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
+  const [isSlaDialogOpen, setIsSlaDialogOpen] = useState(false);
   const [slaName, setSlaName] = useState('Default SLA');
   const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
   const [slaFirstResponseMinutes, setSlaFirstResponseMinutes] = useState(30);
@@ -116,7 +118,10 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
 
   const requestBreakGlass = useMutation({
     mutationFn: () => createBreakGlassRequest(workspaceSlug, breakGlassReason, 60),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] }),
+    onSuccess: () => {
+      setIsBreakGlassDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'break-glass'] });
+    },
   });
 
   const approveBreakGlass = useMutation({
@@ -138,6 +143,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
       setSlaPriority('high');
       setSlaFirstResponseMinutes(30);
       setSlaResolutionMinutes(240);
+      setIsSlaDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'sla-policies'] });
     },
   });
@@ -284,34 +290,17 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             </div>
           </div>
 
-          <div className="rounded-md border p-3">
-            <p className="text-sm font-medium">SLA policies</p>
-            <div className="mt-2 grid gap-2 md:grid-cols-2">
-              <Input value={slaName} onChange={(event) => setSlaName(event.target.value)} placeholder="Policy name" />
-              <Select value={slaPriority} onValueChange={(value) => setSlaPriority((value as 'low' | 'medium' | 'high' | 'urgent') ?? 'high')}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="low">low</SelectItem>
-                    <SelectItem value="medium">medium</SelectItem>
-                    <SelectItem value="high">high</SelectItem>
-                    <SelectItem value="urgent">urgent</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Input type="number" value={slaFirstResponseMinutes} onChange={(event) => setSlaFirstResponseMinutes(Number(event.target.value) || 0)} placeholder="First response (minutes)" />
-              <Input type="number" value={slaResolutionMinutes} onChange={(event) => setSlaResolutionMinutes(Number(event.target.value) || 0)} placeholder="Resolution (minutes)" />
+          <div className="flex flex-col gap-3 rounded-md border p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">SLA policies</p>
+                <p className="text-xs text-muted-foreground">Review response targets before creating another policy.</p>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsSlaDialogOpen(true)}>
+                Create SLA policy
+              </Button>
             </div>
-            <Button
-              className="mt-2"
-              size="sm"
-              variant="outline"
-              disabled={createSlaPolicyMutation.isPending || slaName.trim().length < 2}
-              onClick={() => createSlaPolicyMutation.mutate()}
-            >
-              {createSlaPolicyMutation.isPending ? 'Creating policy...' : 'Create SLA policy'}
-            </Button>
-            <div className="mt-3 space-y-2 text-xs">
+            <div className="flex flex-col gap-2 text-xs">
               {slaPolicies.slice(0, 6).map((policy) => (
                 <p key={policy.id}>
                   {policy.name} • {policy.priority} • first response {policy.first_response_minutes}m • resolution {policy.resolution_minutes}m
@@ -328,13 +317,17 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           <CardDescription>Request emergency elevated access and inspect privileged actions.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="rounded-md border p-3">
-            <p className="text-sm font-medium">Break-glass requests</p>
-            <Input className="mt-2" value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} />
-            <Button className="mt-2" size="sm" variant="outline" onClick={() => requestBreakGlass.mutate()}>
-              Request break-glass access
-            </Button>
-            <div className="mt-3 space-y-2 text-xs">
+          <div className="flex flex-col gap-3 rounded-md border p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Break-glass requests</p>
+                <p className="text-xs text-muted-foreground">Request emergency access only for time-sensitive incidents.</p>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsBreakGlassDialogOpen(true)}>
+                Request access
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 text-xs">
               {breakGlass.slice(0, 5).map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
                   <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
@@ -478,6 +471,105 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         </CardContent>
       </Card>
     </div>
+      <Dialog open={isSlaDialogOpen} onOpenChange={setIsSlaDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create SLA Policy</DialogTitle>
+            <DialogDescription>
+              Define the first-response and resolution targets for tickets with this priority.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="sla-policy-form" onSubmit={(event) => {
+            event.preventDefault();
+            createSlaPolicyMutation.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="sla-policy-name">Policy name</FieldLabel>
+                <Input id="sla-policy-name" value={slaName} onChange={(event) => setSlaName(event.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel>Priority</FieldLabel>
+                <Select value={slaPriority} onValueChange={(value) => setSlaPriority((value as 'low' | 'medium' | 'high' | 'urgent') ?? 'high')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="low">low</SelectItem>
+                      <SelectItem value="medium">medium</SelectItem>
+                      <SelectItem value="high">high</SelectItem>
+                      <SelectItem value="urgent">urgent</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="sla-first-response">First response (minutes)</FieldLabel>
+                  <Input
+                    id="sla-first-response"
+                    type="number"
+                    value={slaFirstResponseMinutes}
+                    onChange={(event) => setSlaFirstResponseMinutes(Number(event.target.value) || 0)}
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="sla-resolution">Resolution (minutes)</FieldLabel>
+                  <Input
+                    id="sla-resolution"
+                    type="number"
+                    value={slaResolutionMinutes}
+                    onChange={(event) => setSlaResolutionMinutes(Number(event.target.value) || 0)}
+                  />
+                </Field>
+              </div>
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsSlaDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createSlaPolicyMutation.isPending || slaName.trim().length < 2}
+              form="sla-policy-form"
+              type="submit"
+            >
+              {createSlaPolicyMutation.isPending ? 'Creating policy...' : 'Create SLA policy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isBreakGlassDialogOpen} onOpenChange={setIsBreakGlassDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Break-Glass Access</DialogTitle>
+            <DialogDescription>
+              Explain why emergency elevated access is required. Requests remain pending until approved.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="break-glass-form" onSubmit={(event) => {
+            event.preventDefault();
+            requestBreakGlass.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="break-glass-reason">Reason</FieldLabel>
+                <Input id="break-glass-reason" value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} />
+                <FieldDescription>Include the incident or ticket context for audit review.</FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsBreakGlassDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button disabled={requestBreakGlass.isPending} form="break-glass-form" type="submit">
+              {requestBreakGlass.isPending ? 'Requesting...' : 'Request access'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isProviderDialogOpen} onOpenChange={setIsProviderDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

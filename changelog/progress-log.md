@@ -913,6 +913,10 @@ Continue `UX-OVERHAUL-P1` with app-wide UX QA on remaining settings surfaces suc
 Verification:
 - `frontend`: `npm run test -- --run src/features/workspace/settings/GovernanceSettingsSection.test.tsx` passed.
 - `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (20 files, 73 tests).
+- `frontend`: `npm run build` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
 - `frontend`: `npm run test -- --run` passed (20 files, 72 tests).
 - `frontend`: `npm run build` passed.
 - Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
@@ -921,3 +925,23 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1` with app-wide UX QA on remaining governance controls, SLA/break-glass forms, and integrations edge states, then apply final polish and close the epic after verification.
+
+## 2026-04-22 16:50 +08:00 - Continued UX QA with Governance SLA and Break-Glass Dialogs
+
+- App-wide UX QA found SLA creation and break-glass requests still exposed edit controls inline.
+- Reworked governance settings in:
+  - `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`
+- SLA policy creation now opens in a focused dialog with visible labels for policy name, priority, first response, and resolution targets.
+- Break-glass access requests now open in a focused dialog with a labeled reason field and audit-review helper copy.
+- Existing SLA policies and break-glass requests stay visible for review without permanently exposing create/request forms.
+- Updated regression coverage for dialog-first SLA creation and break-glass request flows:
+  - `frontend/src/features/workspace/settings/GovernanceSettingsSection.test.tsx`
+- Updated `project-state.yaml` and `roadmap.md` so remaining UX QA points to integrations edge states and any residual governance review-only states.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/settings/GovernanceSettingsSection.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1` with app-wide UX QA on integrations edge states and any remaining governance review-only states, then apply final polish and close the epic after verification.
