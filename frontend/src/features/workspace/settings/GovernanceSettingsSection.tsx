@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,6 +63,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [ipAllowlistDraft, setIpAllowlistDraft] = useState<string | null>(null);
 
   const [providerType, setProviderType] = useState<'saml' | 'oidc'>('oidc');
+  const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
   const [providerName, setProviderName] = useState('');
   const [providerIssuer, setProviderIssuer] = useState('');
   const [providerSsoUrl, setProviderSsoUrl] = useState('');
@@ -71,6 +73,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [providerClientId, setProviderClientId] = useState('');
   const [providerClientSecret, setProviderClientSecret] = useState('');
   const [lastOidcUrl, setLastOidcUrl] = useState<string | null>(null);
+  const [isDirectoryDialogOpen, setIsDirectoryDialogOpen] = useState(false);
   const [directoryName, setDirectoryName] = useState('');
   const [lastScimToken, setLastScimToken] = useState<string | null>(null);
 
@@ -186,6 +189,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
       setProviderRedirectUrl('');
       setProviderClientId('');
       setProviderClientSecret('');
+      setIsProviderDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'identity-providers'] });
     },
   });
@@ -204,6 +208,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
     mutationFn: () => createProvisioningDirectory(workspaceSlug, directoryName.trim()),
     onSuccess: (response) => {
       setDirectoryName('');
+      setIsDirectoryDialogOpen(false);
       setLastScimToken(response.meta?.token ?? null);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'provisioning-directories'] });
     },
@@ -215,6 +220,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const audits = auditQuery.data?.data ?? [];
 
   return (
+    <>
     <div className="grid gap-5 xl:grid-cols-2">
       <Card className="shadow-none">
         <CardHeader>
@@ -412,69 +418,15 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           </div>
 
           <div className="space-y-4 rounded-md border p-3">
-            <p className="text-sm font-medium">Identity providers</p>
-            <FieldGroup>
-              <Field>
-                <FieldLabel>Provider type</FieldLabel>
-                <Select value={providerType} onValueChange={(value) => setProviderType((value as 'saml' | 'oidc') ?? 'oidc')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="oidc">OIDC</SelectItem>
-                      <SelectItem value="saml">SAML</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel>Name</FieldLabel>
-                <Input value={providerName} onChange={(event) => setProviderName(event.target.value)} />
-              </Field>
-              <Field>
-                <FieldLabel>Issuer</FieldLabel>
-                <Input value={providerIssuer} onChange={(event) => setProviderIssuer(event.target.value)} />
-              </Field>
-              {providerType === 'saml' ? (
-                <Field>
-                  <FieldLabel>SAML SSO URL</FieldLabel>
-                  <Input value={providerSsoUrl} onChange={(event) => setProviderSsoUrl(event.target.value)} />
-                </Field>
-              ) : (
-                <>
-                  <Field>
-                    <FieldLabel>Authorization URL</FieldLabel>
-                    <Input value={providerAuthUrl} onChange={(event) => setProviderAuthUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Token URL</FieldLabel>
-                    <Input value={providerTokenUrl} onChange={(event) => setProviderTokenUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Redirect URI</FieldLabel>
-                    <Input value={providerRedirectUrl} onChange={(event) => setProviderRedirectUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Client ID</FieldLabel>
-                    <Input value={providerClientId} onChange={(event) => setProviderClientId(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel>Client secret</FieldLabel>
-                    <Input type="password" value={providerClientSecret} onChange={(event) => setProviderClientSecret(event.target.value)} />
-                  </Field>
-                </>
-              )}
-            </FieldGroup>
-            {createProvider.isError && (
-              <p className="text-xs text-destructive">{(createProvider.error as Error).message}</p>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!providerName.trim() || createProvider.isPending}
-              onClick={() => createProvider.mutate()}
-            >
-              {createProvider.isPending ? 'Creating...' : 'Create provider'}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Identity providers</p>
+                <p className="text-xs text-muted-foreground">Review configured SSO endpoints before adding another provider.</p>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsProviderDialogOpen(true)}>
+                Add provider
+              </Button>
+            </div>
             <div className="space-y-2 text-xs">
               {providers.map((provider) => (
                 <div key={provider.id} className="rounded border p-2">
@@ -501,11 +453,13 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           </div>
 
           <div className="space-y-4 rounded-md border p-3 lg:col-span-2">
-            <p className="text-sm font-medium">SCIM provisioning directories</p>
-            <div className="flex flex-wrap gap-2">
-              <Input className="max-w-sm" value={directoryName} onChange={(event) => setDirectoryName(event.target.value)} placeholder="Directory name" />
-              <Button size="sm" variant="outline" disabled={!directoryName.trim() || createDirectory.isPending} onClick={() => createDirectory.mutate()}>
-                {createDirectory.isPending ? 'Creating...' : 'Create directory'}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">SCIM provisioning directories</p>
+                <p className="text-xs text-muted-foreground">Create directories only when you are ready to store the one-time SCIM token.</p>
+              </div>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsDirectoryDialogOpen(true)}>
+                Create directory
               </Button>
             </div>
             {lastScimToken && (
@@ -524,5 +478,127 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         </CardContent>
       </Card>
     </div>
+      <Dialog open={isProviderDialogOpen} onOpenChange={setIsProviderDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Identity Provider</DialogTitle>
+            <DialogDescription>
+              Configure an OIDC or SAML provider for this workspace. Keep secrets available before saving.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="identity-provider-form" onSubmit={(event) => {
+            event.preventDefault();
+            createProvider.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>Provider type</FieldLabel>
+                <Select value={providerType} onValueChange={(value) => setProviderType((value as 'saml' | 'oidc') ?? 'oidc')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="oidc">OIDC</SelectItem>
+                      <SelectItem value="saml">SAML</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="identity-provider-name">Name</FieldLabel>
+                <Input id="identity-provider-name" value={providerName} onChange={(event) => setProviderName(event.target.value)} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="identity-provider-issuer">Issuer</FieldLabel>
+                <Input id="identity-provider-issuer" value={providerIssuer} onChange={(event) => setProviderIssuer(event.target.value)} />
+              </Field>
+              {providerType === 'saml' ? (
+                <Field>
+                  <FieldLabel htmlFor="identity-provider-saml-url">SAML SSO URL</FieldLabel>
+                  <Input id="identity-provider-saml-url" value={providerSsoUrl} onChange={(event) => setProviderSsoUrl(event.target.value)} />
+                </Field>
+              ) : (
+                <>
+                  <Field>
+                    <FieldLabel htmlFor="identity-provider-auth-url">Authorization URL</FieldLabel>
+                    <Input id="identity-provider-auth-url" value={providerAuthUrl} onChange={(event) => setProviderAuthUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="identity-provider-token-url">Token URL</FieldLabel>
+                    <Input id="identity-provider-token-url" value={providerTokenUrl} onChange={(event) => setProviderTokenUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="identity-provider-redirect-uri">Redirect URI</FieldLabel>
+                    <Input id="identity-provider-redirect-uri" value={providerRedirectUrl} onChange={(event) => setProviderRedirectUrl(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="identity-provider-client-id">Client ID</FieldLabel>
+                    <Input id="identity-provider-client-id" value={providerClientId} onChange={(event) => setProviderClientId(event.target.value)} />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="identity-provider-client-secret">Client secret</FieldLabel>
+                    <Input
+                      id="identity-provider-client-secret"
+                      type="password"
+                      value={providerClientSecret}
+                      onChange={(event) => setProviderClientSecret(event.target.value)}
+                    />
+                  </Field>
+                </>
+              )}
+              {createProvider.isError && (
+                <p className="text-xs text-destructive">{(createProvider.error as Error).message}</p>
+              )}
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsProviderDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!providerName.trim() || createProvider.isPending}
+              form="identity-provider-form"
+              type="submit"
+            >
+              {createProvider.isPending ? 'Creating...' : 'Create provider'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDirectoryDialogOpen} onOpenChange={setIsDirectoryDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create SCIM Directory</DialogTitle>
+            <DialogDescription>
+              Name the provisioning directory. The SCIM token is shown once after creation.
+            </DialogDescription>
+          </DialogHeader>
+          <form id="scim-directory-form" onSubmit={(event) => {
+            event.preventDefault();
+            createDirectory.mutate();
+          }}>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="directory-name">Directory name</FieldLabel>
+                <Input id="directory-name" value={directoryName} onChange={(event) => setDirectoryName(event.target.value)} />
+                <FieldDescription>Use the identity source name, for example Azure AD or Okta.</FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsDirectoryDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!directoryName.trim() || createDirectory.isPending}
+              form="scim-directory-form"
+              type="submit"
+            >
+              {createDirectory.isPending ? 'Creating...' : 'Create directory'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

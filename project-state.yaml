@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-21T22:57:29+08:00"
+updated_at: "2026-04-22T16:47:24+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -32,20 +32,21 @@ items:
       - "2026-04-21: Wave 2 now covers ticket details, ticketing/forms settings, and admin workspace editor decluttering."
       - "2026-04-21: Completed Wave 2 after auth/onboarding cleanup and full frontend verification."
       - "2026-04-21: App-wide QA pass found workflow automation settings still had always-visible placeholder-driven create flows; moved workflow/rule creation into dialogs with labeled fields and targeted coverage."
-    incomplete_reason: "Workspace CRUD, ticket details, settings, admin, auth/onboarding, and workflow automation creation cleanup are complete; continue app-wide QA for remaining edge surfaces before epic closeout."
+      - "2026-04-22: Governance/security QA moved SSO provider and SCIM directory creation into focused dialogs with labeled fields and regression coverage."
+    incomplete_reason: "Workspace CRUD, ticket details, settings, admin, auth/onboarding, workflow automation creation, and governance identity setup cleanup are complete; continue app-wide QA for remaining edge surfaces before epic closeout."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
-      - Continue app-wide UX QA on remaining settings surfaces such as governance/security and integrations edge states.
+      - Continue app-wide UX QA on remaining governance controls, SLA/break-glass forms, and integrations edge states.
       - Close the UX overhaul epic after any final QA fixes and verification.
     tags:
       - frontend
       - ux
       - mvp
     created_at: "2026-04-20T10:05:00+08:00"
-    updated_at: "2026-04-21T22:57:29+08:00"
-    changed_at: "2026-04-21T22:57:29+08:00"
+    updated_at: "2026-04-22T16:47:24+08:00"
+    changed_at: "2026-04-22T16:47:24+08:00"
     changed_source: codex
 
   - id: UX-OVERHAUL-P1-W1

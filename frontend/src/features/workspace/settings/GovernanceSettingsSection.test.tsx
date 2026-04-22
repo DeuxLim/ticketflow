@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup } from '@testing-library/react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GovernanceSettingsSection } from './GovernanceSettingsSection';
@@ -129,8 +129,10 @@ describe('GovernanceSettingsSection', () => {
 
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.change(screen.getByPlaceholderText('Directory name'), { target: { value: 'Azure AD' } });
-    fireEvent.click(getEnabledButtonByName('Create directory'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create directory' }));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Directory name'), { target: { value: 'Azure AD' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create directory' }));
 
     await waitFor(() => {
       expect(createProvisioningDirectory).toHaveBeenCalledWith('acme', 'Azure AD');
@@ -138,6 +140,30 @@ describe('GovernanceSettingsSection', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Latest SCIM token \(shown once\): scim_abc123/i)).not.toBeNull();
+    });
+  });
+
+  it('creates an identity provider from a focused dialog', async () => {
+    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add provider' }));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Name'), { target: { value: 'Acme OIDC' } });
+    fireEvent.change(dialog.getByLabelText('Issuer'), { target: { value: 'https://idp.example.test' } });
+    fireEvent.change(dialog.getByLabelText('Authorization URL'), { target: { value: 'https://idp.example.test/auth' } });
+    fireEvent.change(dialog.getByLabelText('Token URL'), { target: { value: 'https://idp.example.test/token' } });
+    fireEvent.change(dialog.getByLabelText('Redirect URI'), { target: { value: 'https://app.example.test/callback' } });
+    fireEvent.change(dialog.getByLabelText('Client ID'), { target: { value: 'client-id' } });
+    fireEvent.change(dialog.getByLabelText('Client secret'), { target: { value: 'client-secret' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create provider' }));
+
+    await waitFor(() => {
+      expect(createIdentityProvider).toHaveBeenCalledWith('acme', expect.objectContaining({
+        provider_type: 'oidc',
+        name: 'Acme OIDC',
+        issuer: 'https://idp.example.test',
+        authorization_url: 'https://idp.example.test/auth',
+      }));
     });
   });
 
