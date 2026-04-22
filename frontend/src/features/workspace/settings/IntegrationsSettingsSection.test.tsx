@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IntegrationsSettingsSection } from './IntegrationsSettingsSection';
 import {
   createWebhookEndpoint,
@@ -50,6 +51,10 @@ function getEnabledButtonByName(name: string): HTMLButtonElement {
 }
 
 describe('IntegrationsSettingsSection', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(listWebhookEndpoints).mockResolvedValue({ data: [] } as never);
@@ -61,10 +66,13 @@ describe('IntegrationsSettingsSection', () => {
     vi.mocked(createWebhookEndpoint).mockResolvedValue({ data: { id: 1 } } as never);
     renderWithQueryClient(<IntegrationsSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.change(screen.getByLabelText('Endpoint name'), { target: { value: 'Primary Hook' } });
-    fireEvent.change(screen.getByLabelText('Webhook URL'), { target: { value: 'https://example.test/webhooks' } });
-    fireEvent.change(screen.getByLabelText('Signing secret'), { target: { value: 'very-secret-123' } });
-    fireEvent.click(getEnabledButtonByName('Create endpoint'));
+    expect(screen.queryByLabelText('Endpoint name')).toBeNull();
+    fireEvent.click(getEnabledButtonByName('New endpoint'));
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Endpoint name'), { target: { value: 'Primary Hook' } });
+    fireEvent.change(dialog.getByLabelText('Webhook URL'), { target: { value: 'https://example.test/webhooks' } });
+    fireEvent.change(dialog.getByLabelText('Signing secret'), { target: { value: 'very-secret-123' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create endpoint' }));
 
     await waitFor(() => {
       expect(createWebhookEndpoint).toHaveBeenCalledWith('acme', expect.objectContaining({
@@ -75,9 +83,7 @@ describe('IntegrationsSettingsSection', () => {
     });
 
     await waitFor(() => {
-      expect((screen.getByLabelText('Endpoint name') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Webhook URL') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Signing secret') as HTMLInputElement).value).toBe('');
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
 
@@ -85,10 +91,12 @@ describe('IntegrationsSettingsSection', () => {
     vi.mocked(createWebhookEndpoint).mockRejectedValue(new Error('Unable to create endpoint.'));
     renderWithQueryClient(<IntegrationsSettingsSection workspaceSlug="acme" />);
 
-    fireEvent.change(screen.getByLabelText('Endpoint name'), { target: { value: 'Primary Hook' } });
-    fireEvent.change(screen.getByLabelText('Webhook URL'), { target: { value: 'https://example.test/webhooks' } });
-    fireEvent.change(screen.getByLabelText('Signing secret'), { target: { value: 'very-secret-123' } });
-    fireEvent.click(getEnabledButtonByName('Create endpoint'));
+    fireEvent.click(getEnabledButtonByName('New endpoint'));
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Endpoint name'), { target: { value: 'Primary Hook' } });
+    fireEvent.change(dialog.getByLabelText('Webhook URL'), { target: { value: 'https://example.test/webhooks' } });
+    fireEvent.change(dialog.getByLabelText('Signing secret'), { target: { value: 'very-secret-123' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Create endpoint' }));
 
     await waitFor(() => {
       expect(screen.getByText('Unable to create endpoint.')).not.toBeNull();

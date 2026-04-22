@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-22T16:50:24+08:00"
+updated_at: "2026-04-22T17:26:21+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -34,20 +34,21 @@ items:
       - "2026-04-21: App-wide QA pass found workflow automation settings still had always-visible placeholder-driven create flows; moved workflow/rule creation into dialogs with labeled fields and targeted coverage."
       - "2026-04-22: Governance/security QA moved SSO provider and SCIM directory creation into focused dialogs with labeled fields and regression coverage."
       - "2026-04-22: Governance QA moved SLA policy creation and break-glass requests into focused dialogs with labeled fields and regression coverage."
-    incomplete_reason: "Workspace CRUD, ticket details, settings, admin, auth/onboarding, workflow automation creation, and governance setup cleanup are complete; continue app-wide QA for remaining edge surfaces before epic closeout."
+      - "2026-04-22: Integrations QA moved webhook endpoint creation into a focused dialog with visible labels, helper text, and regression coverage."
+    incomplete_reason: "Workspace CRUD, ticket details, settings, admin, auth/onboarding, workflow automation creation, governance setup, and integrations endpoint cleanup are complete; final app-wide QA remains before epic closeout."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
-      - Continue app-wide UX QA on integrations edge states and any remaining governance review-only states.
+      - Run final app-wide UX QA on any remaining governance review-only states.
       - Close the UX overhaul epic after any final QA fixes and verification.
     tags:
       - frontend
       - ux
       - mvp
     created_at: "2026-04-20T10:05:00+08:00"
-    updated_at: "2026-04-22T16:50:24+08:00"
-    changed_at: "2026-04-22T16:50:24+08:00"
+    updated_at: "2026-04-22T17:26:21+08:00"
+    changed_at: "2026-04-22T17:26:21+08:00"
     changed_source: codex
 
   - id: UX-OVERHAUL-P1-W1

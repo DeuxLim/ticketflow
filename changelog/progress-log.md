@@ -945,3 +945,26 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1` with app-wide UX QA on integrations edge states and any remaining governance review-only states, then apply final polish and close the epic after verification.
+
+## 2026-04-22 17:26 +08:00 - Continued UX QA with Integrations Endpoint Dialog
+
+- App-wide UX QA found integrations settings still exposed webhook endpoint creation inline on the default settings surface.
+- Reworked integrations settings in:
+  - `frontend/src/features/workspace/settings/IntegrationsSettingsSection.tsx`
+- Webhook endpoint creation now opens in a focused dialog with visible labels and helper text for endpoint name, URL, signing secret, and subscribed events.
+- The default integrations surface now stays focused on reviewing configured endpoints and delivery logs.
+- Updated regression coverage for dialog-first webhook endpoint creation:
+  - `frontend/src/features/workspace/settings/IntegrationsSettingsSection.test.tsx`
+- Updated `project-state.yaml` and `roadmap.md` so remaining UX QA points to final governance review-only states and epic closeout.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/settings/IntegrationsSettingsSection.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (20 files, 73 tests).
+- `frontend`: `npm run build` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
+
+## Resume From Here
+
+Continue `UX-OVERHAUL-P1` with final app-wide UX QA on any remaining governance review-only states, then apply final polish and close the epic after verification.
