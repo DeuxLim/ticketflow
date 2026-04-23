@@ -50,6 +50,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [commentsDaysDraft, setCommentsDaysDraft] = useState<number | null>(null);
   const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
   const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
+  const [isRetentionDialogOpen, setIsRetentionDialogOpen] = useState(false);
   const [isBreakGlassDialogOpen, setIsBreakGlassDialogOpen] = useState(false);
   const [breakGlassReason, setBreakGlassReason] = useState('Urgent production access for incident response.');
   const [isSlaDialogOpen, setIsSlaDialogOpen] = useState(false);
@@ -63,6 +64,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [tenantModeDraft, setTenantModeDraft] = useState<'shared' | 'dedicated' | null>(null);
   const [dataPlaneKeyDraft, setDataPlaneKeyDraft] = useState<string | null>(null);
   const [ipAllowlistDraft, setIpAllowlistDraft] = useState<string | null>(null);
+  const [isSecurityPolicyDialogOpen, setIsSecurityPolicyDialogOpen] = useState(false);
 
   const [providerType, setProviderType] = useState<'saml' | 'oidc'>('oidc');
   const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
@@ -107,6 +109,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
       setCommentsDaysDraft(null);
       setAttachmentsDaysDraft(null);
       setAuditDaysDraft(null);
+      setIsRetentionDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'retention-policy'] });
     },
   });
@@ -168,6 +171,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
       setTenantModeDraft(null);
       setDataPlaneKeyDraft(null);
       setIpAllowlistDraft(null);
+      setIsSecurityPolicyDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'security-policy'] });
     },
   });
@@ -234,59 +238,63 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           <CardTitle>Retention and export</CardTitle>
           <CardDescription>Define retention windows and generate tenant-scoped compliance exports.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              saveRetention.mutate();
-            }}
-          >
-            <FieldGroup>
-              <div className="grid grid-cols-2 gap-3">
-                <Field>
-                  <FieldLabel>Tickets (days)</FieldLabel>
-                  <Input type="number" value={ticketsDays} onChange={(event) => setTicketsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel>Comments (days)</FieldLabel>
-                  <Input type="number" value={commentsDays} onChange={(event) => setCommentsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel>Attachments (days)</FieldLabel>
-                  <Input type="number" value={attachmentsDays} onChange={(event) => setAttachmentsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel>Audit (days)</FieldLabel>
-                  <Input type="number" value={auditDays} onChange={(event) => setAuditDaysDraft(Number(event.target.value))} />
-                </Field>
+        <CardContent className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3 rounded-md border p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Retention policy</p>
+                <p className="text-xs text-muted-foreground">Review how long workspace data is retained before changing policy windows.</p>
               </div>
-            </FieldGroup>
-            <Button type="submit" disabled={saveRetention.isPending}>{saveRetention.isPending ? 'Saving...' : 'Save retention policy'}</Button>
-          </form>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsRetentionDialogOpen(true)}>
+                Edit retention
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Tickets</p>
+                <p className="font-medium">{ticketsDays} days</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Comments</p>
+                <p className="font-medium">{commentsDays} days</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Attachments</p>
+                <p className="font-medium">{attachmentsDays} days</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Audit</p>
+                <p className="font-medium">{auditDays} days</p>
+              </div>
+            </div>
+          </div>
 
           <div className="rounded-md border p-3">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium">Tenant exports</p>
               <Button size="sm" variant="outline" onClick={() => requestExport.mutate()}>Create export</Button>
             </div>
-            <div className="mt-3 space-y-2 text-xs">
-              {exports.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                  <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!item.download_token}
-                    onClick={() => {
-                      if (!item.download_token) return;
-                      void downloadExport(workspaceSlug, item.id, item.download_token);
-                    }}
-                  >
-                    Download
-                  </Button>
-                </div>
-              ))}
+            <div className="mt-3 flex flex-col gap-2 text-xs">
+              {exports.length === 0 ? (
+                <p className="text-muted-foreground">No exports requested yet.</p>
+              ) : (
+                exports.slice(0, 5).map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                    <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!item.download_token}
+                      onClick={() => {
+                        if (!item.download_token) return;
+                        void downloadExport(workspaceSlug, item.id, item.download_token);
+                      }}
+                    >
+                      Download
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -301,11 +309,15 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
               </Button>
             </div>
             <div className="flex flex-col gap-2 text-xs">
-              {slaPolicies.slice(0, 6).map((policy) => (
-                <p key={policy.id}>
-                  {policy.name} • {policy.priority} • first response {policy.first_response_minutes}m • resolution {policy.resolution_minutes}m
-                </p>
-              ))}
+              {slaPolicies.length === 0 ? (
+                <p className="text-muted-foreground">No SLA policies configured.</p>
+              ) : (
+                slaPolicies.slice(0, 6).map((policy) => (
+                  <p key={policy.id}>
+                    {policy.name} • {policy.priority} • first response {policy.first_response_minutes}m • resolution {policy.resolution_minutes}m
+                  </p>
+                ))
+              )}
             </div>
           </div>
         </CardContent>
@@ -316,7 +328,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           <CardTitle>Break-glass and audit</CardTitle>
           <CardDescription>Request emergency elevated access and inspect privileged actions.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-3 rounded-md border p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -328,30 +340,38 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
               </Button>
             </div>
             <div className="flex flex-col gap-2 text-xs">
-              {breakGlass.slice(0, 5).map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                  <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={item.status !== 'pending' || approveBreakGlass.isPending}
-                    onClick={() => approveBreakGlass.mutate(item.id)}
-                  >
-                    {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
-                  </Button>
-                </div>
-              ))}
+              {breakGlass.length === 0 ? (
+                <p className="text-muted-foreground">No emergency access requests.</p>
+              ) : (
+                breakGlass.slice(0, 5).map((item) => (
+                  <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                    <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={item.status !== 'pending' || approveBreakGlass.isPending}
+                      onClick={() => approveBreakGlass.mutate(item.id)}
+                    >
+                      {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           <div className="rounded-md border p-3">
             <p className="text-sm font-medium">Recent privileged audit events</p>
-            <div className="mt-2 space-y-2 text-xs">
-              {audits.slice(0, 8).map((event) => (
-                <p key={event.id}>
-                  {event.action} • {event.resource_type}#{event.resource_id ?? 'n/a'}
-                </p>
-              ))}
+            <div className="mt-2 flex flex-col gap-2 text-xs">
+              {audits.length === 0 ? (
+                <p className="text-muted-foreground">No privileged audit events yet.</p>
+              ) : (
+                audits.slice(0, 8).map((event) => (
+                  <p key={event.id}>
+                    {event.action} • {event.resource_type}#{event.resource_id ?? 'n/a'}
+                  </p>
+                ))
+              )}
             </div>
           </div>
         </CardContent>
@@ -364,53 +384,41 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           <CardDescription>Manage workspace access guardrails, SSO providers, and SCIM provisioning directories.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-2">
-          <div className="space-y-4 rounded-md border p-3">
-            <p className="text-sm font-medium">Tenant security policy</p>
-            <FieldGroup>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
-                  <Checkbox checked={requireSso} onCheckedChange={(checked) => setRequireSsoDraft(checked === true)} />
-                  <span>Require SSO</span>
-                </label>
-                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
-                  <Checkbox checked={requireMfa} onCheckedChange={(checked) => setRequireMfaDraft(checked === true)} />
-                  <span>Require MFA</span>
-                </label>
+          <div className="flex flex-col gap-4 rounded-md border p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Tenant security policy</p>
+                <p className="text-xs text-muted-foreground">Review active access guardrails before changing enforcement rules.</p>
               </div>
-              <Field>
-                <FieldLabel>Session TTL (minutes)</FieldLabel>
-                <Input type="number" value={sessionTtl} onChange={(event) => setSessionTtlDraft(Number(event.target.value))} />
-              </Field>
-              <Field>
-                <FieldLabel>Tenant mode</FieldLabel>
-                <Select value={tenantMode} onValueChange={(value) => setTenantModeDraft((value as 'shared' | 'dedicated') ?? 'shared')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="shared">shared</SelectItem>
-                      <SelectItem value="dedicated">dedicated</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel>Dedicated data plane key</FieldLabel>
-                <Input value={dataPlaneKey} onChange={(event) => setDataPlaneKeyDraft(event.target.value)} />
-              </Field>
-              <Field>
-                <FieldLabel>IP allowlist (one IP per line)</FieldLabel>
-                <Textarea rows={4} value={ipAllowlist} onChange={(event) => setIpAllowlistDraft(event.target.value)} />
-              </Field>
-            </FieldGroup>
-            {saveSecurityPolicy.isError && (
-              <p className="text-xs text-destructive">{(saveSecurityPolicy.error as Error).message}</p>
-            )}
-            <Button size="sm" variant="outline" disabled={saveSecurityPolicy.isPending} onClick={() => saveSecurityPolicy.mutate()}>
-              {saveSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
-            </Button>
+              <Button size="sm" variant="outline" type="button" onClick={() => setIsSecurityPolicyDialogOpen(true)}>
+                Edit policy
+              </Button>
+            </div>
+            <div className="grid gap-2 text-xs sm:grid-cols-2">
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">SSO required</p>
+                <p className="font-medium">{requireSso ? 'Yes' : 'No'}</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">MFA required</p>
+                <p className="font-medium">{requireMfa ? 'Yes' : 'No'}</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Session TTL</p>
+                <p className="font-medium">{sessionTtl} minutes</p>
+              </div>
+              <div className="rounded border p-2">
+                <p className="text-muted-foreground">Tenant mode</p>
+                <p className="font-medium">{tenantMode}</p>
+              </div>
+              <div className="rounded border p-2 sm:col-span-2">
+                <p className="text-muted-foreground">IP allowlist</p>
+                <p className="font-medium">{ipAllowlist.trim() ? `${ipAllowlist.split('\n').filter(Boolean).length} entries` : 'No restrictions'}</p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-4 rounded-md border p-3">
+          <div className="flex flex-col gap-4 rounded-md border p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium">Identity providers</p>
@@ -420,23 +428,27 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
                 Add provider
               </Button>
             </div>
-            <div className="space-y-2 text-xs">
-              {providers.map((provider) => (
-                <div key={provider.id} className="rounded border p-2">
-                  <p className="font-medium">{provider.name} ({provider.provider_type})</p>
-                  <p className="text-muted-foreground">{provider.issuer ?? provider.authorization_url ?? provider.sso_url ?? 'no endpoint configured'}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {provider.provider_type === 'oidc' && (
-                      <Button size="sm" variant="outline" onClick={() => startOidc.mutate(provider.id)}>
-                        Start OIDC
+            <div className="flex flex-col gap-2 text-xs">
+              {providers.length === 0 ? (
+                <p className="text-muted-foreground">No identity providers configured.</p>
+              ) : (
+                providers.map((provider) => (
+                  <div key={provider.id} className="rounded border p-2">
+                    <p className="font-medium">{provider.name} ({provider.provider_type})</p>
+                    <p className="text-muted-foreground">{provider.issuer ?? provider.authorization_url ?? provider.sso_url ?? 'no endpoint configured'}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {provider.provider_type === 'oidc' && (
+                        <Button size="sm" variant="outline" onClick={() => startOidc.mutate(provider.id)}>
+                          Start OIDC
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => removeProvider.mutate(provider.id)} disabled={removeProvider.isPending}>
+                        Delete
                       </Button>
-                    )}
-                    <Button size="sm" variant="outline" onClick={() => removeProvider.mutate(provider.id)} disabled={removeProvider.isPending}>
-                      Delete
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             {lastOidcUrl && (
               <a className="text-xs underline" href={lastOidcUrl} rel="noreferrer" target="_blank">
@@ -445,7 +457,7 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
             )}
           </div>
 
-          <div className="space-y-4 rounded-md border p-3 lg:col-span-2">
+          <div className="flex flex-col gap-4 rounded-md border p-3 lg:col-span-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium">SCIM provisioning directories</p>
@@ -460,17 +472,139 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
                 Latest SCIM token (shown once): {lastScimToken}
               </p>
             )}
-            <div className="space-y-2 text-xs">
-              {directories.map((directory) => (
-                <p key={directory.id}>
-                  {directory.name} • {directory.status} • {new Date(directory.created_at).toLocaleString()}
-                </p>
-              ))}
+            <div className="flex flex-col gap-2 text-xs">
+              {directories.length === 0 ? (
+                <p className="text-muted-foreground">No SCIM directories configured.</p>
+              ) : (
+                directories.map((directory) => (
+                  <p key={directory.id}>
+                    {directory.name} • {directory.status} • {new Date(directory.created_at).toLocaleString()}
+                  </p>
+                ))
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
+      <Dialog open={isRetentionDialogOpen} onOpenChange={setIsRetentionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Retention Policy</DialogTitle>
+            <DialogDescription>
+              Set the number of days each compliance data category should remain available.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            id="retention-policy-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveRetention.mutate();
+            }}
+          >
+            <FieldGroup>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="retention-tickets-days">Tickets (days)</FieldLabel>
+                  <Input id="retention-tickets-days" type="number" value={ticketsDays} onChange={(event) => setTicketsDaysDraft(Number(event.target.value))} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="retention-comments-days">Comments (days)</FieldLabel>
+                  <Input id="retention-comments-days" type="number" value={commentsDays} onChange={(event) => setCommentsDaysDraft(Number(event.target.value))} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="retention-attachments-days">Attachments (days)</FieldLabel>
+                  <Input id="retention-attachments-days" type="number" value={attachmentsDays} onChange={(event) => setAttachmentsDaysDraft(Number(event.target.value))} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="retention-audit-days">Audit (days)</FieldLabel>
+                  <Input id="retention-audit-days" type="number" value={auditDays} onChange={(event) => setAuditDaysDraft(Number(event.target.value))} />
+                </Field>
+              </div>
+            </FieldGroup>
+            {saveRetention.isError && (
+              <p className="text-xs text-destructive">{(saveRetention.error as Error).message}</p>
+            )}
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsRetentionDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" form="retention-policy-form" disabled={saveRetention.isPending}>
+              {saveRetention.isPending ? 'Saving...' : 'Save retention policy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSecurityPolicyDialogOpen} onOpenChange={setIsSecurityPolicyDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Security Policy</DialogTitle>
+            <DialogDescription>
+              Change workspace access requirements, tenant isolation mode, and trusted network restrictions.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            id="security-policy-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveSecurityPolicy.mutate();
+            }}
+          >
+            <FieldGroup>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
+                  <Checkbox checked={requireSso} onCheckedChange={(checked) => setRequireSsoDraft(checked === true)} />
+                  <span>Require SSO</span>
+                </label>
+                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
+                  <Checkbox checked={requireMfa} onCheckedChange={(checked) => setRequireMfaDraft(checked === true)} />
+                  <span>Require MFA</span>
+                </label>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="security-session-ttl">Session TTL (minutes)</FieldLabel>
+                <Input id="security-session-ttl" type="number" value={sessionTtl} onChange={(event) => setSessionTtlDraft(Number(event.target.value))} />
+                <FieldDescription>Controls how long authenticated workspace sessions remain valid.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel>Tenant mode</FieldLabel>
+                <Select value={tenantMode} onValueChange={(value) => setTenantModeDraft((value as 'shared' | 'dedicated') ?? 'shared')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="shared">shared</SelectItem>
+                      <SelectItem value="dedicated">dedicated</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="security-data-plane-key">Dedicated data plane key</FieldLabel>
+                <Input id="security-data-plane-key" value={dataPlaneKey} onChange={(event) => setDataPlaneKeyDraft(event.target.value)} />
+                <FieldDescription>Leave blank unless this workspace has a dedicated data plane.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="security-ip-allowlist">IP allowlist (one IP per line)</FieldLabel>
+                <Textarea id="security-ip-allowlist" rows={4} value={ipAllowlist} onChange={(event) => setIpAllowlistDraft(event.target.value)} />
+              </Field>
+            </FieldGroup>
+            {saveSecurityPolicy.isError && (
+              <p className="text-xs text-destructive">{(saveSecurityPolicy.error as Error).message}</p>
+            )}
+          </form>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsSecurityPolicyDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button disabled={saveSecurityPolicy.isPending} form="security-policy-form" type="submit">
+              {saveSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isSlaDialogOpen} onOpenChange={setIsSlaDialogOpen}>
         <DialogContent>
           <DialogHeader>

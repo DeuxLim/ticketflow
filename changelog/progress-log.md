@@ -968,3 +968,25 @@ Verification:
 ## Resume From Here
 
 Continue `UX-OVERHAUL-P1` with final app-wide UX QA on any remaining governance review-only states, then apply final polish and close the epic after verification.
+
+## 2026-04-22 17:39 +08:00 - Closed App-Wide UX Overhaul
+
+- Final governance UX QA found retention policy and tenant security policy editors still exposed dense always-on controls.
+- Reworked governance settings in:
+  - `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`
+- Retention policy editing now opens in a focused dialog while the default card shows reviewable retention windows.
+- Tenant security policy editing now opens in a focused dialog while the default card shows SSO, MFA, session, tenant mode, and allowlist status.
+- Added calmer empty states for exports, SLA policies, break-glass requests, audit events, identity providers, and SCIM directories.
+- Updated regression coverage for retention and security policy dialog-first flows:
+  - `frontend/src/features/workspace/settings/GovernanceSettingsSection.test.tsx`
+- Marked `UX-OVERHAUL-P1` complete in `project-state.yaml` and synchronized `roadmap.md`.
+
+Verification:
+- `frontend`: `npm run test -- --run src/features/workspace/settings/GovernanceSettingsSection.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm run test -- --run` passed (20 files, 74 tests).
+- `frontend`: `npm run build` passed.
+
+## Resume From Here
+
+`UX-OVERHAUL-P1` is complete. Choose the next product or technical roadmap item before starting new implementation work.

@@ -4,19 +4,17 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- `UX-OVERHAUL-P1` App-Wide UX Overhaul
+- None
 
 ## MVP Items
 
 ### `UX-OVERHAUL-P1` App-Wide UX Overhaul
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Rework the app into a modal-first, lower-clutter operator experience with clearer labels, calmer information density, and more focused task flows across workspace, settings, admin, and auth surfaces.
-- Current state: workspace CRUD hardening is complete and verified; Wave 2 is complete after ticket detail, settings, admin workspace configuration, and auth/onboarding cleanup. App-wide QA has also cleaned up workflow automation creation, governance identity, SLA and break-glass setup flows, and integrations endpoint creation.
-- Next actions:
-  - Run final app-wide UX QA on any remaining governance review-only states.
-  - Close the UX overhaul epic after any final QA fixes and verification.
+- Current state: complete after workspace CRUD hardening, ticket detail/settings/admin/auth cleanup, workflow automation dialogs, governance identity/SLA/break-glass dialogs, integrations endpoint dialogs, and final governance retention/security policy dialog cleanup.
+- Next actions: none for this item.
 
 #### Child Items
 
@@ -97,4 +95,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `UX-OVERHAUL-P1` with final app-wide UX QA on any remaining governance review-only states, then apply final polish and close the epic after verification.
+`UX-OVERHAUL-P1` is complete. Choose the next product or technical roadmap item before starting new implementation work.

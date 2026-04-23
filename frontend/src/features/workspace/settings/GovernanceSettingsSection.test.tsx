@@ -167,15 +167,41 @@ describe('GovernanceSettingsSection', () => {
     });
   });
 
+  it('updates retention policy from a focused dialog', async () => {
+    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
+
+    expect(screen.queryByLabelText('Tickets (days)')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit retention' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText('Tickets (days)'), { target: { value: '400' } });
+    fireEvent.change(dialog.getByLabelText('Comments (days)'), { target: { value: '365' } });
+    fireEvent.change(dialog.getByLabelText('Attachments (days)'), { target: { value: '180' } });
+    fireEvent.change(dialog.getByLabelText('Audit (days)'), { target: { value: '900' } });
+    fireEvent.click(dialog.getByRole('button', { name: 'Save retention policy' }));
+
+    await waitFor(() => {
+      expect(updateRetentionPolicy).toHaveBeenCalledWith('acme', {
+        tickets_days: 400,
+        comments_days: 365,
+        attachments_days: 180,
+        audit_days: 900,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
   it('shows security policy save error message on failure', async () => {
     vi.mocked(updateTenantSecurityPolicy).mockRejectedValue(new Error('Security policy save failed.'));
 
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
-    await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: 'Save security policy' }).length).toBeGreaterThan(0);
-    });
-    fireEvent.click(getEnabledButtonByName('Save security policy'));
+    expect(screen.queryByLabelText('Session TTL (minutes)')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Edit policy' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.click(dialog.getByRole('button', { name: 'Save security policy' }));
 
     await waitFor(() => {
       expect(screen.getByText('Security policy save failed.')).not.toBeNull();
