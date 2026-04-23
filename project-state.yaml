@@ -1,13 +1,244 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-22T17:39:47+08:00"
+updated_at: "2026-04-23T21:05:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus: []
+current_focus:
+  - HARDEN-P1
 items:
+  - id: HARDEN-P1
+    title: Existing Feature Hardening and QA Closure
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Audit the current product surface, tighten parity and edge-state behavior, and close regression coverage gaps before any new feature scope.
+    definition_of_done:
+      - Auth, onboarding, workspace shell, dashboard, CRUD pages, settings, and admin surfaces are audited against current backend/frontend behavior.
+      - Missing permission, validation, and server-error states are covered where they are part of the intended UX.
+      - Critical existing flows have regression coverage or explicit QA evidence.
+      - Canonical tracker, roadmap, and progress log stay synchronized throughout the hardening pass.
+    dependencies:
+      - UX-OVERHAUL-P1
+      - ALIGN-P1
+      - ADMIN-UX-P1
+    notes:
+      - "2026-04-23: Initialized from a full-feature hardening audit after the tracker reached an all-complete state with no active focus."
+      - "2026-04-23: Verified current baseline before changes with `frontend` lint/test/build and `backend` `composer test`."
+      - "2026-04-23: Completed first hardening wave by adding regression coverage for auth login routing, route guards, workspace shell logout/navigation gating, workspace dashboard permission states, and admin access edge behavior."
+    incomplete_reason: "Critical-path browser QA and final hardening closeout are still pending."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Run browser QA across login/logout, onboarding, workspace CRUD, ticket flows, settings tabs, and admin controls.
+      - Convert any browser-only defects into focused HARDEN-P1 child tasks before closeout.
+      - Run final verification and close the epic once critical-path QA is complete.
+    tags:
+      - hardening
+      - qa
+      - parity
+      - mvp
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T01
+    title: Audit current feature surfaces and capture tracker-backed gaps
+    type: task
+    parent_id: HARDEN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Inspect auth, workspace, settings, and admin surfaces against current backend routes and existing regression coverage to identify real hardening gaps.
+    definition_of_done:
+      - User-facing surfaces are compared against backend/frontend implementation.
+      - Likely gap buckets are translated into stable tracker tasks instead of prose-only notes.
+      - Baseline verification status is recorded before follow-up fixes.
+    dependencies:
+      - HARDEN-P1
+    notes:
+      - "2026-04-23: Audited auth/onboarding, workspace shell, dashboard, customers, tickets, invitations, members, settings tabs, and admin surfaces against `backend/routes/api.php`, frontend routes/pages, and current tests."
+      - "2026-04-23: Confirmed the highest-value immediate gap is sparse regression depth outside tickets/settings rather than a broken baseline."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - audit
+      - qa
+      - tracker
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T02
+    title: Tighten auth and route-access regression coverage
+    type: task
+    parent_id: HARDEN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add focused frontend regression coverage for login routing and route-guard behavior so protected-route entry, admin routing, and auth failure states stay stable.
+    definition_of_done:
+      - Login flow covers admin redirect, preferred workspace redirect, onboarding fallback, and return-to-origin behavior.
+      - Route guards cover unauthenticated redirect, authenticated pass-through, non-admin redirect, and failed admin verification.
+      - Frontend verification passes with the added coverage.
+    dependencies:
+      - HARDEN-P1-T01
+    notes:
+      - "2026-04-23: Added `LoginPage.test.tsx` for admin/non-admin redirect logic, onboarding fallback, origin redirect, and login error visibility."
+      - "2026-04-23: Added `route-guards.test.tsx` for unauthenticated redirect, authenticated pass-through, non-admin admin redirect, and failed `/auth/me` handling."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - auth
+      - tests
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T03
+    title: Tighten workspace shell and dashboard regression coverage
+    type: task
+    parent_id: HARDEN-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Lock down workspace navigation gating, logout resilience, and dashboard permission/error states so core operators flows remain reachable and safe to change.
+    definition_of_done:
+      - Workspace shell coverage confirms navigation is permission-scoped.
+      - Logout still clears local auth state even when the API call fails.
+      - Dashboard coverage asserts forbidden and happy-path states.
+    dependencies:
+      - HARDEN-P1-T01
+    notes:
+      - "2026-04-23: Added `WorkspaceLayout.test.tsx` for permission-scoped navigation visibility and logout fallback behavior."
+      - "2026-04-23: Added `WorkspaceDashboardPage.test.tsx` for no-access forbidden state, metrics/recent-ticket rendering, and post-load permission-loss handling."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - workspace
+      - dashboard
+      - tests
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T04
+    title: Tighten admin access and edge-state regression coverage
+    type: task
+    parent_id: HARDEN-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Extend admin hardening beyond workspace editor mutations by explicitly covering access-routing edge cases through shared route-guard behavior and dashboard fallback handling.
+    definition_of_done:
+      - Admin entry conditions are covered through route/access regression tests.
+      - Existing admin dashboard edge-state handling remains verified.
+      - Frontend verification passes after the coverage increase.
+    dependencies:
+      - HARDEN-P1-T01
+    notes:
+      - "2026-04-23: Admin access regressions are now covered through shared route-guard tests for non-admin and failed `/auth/me` behavior."
+      - "2026-04-23: Existing `AdminDashboardPage.test.tsx` already covered editor mutation errors; this wave keeps admin hardening focused on missing access-path coverage instead of introducing new admin scope."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - frontend
+      - admin
+      - tests
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T05
+    title: Run browser critical-path QA
+    type: task
+    parent_id: HARDEN-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Validate critical existing flows in a running app to catch browser-only regressions that unit and feature tests will not expose.
+    definition_of_done:
+      - Login/logout, onboarding, customer CRUD, ticket flows, settings tabs, and admin controls are exercised in the browser.
+      - Any browser-only defects are fixed or tracked under explicit child tasks.
+      - QA evidence is recorded in the progress log before closeout.
+    dependencies:
+      - HARDEN-P1-T02
+      - HARDEN-P1-T03
+      - HARDEN-P1-T04
+    notes:
+      - "2026-04-23: Planned after the first regression-depth wave so browser QA can focus on genuine end-to-end issues rather than obvious missing automated coverage."
+    incomplete_reason: "Critical-path browser validation has not been executed yet in this hardening epic."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Start the Ticketing backend and frontend from this repo.
+      - Exercise the critical-path flows with seeded accounts and record any browser-only defects.
+    tags:
+      - qa
+      - browser
+      - e2e
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
+  - id: HARDEN-P1-T06
+    title: Run verification and close out the hardening epic
+    type: task
+    parent_id: HARDEN-P1
+    status: planned
+    priority: medium
+    mvp: true
+    description: Re-run the relevant verification suite, confirm tracker parity, and close the hardening epic once browser QA and follow-up fixes are complete.
+    definition_of_done:
+      - Relevant backend/frontend verification commands pass.
+      - "`project-state.yaml`, `roadmap.md`, and `changelog/progress-log.md` are synchronized."
+      - HARDEN-P1 and children meet the definition of done before being marked complete.
+    dependencies:
+      - HARDEN-P1-T05
+    notes:
+      - "2026-04-23: Reserved as the explicit closeout task so the hardening epic does not get marked complete before browser QA is done."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Re-run frontend lint/test/build and backend test coverage after browser QA.
+      - Update tracker state and progress log with final verification evidence.
+    tags:
+      - verification
+      - tracker
+      - qa
+    created_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-23T21:05:00+08:00"
+    changed_at: "2026-04-23T21:05:00+08:00"
+    changed_source: codex
+
   - id: UX-OVERHAUL-P1
     title: App-Wide UX Overhaul
     type: epic

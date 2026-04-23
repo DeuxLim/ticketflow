@@ -990,3 +990,41 @@ Verification:
 ## Resume From Here
 
 `UX-OVERHAUL-P1` is complete. Choose the next product or technical roadmap item before starting new implementation work.
+
+## 2026-04-23 21:05 +08:00 - Initialized Existing Feature Hardening Program and Closed First Coverage Gaps
+
+- Started new epic `HARDEN-P1` in `project-state.yaml` because all previously tracked epics were complete and `current_focus` was empty.
+- Audited the current product surface against:
+  - `backend/routes/api.php`
+  - frontend routes, layouts, pages, and settings sections
+  - existing backend/frontend regression coverage
+- Confirmed the current baseline was green before changes:
+  - `frontend`: `npm run lint`
+  - `frontend`: `npm test`
+  - `frontend`: `npm run build`
+  - `backend`: `composer test`
+- The highest-value immediate gap was sparse regression depth outside tickets/settings, especially around:
+  - login routing and return-path behavior
+  - shared route guards and admin entry conditions
+  - workspace shell navigation/logout resilience
+  - dashboard permission and degraded-access states
+- Added new regression coverage in:
+  - `frontend/src/features/auth/pages/LoginPage.test.tsx`
+  - `frontend/src/components/route-guards.test.tsx`
+  - `frontend/src/layouts/WorkspaceLayout.test.tsx`
+  - `frontend/src/features/workspace/pages/WorkspaceDashboardPage.test.tsx`
+- Marked the audit and first regression-depth wave complete under `HARDEN-P1-T01` through `HARDEN-P1-T04`.
+- Left browser critical-path QA and hardening closeout open as the remaining work under `HARDEN-P1-T05` and `HARDEN-P1-T06`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/auth/pages/LoginPage.test.tsx src/components/route-guards.test.tsx src/layouts/WorkspaceLayout.test.tsx src/features/workspace/pages/WorkspaceDashboardPage.test.tsx` passed.
+- `frontend`: `npm run lint` passed.
+- `frontend`: `npm test` passed (24 files, 88 tests).
+- `frontend`: `npm run build` passed.
+- `backend`: `composer test` passed.
+- Root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'` passed.
+- Root: `git diff --check` passed.
+
+## Resume From Here
+
+Continue `HARDEN-P1` by running the expanded frontend test suite, lint/build, backend tests, and then execute browser critical-path QA to catch any remaining end-to-end gaps.

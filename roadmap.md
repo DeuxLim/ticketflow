@@ -4,9 +4,29 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- None
+- `HARDEN-P1`
 
 ## MVP Items
+
+### `HARDEN-P1` Existing Feature Hardening and QA Closure
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Audit the current product surface, tighten parity and edge-state behavior, and close regression coverage gaps before any new feature scope.
+- Current state: audit is complete, baseline frontend/backend verification passed, and the first hardening wave added regression coverage for login routing, route guards, workspace shell/logout, workspace dashboard states, and admin access edges.
+- Next actions:
+  - Run browser QA across login/logout, onboarding, workspace CRUD, ticket flows, settings tabs, and admin controls.
+  - Convert any browser-only defects into focused follow-up tasks.
+  - Re-run verification and close the epic once browser QA is complete.
+
+#### Child Items
+
+- `HARDEN-P1-T01` Audit current feature surfaces and capture tracker-backed gaps - `complete`
+- `HARDEN-P1-T02` Tighten auth and route-access regression coverage - `complete`
+- `HARDEN-P1-T03` Tighten workspace shell and dashboard regression coverage - `complete`
+- `HARDEN-P1-T04` Tighten admin access and edge-state regression coverage - `complete`
+- `HARDEN-P1-T05` Run browser critical-path QA - `incomplete`
+- `HARDEN-P1-T06` Run verification and close out the hardening epic - `planned`
 
 ### `UX-OVERHAUL-P1` App-Wide UX Overhaul
 
@@ -95,4 +115,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-`UX-OVERHAUL-P1` is complete. Choose the next product or technical roadmap item before starting new implementation work.
+Continue `HARDEN-P1` with browser critical-path QA, convert any browser-only defects into focused child tasks, then run closeout verification before starting new feature scope.
