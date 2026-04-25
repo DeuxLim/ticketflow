@@ -1028,3 +1028,156 @@ Verification:
 ## Resume From Here
 
 Continue `HARDEN-P1` by running the expanded frontend test suite, lint/build, backend tests, and then execute browser critical-path QA to catch any remaining end-to-end gaps.
+
+## 2026-04-24 07:15 +08:00 - Ran Live Browser QA Smoke Pass for Hardening Epic
+
+- Started the Ticketing app from this repo for live validation:
+  - `backend`: `php artisan serve --host=127.0.0.1 --port=8000`
+  - `frontend`: `npm run dev -- --host localhost --port 5173`
+- Used seeded credentials from `SEED_CREDENTIALS.md` to exercise the running app in the browser.
+- Browser QA paths successfully exercised:
+  - workspace-user login with `user@ticketing.local`
+  - workspace overview/dashboard load
+  - customers directory load
+  - ticket queue load
+  - ticket details load
+  - settings route load including Security & Access tab
+  - workspace logout
+  - platform-admin login with `admin@ticketing.local`
+  - admin dashboard/control-plane load
+  - admin logout
+- No new browser-only defects were observed in the exercised paths.
+- Remaining browser QA scope is now narrower:
+  - onboarding with a fresh user / disposable tenant setup
+  - create/delete mutation paths that should be exercised against disposable data before epic closeout
+- Updated `project-state.yaml` and `roadmap.md` so `HARDEN-P1-T05` reflects partial completion with the remaining browser gaps called out explicitly.
+
+Verification:
+- Live browser smoke pass completed against `http://localhost:5173` with the local `backend` server on `http://127.0.0.1:8000`.
+
+## Resume From Here
+
+Continue `HARDEN-P1` by validating onboarding and disposable create/delete mutation flows in the browser, then run the final verification/closeout pass.
+
+## 2026-04-24 07:20 +08:00 - Closed Remaining Hardening QA and Completed Epic Closeout
+
+- Finished the remaining `HARDEN-P1-T05` QA gap with disposable data instead of touching seeded demo records.
+- Validated onboarding coverage with a fresh disposable user by:
+  - registering the user,
+  - confirming `/api/workspaces` returned zero workspaces,
+  - creating a new workspace,
+  - confirming owner/bootstrap access via `/access`,
+  - confirming the new owner appeared in `/members/assignable`.
+- Validated disposable mutation coverage by:
+  - creating a disposable customer,
+  - creating a disposable ticket against that customer,
+  - deleting the disposable ticket,
+  - deleting the disposable customer,
+  - confirming both list endpoints returned empty results afterward.
+- Marked `HARDEN-P1-T05` complete because critical onboarding and create/delete flows are now exercised with runtime evidence.
+- Marked `HARDEN-P1-T06` complete after final verification passed.
+- Marked `HARDEN-P1` complete and cleared `current_focus` because all child tasks now meet their definition of done.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run lint`
+- `frontend`: `npm test`
+- `frontend`: `npm run build`
+- `backend`: `composer test`
+- root: `ruby -e 'require "yaml"; YAML.load_file("project-state.yaml"); puts "project-state.yaml: OK"'`
+- root: `git diff --check`
+
+## Resume From Here
+
+All tracked hardening work is complete. Resume by selecting the next highest-priority MVP item only when new scope is intentionally opened.
+
+## 2026-04-24 07:25 +08:00 - Initialized Frontend Maintainability Epic and Completed First Shared Ticket Form Extraction
+
+- Started new epic `MAINT-P1` after the tracker returned to an all-complete state and a codebase scan showed the main remaining engineering risk had shifted to oversized frontend screens.
+- Used the current codebase, not stale roadmap notes, to pick scope:
+  - `TicketDetailsPage.tsx` at 1727 lines,
+  - `TicketsPage.tsx` at 1421 lines,
+  - `AdminDashboardPage.tsx` at 832 lines,
+  - `GovernanceSettingsSection.tsx` at 830 lines.
+- Completed `MAINT-P1-T01` by extracting duplicated ticket-form logic into `frontend/src/features/workspace/pages/ticketForm.ts`.
+- Centralized:
+  - shared ticket-form schema,
+  - default values,
+  - server-side field error mapping,
+  - tag parsing,
+  - custom-field payload building,
+  - template-based custom-field filtering.
+- Updated `TicketsPage.tsx` and `TicketDetailsPage.tsx` to consume the shared module instead of carrying duplicated helper logic inline.
+- Added `frontend/src/features/workspace/pages/ticketForm.test.ts` to lock down the extracted helper behavior.
+- Fixed roadmap drift introduced during the prior closeout by removing the duplicate `HARDEN-P1` status line and setting the next active focus explicitly.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/ticketForm.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1` with `MAINT-P1-T02` by decomposing `TicketsPage.tsx` around the new shared ticket-form module, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.
+
+## 2026-04-24 07:35 +08:00 - Started TicketsPage Decomposition Under Maintainability Epic
+
+- Advanced `MAINT-P1-T02` from `planned` to `incomplete`.
+- Extracted ticket dialog form rendering from `frontend/src/features/workspace/pages/TicketsPage.tsx` into `frontend/src/features/workspace/pages/TicketFormFields.tsx`.
+- Kept the extracted form on top of the shared `ticketForm.ts` contract added earlier in the session.
+- Reduced `TicketsPage.tsx` by removing one large local rendering block without changing route behavior or ticket mutation flow.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/ticketForm.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T02` by extracting `TicketsPage.tsx` filter, saved-view, table, and bulk-control concerns into focused modules, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.
+
+## 2026-04-24 08:10 +08:00 - Extracted TicketsPage Controls Sheet During Maintainability Pass
+
+- Continued `MAINT-P1-T02` by extracting the saved-view, filter, and bulk-action controls sheet from `frontend/src/features/workspace/pages/TicketsPage.tsx`.
+- Added `frontend/src/features/workspace/pages/TicketQueueControlsSheet.tsx` and moved the controls-panel rendering there.
+- Kept `TicketsPage.tsx` responsible for state and mutations while reducing render-surface size and coupling.
+- Updated canonical tracker notes so `MAINT-P1-T02` now reflects two landed extractions:
+  - `TicketFormFields.tsx`
+  - `TicketQueueControlsSheet.tsx`
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/ticketForm.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T02` by extracting the `TicketsPage.tsx` queue table and row-action surface into a focused module, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.
+
+## 2026-04-25 20:55 +08:00 - Extracted TicketsPage Queue Table Surface
+
+- Continued `MAINT-P1-T02` by extracting the queue list rendering from `frontend/src/features/workspace/pages/TicketsPage.tsx`.
+- Added `frontend/src/features/workspace/pages/TicketQueueTable.tsx` and moved:
+  - loading, error, and empty states,
+  - table markup,
+  - row action buttons,
+  - selection UI,
+  - pagination rendering.
+- Kept `TicketsPage.tsx` responsible for mutation wiring and edit/delete handler orchestration while reducing another large render block.
+- Updated canonical tracker notes so `MAINT-P1-T02` now reflects three landed `TicketsPage` extractions:
+  - `TicketFormFields.tsx`
+  - `TicketQueueControlsSheet.tsx`
+  - `TicketQueueTable.tsx`
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/ticketForm.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T02` by reducing the remaining `TicketsPage.tsx` orchestration and inline action helpers, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.

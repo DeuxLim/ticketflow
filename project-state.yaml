@@ -1,19 +1,218 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-23T21:05:00+08:00"
+updated_at: "2026-04-25T20:55:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
 current_focus:
-  - HARDEN-P1
+  - MAINT-P1
 items:
+  - id: MAINT-P1
+    title: Frontend Maintainability Decomposition
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Reduce complexity in oversized, high-churn frontend screens by centralizing duplicated ticket-form logic and splitting monolithic route views into smaller units without changing product behavior.
+    definition_of_done:
+      - Shared ticket-form schema, defaults, and payload helpers are centralized and covered by regression tests.
+      - Oversized workspace ticket and admin/governance screens are decomposed into smaller focused modules or components.
+      - No public API, route, or permission behavior regresses during the refactor.
+      - Frontend verification passes and canonical tracker files stay synchronized throughout the refactor.
+    dependencies:
+      - HARDEN-P1
+      - ALIGN-P1
+    notes:
+      - "2026-04-24: Initialized after all tracked MVP feature work was complete and a codebase scan showed the main remaining engineering risk had shifted to oversized frontend screens such as `TicketDetailsPage.tsx` (1727 lines), `TicketsPage.tsx` (1421 lines), `AdminDashboardPage.tsx` (832 lines), and `GovernanceSettingsSection.tsx` (830 lines)."
+      - "2026-04-24: Completed the first safe extraction by moving shared ticket-form schema, defaults, server-field error mapping, tag parsing, custom-field payload building, and template filtering into `frontend/src/features/workspace/pages/ticketForm.ts` with regression coverage in `ticketForm.test.ts`."
+      - "2026-04-24: Started `MAINT-P1-T02` by extracting ticket dialog form rendering from `TicketsPage.tsx` into `TicketFormFields.tsx` while keeping behavior on the shared ticket-form contract."
+      - "2026-04-24: Continued `MAINT-P1-T02` by extracting the saved-view, filter, and bulk-action sheet from `TicketsPage.tsx` into `TicketQueueControlsSheet.tsx`."
+      - "2026-04-25: Continued `MAINT-P1-T02` by extracting the queue table, row actions, loading/error/empty states, selection handling, and pagination rendering from `TicketsPage.tsx` into `TicketQueueTable.tsx`."
+    incomplete_reason: "The main `TicketsPage` render surfaces are now extracted, but the page still owns a large amount of orchestration and inline handler logic that should be reduced before closing T02."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Reduce `TicketsPage.tsx` orchestration further by extracting inline handler and state-shaping logic where it clearly improves readability without changing behavior.
+      - Decompose `TicketDetailsPage.tsx` edit and mutation surfaces into smaller focused sections.
+      - Split oversized governance and admin sections into smaller maintainable modules, then run closeout verification.
+    tags:
+      - refactor
+      - maintainability
+      - frontend
+      - mvp
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-25T20:55:00+08:00"
+    changed_at: "2026-04-25T20:55:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P1-T01
+    title: Extract shared ticket form contract and helpers
+    type: task
+    parent_id: MAINT-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Centralize duplicated ticket-form validation and payload-building logic used by ticket list and ticket details flows so future screen decomposition can happen safely.
+    definition_of_done:
+      - Shared ticket-form schema, defaults, and helper logic live in a dedicated module.
+      - "`TicketsPage.tsx` and `TicketDetailsPage.tsx` consume the shared module without changing behavior."
+      - Regression coverage exists for the extracted helper behavior and frontend verification passes.
+    dependencies:
+      - MAINT-P1
+    notes:
+      - "2026-04-24: Added `ticketForm.ts` to centralize shared schema, defaults, server field error mapping, tag parsing, custom-field option handling, payload building, and template field filtering."
+      - "2026-04-24: Updated both `TicketsPage.tsx` and `TicketDetailsPage.tsx` to use the shared module and added `ticketForm.test.ts` for helper regression coverage."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - refactor
+      - tickets
+      - frontend
+      - tests
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-24T07:25:00+08:00"
+    changed_at: "2026-04-24T07:25:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P1-T02
+    title: Decompose TicketsPage into focused modules
+    type: task
+    parent_id: MAINT-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Split ticket queue filters, bulk controls, and form/dialog concerns out of `TicketsPage.tsx` to reduce coupling and make behavior changes safer.
+    definition_of_done:
+      - "`TicketsPage.tsx` is materially smaller and delegates focused concerns to named modules or components."
+      - Shared ticket form concerns continue to use the centralized helper module.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P1-T01
+    notes:
+      - "2026-04-24: Began decomposition by extracting ticket dialog form rendering into `TicketFormFields.tsx`, removing one large local component from `TicketsPage.tsx` while preserving the shared ticket-form contract."
+      - "2026-04-24: Extracted the controls sheet into `TicketQueueControlsSheet.tsx`, moving saved-view, filter, and bulk-action rendering out of `TicketsPage.tsx`."
+      - "2026-04-25: Extracted the queue list rendering into `TicketQueueTable.tsx`, moving table markup, loading/error/empty states, row actions, selection UI, and pagination rendering out of `TicketsPage.tsx`."
+    incomplete_reason: "The form, controls sheet, and queue table are extracted, but `TicketsPage.tsx` still contains a large orchestration layer and inline ticket-action handlers."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Reduce `TicketsPage.tsx` orchestration further by isolating list-level action handlers and state-shaping helpers where practical.
+      - Reassess whether the remaining `TicketsPage.tsx` orchestration is small enough to close `MAINT-P1-T02` before moving to `MAINT-P1-T03`.
+    tags:
+      - refactor
+      - tickets
+      - frontend
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-25T20:55:00+08:00"
+    changed_at: "2026-04-25T20:55:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P1-T03
+    title: Decompose TicketDetailsPage edit and mutation surfaces
+    type: task
+    parent_id: MAINT-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Break the ticket details workbench into smaller edit, activity, and mutation sections to make the page easier to reason about and test.
+    definition_of_done:
+      - "`TicketDetailsPage.tsx` is materially smaller and large modal or sheet sections are extracted into focused modules."
+      - Ticket edit behavior continues to use the shared ticket-form contract.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P1-T01
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Extract edit sheet and supporting mutation sections without changing route behavior.
+    tags:
+      - refactor
+      - ticket-details
+      - frontend
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-24T07:25:00+08:00"
+    changed_at: "2026-04-24T07:25:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P1-T04
+    title: Decompose oversized admin and governance sections
+    type: task
+    parent_id: MAINT-P1
+    status: planned
+    priority: medium
+    mvp: true
+    description: Split large admin and governance settings sections into smaller modules so future policy and platform changes do not accumulate in single files.
+    definition_of_done:
+      - "`AdminDashboardPage.tsx` and `GovernanceSettingsSection.tsx` are materially smaller or delegate focused sections to child modules."
+      - Existing behavior and API contracts remain unchanged.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P1-T01
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Identify the highest-churn policy and admin editor sections for first extraction.
+    tags:
+      - refactor
+      - admin
+      - governance
+      - frontend
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-24T07:25:00+08:00"
+    changed_at: "2026-04-24T07:25:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P1-T05
+    title: Run verification and close out maintainability epic
+    type: task
+    parent_id: MAINT-P1
+    status: planned
+    priority: medium
+    mvp: true
+    description: Re-run the relevant frontend verification suite and close the maintainability epic once the decomposition tasks are complete.
+    definition_of_done:
+      - Relevant frontend tests, lint, and build checks pass after the refactor.
+      - "`project-state.yaml`, `roadmap.md`, and `changelog/progress-log.md` are synchronized."
+      - MAINT-P1 and its children meet their definitions of done before being marked complete.
+    dependencies:
+      - MAINT-P1-T02
+      - MAINT-P1-T03
+      - MAINT-P1-T04
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Re-run the frontend verification suite after decomposition work lands.
+    tags:
+      - verification
+      - refactor
+      - frontend
+    created_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-24T07:25:00+08:00"
+    changed_at: "2026-04-24T07:25:00+08:00"
+    changed_source: codex
+
   - id: HARDEN-P1
     title: Existing Feature Hardening and QA Closure
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Audit the current product surface, tighten parity and edge-state behavior, and close regression coverage gaps before any new feature scope.
@@ -30,22 +229,22 @@ items:
       - "2026-04-23: Initialized from a full-feature hardening audit after the tracker reached an all-complete state with no active focus."
       - "2026-04-23: Verified current baseline before changes with `frontend` lint/test/build and `backend` `composer test`."
       - "2026-04-23: Completed first hardening wave by adding regression coverage for auth login routing, route guards, workspace shell logout/navigation gating, workspace dashboard permission states, and admin access edge behavior."
-    incomplete_reason: "Critical-path browser QA and final hardening closeout are still pending."
+      - "2026-04-24: Browser QA smoke pass covered workspace-user login, overview/customers/tickets/settings navigation, ticket details, user logout, platform-admin login, admin dashboard access, and admin logout with no new defects observed in those paths."
+      - "2026-04-24: Closed remaining QA gaps with a disposable user and workspace by validating zero-workspace onboarding, owner/bootstrap access, assignable membership visibility, disposable customer create/delete, and disposable ticket create/delete."
+      - "2026-04-24: Final closeout verification passed with `frontend` lint/test/build, `backend` `composer test`, YAML validation, and `git diff --check`."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run browser QA across login/logout, onboarding, workspace CRUD, ticket flows, settings tabs, and admin controls.
-      - Convert any browser-only defects into focused HARDEN-P1 child tasks before closeout.
-      - Run final verification and close the epic once critical-path QA is complete.
+    next_actions: []
     tags:
       - hardening
       - qa
       - parity
       - mvp
     created_at: "2026-04-23T21:05:00+08:00"
-    updated_at: "2026-04-23T21:05:00+08:00"
-    changed_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-24T07:20:00+08:00"
+    changed_at: "2026-04-24T07:20:00+08:00"
     changed_source: codex
 
   - id: HARDEN-P1-T01
@@ -177,7 +376,7 @@ items:
     title: Run browser critical-path QA
     type: task
     parent_id: HARDEN-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Validate critical existing flows in a running app to catch browser-only regressions that unit and feature tests will not expose.
@@ -191,27 +390,28 @@ items:
       - HARDEN-P1-T04
     notes:
       - "2026-04-23: Planned after the first regression-depth wave so browser QA can focus on genuine end-to-end issues rather than obvious missing automated coverage."
-    incomplete_reason: "Critical-path browser validation has not been executed yet in this hardening epic."
+      - "2026-04-24: Executed live browser smoke validation for workspace-user login, overview/customers/tickets/settings navigation, ticket details, workspace logout, platform-admin login, admin dashboard access, and admin logout."
+      - "2026-04-24: No new browser-only defects were observed in the exercised paths."
+      - "2026-04-24: Completed the remaining disposable-path QA by registering a fresh user, confirming zero workspaces, creating a new workspace, confirming owner/bootstrap permissions, creating a disposable customer, creating a disposable ticket, and deleting both successfully."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Start the Ticketing backend and frontend from this repo.
-      - Exercise the critical-path flows with seeded accounts and record any browser-only defects.
+    next_actions: []
     tags:
       - qa
       - browser
       - e2e
     created_at: "2026-04-23T21:05:00+08:00"
-    updated_at: "2026-04-23T21:05:00+08:00"
-    changed_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-24T07:20:00+08:00"
+    changed_at: "2026-04-24T07:20:00+08:00"
     changed_source: codex
 
   - id: HARDEN-P1-T06
     title: Run verification and close out the hardening epic
     type: task
     parent_id: HARDEN-P1
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Re-run the relevant verification suite, confirm tracker parity, and close the hardening epic once browser QA and follow-up fixes are complete.
@@ -223,20 +423,19 @@ items:
       - HARDEN-P1-T05
     notes:
       - "2026-04-23: Reserved as the explicit closeout task so the hardening epic does not get marked complete before browser QA is done."
+      - "2026-04-24: Reconfirmed closeout verification after QA with `frontend` lint/test/build, `backend` `composer test`, YAML validation, and `git diff --check`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Re-run frontend lint/test/build and backend test coverage after browser QA.
-      - Update tracker state and progress log with final verification evidence.
+    next_actions: []
     tags:
       - verification
       - tracker
       - qa
     created_at: "2026-04-23T21:05:00+08:00"
-    updated_at: "2026-04-23T21:05:00+08:00"
-    changed_at: "2026-04-23T21:05:00+08:00"
+    updated_at: "2026-04-24T07:20:00+08:00"
+    changed_at: "2026-04-24T07:20:00+08:00"
     changed_source: codex
 
   - id: UX-OVERHAUL-P1
