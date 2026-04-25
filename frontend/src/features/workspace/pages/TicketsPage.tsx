@@ -1,15 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { useForm, type UseFormReturn } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
-import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { Input } from '@/components/ui/input';
 import { ApiError } from '@/services/api/client';
@@ -32,144 +31,20 @@ import {
   listTicketQueues,
   listTicketTags,
 } from '@/features/workspace/settings/settings-api';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
+import { TicketFormFields } from '@/features/workspace/pages/TicketFormFields';
+import { TicketQueueControlsSheet } from '@/features/workspace/pages/TicketQueueControlsSheet';
+import { TicketQueueTable } from '@/features/workspace/pages/TicketQueueTable';
+import {
+  applyTicketFormFieldErrors,
+  buildCustomFieldPayload,
+  filterCustomFieldsByTemplate,
+  parseTicketTags,
+  ticketFormDefaultValues,
+  ticketFormSchema,
+  type TicketForm,
+} from '@/features/workspace/pages/ticketForm';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
-import type { Customer, Ticket, TicketCategoryConfig, TicketCustomFieldConfig, TicketFormTemplateConfig, TicketQueueConfig, TicketTagConfig } from '@/types/api';
-
-const ticketSchema = z.object({
-  customer_id: z.string().min(1, 'Select a customer'),
-  title: z.string().min(3, 'Title is required'),
-  description: z.string().min(5, 'Description is required'),
-  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  assigned_to_user_id: z.string().optional().or(z.literal('')),
-  category: z.string().optional().or(z.literal('')),
-  queue_key: z.string().optional().or(z.literal('')),
-  tags: z.string().optional().or(z.literal('')),
-  custom_fields: z.record(z.string(), z.string()).optional(),
-});
-
-type TicketForm = z.infer<typeof ticketSchema>;
-
-type MemberOption = {
-  id: number;
-  user: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-};
-
-function applyTicketFormFieldErrors(form: UseFormReturn<TicketForm>, error: unknown) {
-  if (!(error instanceof ApiError)) {
-    return;
-  }
-
-  for (const [field, messages] of Object.entries(error.fieldErrors)) {
-    if (!messages.length) continue;
-
-    if (
-      field === 'customer_id' ||
-      field === 'title' ||
-      field === 'description' ||
-      field === 'status' ||
-      field === 'priority' ||
-      field === 'assigned_to_user_id' ||
-      field === 'category' ||
-      field === 'queue_key' ||
-      field === 'tags'
-    ) {
-      form.setError(field, { type: 'server', message: messages[0] });
-    }
-  }
-}
-
-function parseTicketTags(value: string | undefined): string[] | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-
-  return parsed.length > 0 ? parsed : null;
-}
-
-function customFieldOptions(field: TicketCustomFieldConfig): string[] {
-  return field.options
-    .map((option) => (typeof option === 'string' ? option : null))
-    .filter((option): option is string => option !== null);
-}
-
-function buildCustomFieldPayload(
-  values: Record<string, string> | undefined,
-  fieldConfigs: TicketCustomFieldConfig[],
-): Record<string, unknown> {
-  if (!values) {
-    return {};
-  }
-
-  return fieldConfigs.reduce<Record<string, unknown>>((payload, field) => {
-    const rawValue = values[field.key];
-    if (rawValue === undefined || rawValue === '') {
-      return payload;
-    }
-
-    if (field.field_type === 'number') {
-      const parsed = Number(rawValue);
-      if (Number.isFinite(parsed)) {
-        payload[field.key] = parsed;
-      }
-      return payload;
-    }
-
-    if (field.field_type === 'checkbox') {
-      payload[field.key] = rawValue === 'true';
-      return payload;
-    }
-
-    if (field.field_type === 'multiselect') {
-      payload[field.key] = rawValue
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
-      return payload;
-    }
-
-    payload[field.key] = rawValue;
-    return payload;
-  }, {});
-}
-
-function templateFieldKeys(template: TicketFormTemplateConfig | null): Set<string> | null {
-  if (!template) {
-    return null;
-  }
-
-  const keys = template.field_schema
-    .map((entry) => (typeof entry.key === 'string' ? entry.key : null))
-    .filter((key): key is string => key !== null && key.length > 0);
-
-  return keys.length > 0 ? new Set(keys) : new Set<string>();
-}
-
-function filterCustomFieldsByTemplate(
-  fields: TicketCustomFieldConfig[],
-  template: TicketFormTemplateConfig | null,
-): TicketCustomFieldConfig[] {
-  const keys = templateFieldKeys(template);
-  if (keys === null) {
-    return fields;
-  }
-
-  return fields.filter((field) => keys.has(field.key));
-}
+import type { Ticket } from '@/types/api';
 
 export function TicketsPage() {
   const { workspaceSlug } = useParams();
@@ -201,35 +76,13 @@ export function TicketsPage() {
   const [bulkAssignee, setBulkAssignee] = useState<string>('none');
 
   const createForm = useForm<TicketForm>({
-    resolver: zodResolver(ticketSchema),
-    defaultValues: {
-      customer_id: '',
-      title: '',
-      description: '',
-      status: 'open',
-      priority: 'medium',
-      assigned_to_user_id: '',
-      category: '',
-      queue_key: '',
-      tags: '',
-      custom_fields: {},
-    },
+    resolver: zodResolver(ticketFormSchema),
+    defaultValues: ticketFormDefaultValues,
   });
 
   const editForm = useForm<TicketForm>({
-    resolver: zodResolver(ticketSchema),
-    defaultValues: {
-      customer_id: '',
-      title: '',
-      description: '',
-      status: 'open',
-      priority: 'medium',
-      assigned_to_user_id: '',
-      category: '',
-      queue_key: '',
-      tags: '',
-      custom_fields: {},
-    },
+    resolver: zodResolver(ticketFormSchema),
+    defaultValues: ticketFormDefaultValues,
   });
 
   const customersQuery = useQuery({
@@ -498,6 +351,39 @@ export function TicketsPage() {
     setSelectedTicketIds([]);
   };
 
+  const openEditTicket = (ticket: Ticket) => {
+    setEditTarget(ticket);
+    setEditTemplateId(defaultTemplateId);
+    editForm.reset({
+      customer_id: String(ticket.customer_id),
+      title: ticket.title,
+      description: ticket.description,
+      status: ticket.status,
+      priority: ticket.priority,
+      assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
+      category: ticket.category ?? '',
+      queue_key: ticket.queue_key ?? '',
+      tags: (ticket.tags ?? []).join(', '),
+      custom_fields: Object.fromEntries(
+        (ticket.custom_fields ?? []).map((field) => [
+          field.key ?? String(field.ticket_custom_field_id),
+          field.value === null || field.value === undefined
+            ? ''
+            : Array.isArray(field.value)
+              ? field.value.join(', ')
+              : String(field.value),
+        ]),
+      ),
+    });
+  };
+
+  const requestDeleteTicket = (ticket: Ticket) => {
+    const shouldDelete = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
+    if (shouldDelete) {
+      deleteTicket.mutate(ticket.id);
+    }
+  };
+
   if (accessQuery.isLoading) {
     return <p className="text-sm text-muted-foreground">Checking access...</p>;
   }
@@ -594,447 +480,88 @@ export function TicketsPage() {
             </div>
           </div>
 
-          {ticketsQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading tickets...</p>
-          ) : ticketsQuery.isError ? (
-            <p className="text-sm text-destructive">{(ticketsQuery.error as Error).message}</p>
-          ) : tickets.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tickets found for current filters.</p>
-          ) : (
-            <div className="overflow-x-auto">
-            <Table className="min-w-[860px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <input
-                      aria-label="Select all tickets"
-                      checked={tickets.length > 0 && selectedVisibleTicketIds.length === tickets.length}
-                      onChange={(event) => {
-                        if (event.target.checked) {
-                          setSelectedTicketIds(tickets.map((ticket) => ticket.id));
-                          return;
-                        }
-
-                        setSelectedTicketIds([]);
-                      }}
-                      type="checkbox"
-                    />
-                  </TableHead>
-                  <TableHead>Ticket</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Assignee</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell>
-                      <input
-                        aria-label={`Select ticket ${ticket.ticket_number}`}
-                        checked={selectedTicketIds.includes(ticket.id)}
-                        onChange={(event) => {
-                          if (event.target.checked) {
-                            setSelectedTicketIds((prev) => [...prev, ticket.id]);
-                            return;
-                          }
-
-                          setSelectedTicketIds((prev) => prev.filter((id) => id !== ticket.id));
-                        }}
-                        type="checkbox"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${ticket.id}`}>
-                        {ticket.ticket_number}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">{ticket.title}</p>
-                    </TableCell>
-                    <TableCell>{ticket.customer?.name ?? '—'}</TableCell>
-                    <TableCell>
-                      {ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'}
-                    </TableCell>
-                    <TableCell><Badge variant="outline">{ticket.status}</Badge></TableCell>
-                    <TableCell><Badge variant="secondary">{ticket.priority}</Badge></TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {ticket.updated_at ? new Date(ticket.updated_at).toLocaleDateString() : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          disabled={!canManage}
-                          onClick={() => {
-                            setEditTarget(ticket);
-                            setEditTemplateId(defaultTemplateId);
-                            editForm.reset({
-                              customer_id: String(ticket.customer_id),
-                              title: ticket.title,
-                              description: ticket.description,
-                              status: ticket.status,
-                              priority: ticket.priority,
-                              assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
-                              category: ticket.category ?? '',
-                              queue_key: ticket.queue_key ?? '',
-                              tags: (ticket.tags ?? []).join(', '),
-                              custom_fields: Object.fromEntries(
-                                (ticket.custom_fields ?? []).map((field) => [
-                                  field.key ?? String(field.ticket_custom_field_id),
-                                  field.value === null || field.value === undefined
-                                    ? ''
-                                    : Array.isArray(field.value)
-                                      ? field.value.join(', ')
-                                      : String(field.value),
-                                ]),
-                              ),
-                            });
-                          }}
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          disabled={!canManage || deleteTicket.isPending}
-                          onClick={() => {
-                            const shouldDelete = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
-                            if (shouldDelete) {
-                              deleteTicket.mutate(ticket.id);
-                            }
-                          }}
-                          size="sm"
-                          variant="outline"
-                          type="button"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
-          )}
-
-          {pagination && pagination.last_page > 1 && (
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <p className="mr-auto text-xs text-muted-foreground">
-                Page {pagination.current_page} of {pagination.last_page} • {pagination.total} total
-              </p>
-              <Button
-                disabled={page <= 1}
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Previous
-              </Button>
-              <Button
-                disabled={page >= pagination.last_page}
-                onClick={() => setPage((prev) => Math.min(pagination.last_page, prev + 1))}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
-          )}
+          <TicketQueueTable
+            workspaceSlug={workspaceSlug}
+            tickets={tickets}
+            isLoading={ticketsQuery.isLoading}
+            errorMessage={ticketsQuery.isError ? (ticketsQuery.error as Error).message : null}
+            pagination={pagination}
+            page={page}
+            onPageChange={setPage}
+            selectedTicketIds={selectedTicketIds}
+            selectedVisibleTicketIds={selectedVisibleTicketIds}
+            onSelectedTicketIdsChange={setSelectedTicketIds}
+            canManage={canManage}
+            deletePending={deleteTicket.isPending}
+            onEdit={openEditTicket}
+            onDelete={requestDeleteTicket}
+          />
         </CardContent>
       </Card>
 
-      <Sheet open={isControlsOpen} onOpenChange={setIsControlsOpen}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
-          <SheetHeader>
-            <SheetTitle>Views, Filters, and Bulk Actions</SheetTitle>
-            <SheetDescription>Use this panel for queue shaping and multi-ticket changes without crowding the list.</SheetDescription>
-          </SheetHeader>
-
-          <div className="flex flex-1 flex-col gap-6 px-4 pb-4">
-            <div className="rounded-md border p-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="saved-view-select">Saved view</FieldLabel>
-                  <Select value={selectedSavedViewId} onValueChange={(value) => {
-                    const next = value ?? 'none';
-                    setSelectedSavedViewId(next);
-                    if (next === 'none') return;
-                    const selected = savedViews.find((view) => String(view.id) === next);
-                    if (selected) {
-                      applySavedFilters(selected.filters);
-                    }
-                  }}>
-                    <SelectTrigger id="saved-view-select"><SelectValue placeholder="Select a saved view" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">None</SelectItem>
-                        {savedViews.map((view) => (
-                          <SelectItem key={view.id} value={String(view.id)}>
-                            {view.name}{view.is_shared ? ' (shared)' : ''}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>Apply a saved queue setup or capture the current filter combination as a reusable view.</FieldDescription>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="saved-view-name">New view name</FieldLabel>
-                  <Input
-                    id="saved-view-name"
-                    value={savedViewName}
-                    onChange={(event) => setSavedViewName(event.target.value)}
-                    placeholder="My open high-priority tickets"
-                  />
-                </Field>
-
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    checked={savedViewShared}
-                    onChange={(event) => setSavedViewShared(event.target.checked)}
-                    type="checkbox"
-                  />
-                  <span>Make this saved view shared</span>
-                </label>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    disabled={!canSaveView || saveView.isPending}
-                    onClick={() => saveView.mutate()}
-                  >
-                    {saveView.isPending ? 'Saving...' : 'Save current filters'}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                    disabled={selectedSavedViewId === 'none' || removeSavedView.isPending}
-                    onClick={() => {
-                      if (selectedSavedViewId === 'none') return;
-                      removeSavedView.mutate(Number(selectedSavedViewId));
-                    }}
-                  >
-                    {removeSavedView.isPending ? 'Deleting...' : 'Delete view'}
-                  </Button>
-                </div>
-              </FieldGroup>
-            </div>
-
-            <div className="rounded-md border p-4">
-              <FieldGroup>
-                <Field className="md:col-span-2">
-                  <FieldLabel htmlFor="status-filter">Status</FieldLabel>
-                  <Select value={statusFilter} onValueChange={(value) => {
-                    setStatusFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="status-filter"><SelectValue placeholder="All status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All status</SelectItem>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="priority-filter">Priority</FieldLabel>
-                  <Select value={priorityFilter} onValueChange={(value) => {
-                    setPriorityFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="priority-filter"><SelectValue placeholder="All priority" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All priority</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="queue-filter">Queue</FieldLabel>
-                  <Select value={queueFilter} onValueChange={(value) => {
-                    setQueueFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="queue-filter"><SelectValue placeholder="All queues" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All queues</SelectItem>
-                        {activeQueueConfigs.map((queue) => (
-                          <SelectItem key={queue.id} value={queue.key}>
-                            {queue.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="category-filter">Category</FieldLabel>
-                  <Select value={categoryFilter} onValueChange={(value) => {
-                    setCategoryFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="category-filter"><SelectValue placeholder="All categories" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All categories</SelectItem>
-                        {activeCategoryConfigs.map((category) => (
-                          <SelectItem key={category.id} value={category.key}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="customer-filter">Customer</FieldLabel>
-                  <Select value={customerFilter} onValueChange={(value) => {
-                    setCustomerFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="customer-filter"><SelectValue placeholder="All customers" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All customers</SelectItem>
-                        {customers.map((customer) => (
-                          <SelectItem key={customer.id} value={String(customer.id)}>
-                            {customer.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {customerCoverageHint && (
-                    <FieldDescription>{customerCoverageHint}</FieldDescription>
-                  )}
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="assignee-filter">Assignee</FieldLabel>
-                  <Select value={assigneeFilter} onValueChange={(value) => {
-                    setAssigneeFilter(value ?? 'all');
-                    resetPageAndSelection();
-                  }}>
-                    <SelectTrigger className="w-full" id="assignee-filter"><SelectValue placeholder="All assignees" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="all">All assignees</SelectItem>
-                        {members.map((member) => (
-                          <SelectItem key={member.user.id} value={String(member.user.id)}>
-                            {member.user.first_name} {member.user.last_name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </FieldGroup>
-            </div>
-
-            <div className="rounded-md border p-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="bulk-status">Bulk status</FieldLabel>
-                  <Select value={bulkStatus} onValueChange={(value) => setBulkStatus((value ?? 'none') as 'none' | TicketForm['status'])}>
-                    <SelectTrigger className="w-full" id="bulk-status"><SelectValue placeholder="Keep status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Keep status</SelectItem>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                        <SelectItem value="closed">Closed</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="bulk-priority">Bulk priority</FieldLabel>
-                  <Select value={bulkPriority} onValueChange={(value) => setBulkPriority((value ?? 'none') as 'none' | TicketForm['priority'])}>
-                    <SelectTrigger className="w-full" id="bulk-priority"><SelectValue placeholder="Keep priority" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Keep priority</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="bulk-assignee">Bulk assignee</FieldLabel>
-                  <Select value={bulkAssignee} onValueChange={(value) => setBulkAssignee(value ?? 'none')}>
-                    <SelectTrigger className="w-full" id="bulk-assignee"><SelectValue placeholder="Keep assignee" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="none">Keep assignee</SelectItem>
-                        <SelectItem value="">Unassigned</SelectItem>
-                        {members.map((member) => (
-                          <SelectItem key={member.user.id} value={String(member.user.id)}>
-                            {member.user.first_name} {member.user.last_name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FieldDescription>{selectedVisibleTicketIds.length > 0 ? `${selectedVisibleTicketIds.length} visible ticket${selectedVisibleTicketIds.length === 1 ? '' : 's'} selected.` : 'Select tickets in the list before applying a bulk edit.'}</FieldDescription>
-                </Field>
-
-                <Button
-                  disabled={
-                    !canManage ||
-                    selectedVisibleTicketIds.length === 0 ||
-                    (bulkStatus === 'none' && bulkPriority === 'none' && bulkAssignee === 'none') ||
-                    bulkUpdateTickets.isPending
-                  }
-                  onClick={() => bulkUpdateTickets.mutate()}
-                  size="sm"
-                  type="button"
-                >
-                  {bulkUpdateTickets.isPending ? 'Applying...' : `Apply to ${selectedVisibleTicketIds.length}`}
-                </Button>
-              </FieldGroup>
-            </div>
-          </div>
-
-          <SheetFooter className="border-t">
-            <Button onClick={resetAllControls} type="button" variant="outline">
-              Reset controls
-            </Button>
-            <Button onClick={() => setIsControlsOpen(false)} type="button">
-              Done
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <TicketQueueControlsSheet
+        open={isControlsOpen}
+        onOpenChange={setIsControlsOpen}
+        selectedSavedViewId={selectedSavedViewId}
+        onSelectedSavedViewIdChange={setSelectedSavedViewId}
+        savedViews={savedViews}
+        applySavedFilters={applySavedFilters}
+        savedViewName={savedViewName}
+        onSavedViewNameChange={setSavedViewName}
+        savedViewShared={savedViewShared}
+        onSavedViewSharedChange={setSavedViewShared}
+        canSaveView={canSaveView}
+        canManage={canManage}
+        saveViewPending={saveView.isPending}
+        onSaveView={() => saveView.mutate()}
+        removeSavedViewPending={removeSavedView.isPending}
+        onRemoveSavedView={(viewId) => removeSavedView.mutate(viewId)}
+        statusFilter={statusFilter}
+        onStatusFilterChange={(value) => {
+          setStatusFilter(value);
+          resetPageAndSelection();
+        }}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={(value) => {
+          setPriorityFilter(value);
+          resetPageAndSelection();
+        }}
+        queueFilter={queueFilter}
+        onQueueFilterChange={(value) => {
+          setQueueFilter(value);
+          resetPageAndSelection();
+        }}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={(value) => {
+          setCategoryFilter(value);
+          resetPageAndSelection();
+        }}
+        customerFilter={customerFilter}
+        onCustomerFilterChange={(value) => {
+          setCustomerFilter(value);
+          resetPageAndSelection();
+        }}
+        assigneeFilter={assigneeFilter}
+        onAssigneeFilterChange={(value) => {
+          setAssigneeFilter(value);
+          resetPageAndSelection();
+        }}
+        activeQueueConfigs={activeQueueConfigs}
+        activeCategoryConfigs={activeCategoryConfigs}
+        customers={customers}
+        customerCoverageHint={customerCoverageHint}
+        members={members}
+        bulkStatus={bulkStatus}
+        onBulkStatusChange={setBulkStatus}
+        bulkPriority={bulkPriority}
+        onBulkPriorityChange={setBulkPriority}
+        bulkAssignee={bulkAssignee}
+        onBulkAssigneeChange={setBulkAssignee}
+        selectedVisibleTicketIdsCount={selectedVisibleTicketIds.length}
+        bulkUpdatePending={bulkUpdateTickets.isPending}
+        onBulkApply={() => bulkUpdateTickets.mutate()}
+        onResetControls={resetAllControls}
+      />
 
       <Dialog
         onOpenChange={(open) => {
@@ -1128,294 +655,5 @@ export function TicketsPage() {
         </DialogContent>
       </Dialog>
     </section>
-  );
-}
-
-function TicketFormFields({
-  form,
-  customers,
-  members,
-  activeQueues,
-  activeCategories,
-  activeTags,
-  activeCustomFields,
-  templates,
-  selectedTemplateId,
-  onTemplateChange,
-  onSubmit,
-  formId,
-}: {
-  form: UseFormReturn<TicketForm>;
-  customers: Customer[];
-  members: MemberOption[];
-  activeQueues: TicketQueueConfig[];
-  activeCategories: TicketCategoryConfig[];
-  activeTags: TicketTagConfig[];
-  activeCustomFields: TicketCustomFieldConfig[];
-  templates: TicketFormTemplateConfig[];
-  selectedTemplateId: string;
-  onTemplateChange: (templateId: string) => void;
-  onSubmit: (values: TicketForm) => void;
-  formId: string;
-}) {
-  const queueValue = form.watch('queue_key') || 'none';
-  const categoryValue = form.watch('category') || 'none';
-  const hasLegacyQueueValue = queueValue !== 'none' && !activeQueues.some((queue) => queue.key === queueValue);
-  const hasLegacyCategoryValue = categoryValue !== 'none' && !activeCategories.some((category) => category.key === categoryValue);
-
-  return (
-    <form id={formId} onSubmit={form.handleSubmit(onSubmit)}>
-      <FieldGroup className="grid gap-4 md:grid-cols-2">
-      <Field data-invalid={Boolean(form.formState.errors.customer_id)}>
-        <FieldLabel htmlFor={`${formId}-customer`}>Customer</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('customer_id', value ?? '', { shouldValidate: true })}
-          value={form.watch('customer_id')}
-        >
-          <SelectTrigger id={`${formId}-customer`} aria-invalid={Boolean(form.formState.errors.customer_id)}>
-            <SelectValue placeholder="Select customer" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={String(customer.id)}>
-                  {customer.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-        <FieldError errors={[form.formState.errors.customer_id]} />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor={`${formId}-template`}>Form Template</FieldLabel>
-        <Select
-          onValueChange={(value) => onTemplateChange(value ?? 'none')}
-          value={selectedTemplateId}
-        >
-          <SelectTrigger id={`${formId}-template`}><SelectValue placeholder="All active fields" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">All active fields</SelectItem>
-              {templates.map((template) => (
-                <SelectItem key={template.id} value={String(template.id)}>
-                  {template.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor={`${formId}-assignee`}>Assignee</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('assigned_to_user_id', value === 'none' || value === null ? '' : value)}
-          value={form.watch('assigned_to_user_id') || 'none'}
-        >
-          <SelectTrigger id={`${formId}-assignee`}><SelectValue placeholder="Unassigned" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">Unassigned</SelectItem>
-              {members.map((member) => (
-                <SelectItem key={member.user.id} value={String(member.user.id)}>
-                  {member.user.first_name} {member.user.last_name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field data-invalid={Boolean(form.formState.errors.title)}>
-        <FieldLabel htmlFor={`${formId}-title`}>Title</FieldLabel>
-        <Input id={`${formId}-title`} aria-invalid={Boolean(form.formState.errors.title)} {...form.register('title')} />
-        <FieldError errors={[form.formState.errors.title]} />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor={`${formId}-status`}>Status</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('status', value as TicketForm['status'])}
-          value={form.watch('status')}
-        >
-          <SelectTrigger id={`${formId}-status`}><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="resolved">Resolved</SelectItem>
-              <SelectItem value="closed">Closed</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor={`${formId}-queue`}>Queue</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('queue_key', value === 'none' || value === null ? '' : value)}
-          value={queueValue}
-        >
-          <SelectTrigger id={`${formId}-queue`}><SelectValue placeholder="Default queue" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">Default queue</SelectItem>
-              {activeQueues.map((queue) => (
-                <SelectItem key={queue.id} value={queue.key}>
-                  {queue.name}
-                </SelectItem>
-              ))}
-              {hasLegacyQueueValue && <SelectItem value={queueValue}>{queueValue} (legacy)</SelectItem>}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor={`${formId}-category`}>Category</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('category', value === 'none' || value === null ? '' : value)}
-          value={categoryValue}
-        >
-          <SelectTrigger id={`${formId}-category`}><SelectValue placeholder="No category" /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="none">No category</SelectItem>
-              {activeCategories.map((category) => (
-                <SelectItem key={category.id} value={category.key}>
-                  {category.name}
-                </SelectItem>
-              ))}
-              {hasLegacyCategoryValue && <SelectItem value={categoryValue}>{categoryValue} (legacy)</SelectItem>}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field data-invalid={Boolean(form.formState.errors.description)} className="md:col-span-2">
-        <FieldLabel htmlFor={`${formId}-description`}>Description</FieldLabel>
-        <Textarea id={`${formId}-description`} aria-invalid={Boolean(form.formState.errors.description)} {...form.register('description')} />
-        <FieldError errors={[form.formState.errors.description]} />
-      </Field>
-
-      <Field className="md:col-span-2">
-        <FieldLabel htmlFor={`${formId}-priority`}>Priority</FieldLabel>
-        <Select
-          onValueChange={(value) => form.setValue('priority', value as TicketForm['priority'])}
-          value={form.watch('priority')}
-        >
-          <SelectTrigger id={`${formId}-priority`}><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-      </Field>
-
-      <Field className="md:col-span-2">
-        <FieldLabel htmlFor={`${formId}-tags`}>Tags (comma separated)</FieldLabel>
-        <Input id={`${formId}-tags`} list={`${formId}-tag-options`} placeholder="network, vpn" {...form.register('tags')} />
-        {activeTags.length > 0 && (
-          <>
-            <datalist id={`${formId}-tag-options`}>
-              {activeTags.map((tag) => (
-                <option key={tag.id} value={tag.name} />
-              ))}
-            </datalist>
-            <p className="text-xs text-muted-foreground">Available tags: {activeTags.map((tag) => tag.name).join(', ')}</p>
-          </>
-        )}
-      </Field>
-
-      {activeCustomFields.length > 0 && (
-        <div className="space-y-3 md:col-span-2">
-          <p className="text-sm font-medium">Custom Fields</p>
-          <div className="grid gap-3 md:grid-cols-2">
-            {activeCustomFields.map((field) => {
-              const fieldPath = `custom_fields.${field.key}` as const;
-
-              if (field.field_type === 'textarea') {
-                return (
-                  <Field key={field.id} className="md:col-span-2">
-                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
-                    <Textarea id={`${formId}-custom-${field.key}`} {...form.register(fieldPath)} />
-                  </Field>
-                );
-              }
-
-              if (field.field_type === 'select') {
-                const options = customFieldOptions(field);
-                const currentValue = form.watch(fieldPath) ?? '';
-
-                return (
-                  <Field key={field.id}>
-                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
-                    <Select
-                      onValueChange={(value) => form.setValue(fieldPath, value === 'none' || value === null ? '' : value)}
-                      value={currentValue || 'none'}
-                    >
-                      <SelectTrigger id={`${formId}-custom-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="none">Not set</SelectItem>
-                          {options.map((option) => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                );
-              }
-
-              if (field.field_type === 'checkbox') {
-                const currentValue = form.watch(fieldPath) ?? '';
-
-                return (
-                  <Field key={field.id}>
-                    <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
-                    <Select
-                      onValueChange={(value) => form.setValue(fieldPath, value === 'none' || value === null ? '' : value)}
-                      value={currentValue || 'none'}
-                    >
-                      <SelectTrigger id={`${formId}-custom-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="none">Not set</SelectItem>
-                          <SelectItem value="true">True</SelectItem>
-                          <SelectItem value="false">False</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                );
-              }
-
-              const inputType = field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text';
-              const placeholder = field.field_type === 'multiselect' ? 'Comma separated values' : undefined;
-
-              return (
-                <Field key={field.id}>
-                  <FieldLabel htmlFor={`${formId}-custom-${field.key}`}>{field.label}</FieldLabel>
-                  <Input
-                    id={`${formId}-custom-${field.key}`}
-                    placeholder={placeholder}
-                    type={inputType}
-                    {...form.register(fieldPath)}
-                  />
-                </Field>
-              );
-            })}
-          </div>
-        </div>
-      )}
-      </FieldGroup>
-    </form>
   );
 }

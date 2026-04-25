@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch, type UseFormReturn } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { ForbiddenState } from '@/components/forbidden-state';
@@ -40,27 +40,24 @@ import {
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/pages/ticketDetailsApi';
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
+import {
+  applyTicketFormFieldErrors,
+  buildCustomFieldPayload,
+  customFieldOptions,
+  filterCustomFieldsByTemplate,
+  parseTicketTags,
+  ticketFormDefaultValues,
+  ticketFormSchema,
+  type TicketForm,
+} from '@/features/workspace/pages/ticketForm';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/settings/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldConfig, TicketCustomFieldValue, TicketFormTemplateConfig } from '@/types/api';
+import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
 
 const commentSchema = z.object({
   body: z.string().min(2, 'Comment must not be empty'),
   is_internal: z.boolean(),
-});
-
-const ticketUpdateSchema = z.object({
-  customer_id: z.string().min(1, 'Select a customer'),
-  title: z.string().min(3, 'Title is required'),
-  description: z.string().min(5, 'Description is required'),
-  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  assigned_to_user_id: z.string().optional().or(z.literal('')),
-  category: z.string().optional().or(z.literal('')),
-  queue_key: z.string().optional().or(z.literal('')),
-  tags: z.string().optional().or(z.literal('')),
-  custom_fields: z.record(z.string(), z.string()).optional(),
 });
 
 const checklistSchema = z.object({
@@ -73,7 +70,6 @@ const relatedTicketSchema = z.object({
 });
 
 type CommentForm = z.infer<typeof commentSchema>;
-type TicketUpdateForm = z.infer<typeof ticketUpdateSchema>;
 type ChecklistForm = z.infer<typeof checklistSchema>;
 type RelatedTicketForm = z.infer<typeof relatedTicketSchema>;
 
@@ -111,33 +107,6 @@ type AuthUser = {
   email: string;
   is_platform_admin: boolean;
 };
-
-function applyTicketDetailsFieldErrors(
-  form: UseFormReturn<TicketUpdateForm>,
-  error: unknown,
-) {
-  if (!(error instanceof ApiError)) {
-    return;
-  }
-
-  for (const [field, messages] of Object.entries(error.fieldErrors)) {
-    if (!messages.length) continue;
-
-    if (
-      field === 'customer_id' ||
-      field === 'title' ||
-      field === 'description' ||
-      field === 'status' ||
-      field === 'priority' ||
-      field === 'assigned_to_user_id' ||
-      field === 'category' ||
-      field === 'queue_key' ||
-      field === 'tags'
-    ) {
-      form.setError(field, { type: 'server', message: messages[0] });
-    }
-  }
-}
 
 function formatDate(value?: string | null): string {
   if (!value) return '—';
@@ -185,89 +154,6 @@ function mutationErrorMessage(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'Action failed. Please try again.';
 }
 
-function parseTicketTags(value: string | undefined): string[] | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean);
-
-  return parsed.length > 0 ? parsed : null;
-}
-
-function customFieldOptions(field: TicketCustomFieldConfig): string[] {
-  return field.options
-    .map((option) => (typeof option === 'string' ? option : null))
-    .filter((option): option is string => option !== null);
-}
-
-function buildCustomFieldPayload(
-  values: Record<string, string> | undefined,
-  fieldConfigs: TicketCustomFieldConfig[],
-): Record<string, unknown> {
-  if (!values) {
-    return {};
-  }
-
-  return fieldConfigs.reduce<Record<string, unknown>>((payload, field) => {
-    const rawValue = values[field.key];
-    if (rawValue === undefined || rawValue === '') {
-      return payload;
-    }
-
-    if (field.field_type === 'number') {
-      const parsed = Number(rawValue);
-      if (Number.isFinite(parsed)) {
-        payload[field.key] = parsed;
-      }
-      return payload;
-    }
-
-    if (field.field_type === 'checkbox') {
-      payload[field.key] = rawValue === 'true';
-      return payload;
-    }
-
-    if (field.field_type === 'multiselect') {
-      payload[field.key] = rawValue
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
-      return payload;
-    }
-
-    payload[field.key] = rawValue;
-    return payload;
-  }, {});
-}
-
-function templateFieldKeys(template: TicketFormTemplateConfig | null): Set<string> | null {
-  if (!template) {
-    return null;
-  }
-
-  const keys = template.field_schema
-    .map((entry) => (typeof entry.key === 'string' ? entry.key : null))
-    .filter((key): key is string => key !== null && key.length > 0);
-
-  return keys.length > 0 ? new Set(keys) : new Set<string>();
-}
-
-function filterCustomFieldsByTemplate(
-  fields: TicketCustomFieldConfig[],
-  template: TicketFormTemplateConfig | null,
-): TicketCustomFieldConfig[] {
-  const keys = templateFieldKeys(template);
-  if (keys === null) {
-    return fields;
-  }
-
-  return fields.filter((field) => keys.has(field.key));
-}
-
 export function TicketDetailsPage() {
   const { workspaceSlug, ticketId } = useParams();
   const navigate = useNavigate();
@@ -294,20 +180,9 @@ export function TicketDetailsPage() {
     defaultValues: { body: '', is_internal: false },
   });
 
-  const editForm = useForm<TicketUpdateForm>({
-    resolver: zodResolver(ticketUpdateSchema),
-    defaultValues: {
-      customer_id: '',
-      title: '',
-      description: '',
-      status: 'open',
-      priority: 'medium',
-      assigned_to_user_id: '',
-      category: '',
-      queue_key: '',
-      tags: '',
-      custom_fields: {},
-    },
+  const editForm = useForm<TicketForm>({
+    resolver: zodResolver(ticketFormSchema),
+    defaultValues: ticketFormDefaultValues,
   });
 
   const checklistForm = useForm<ChecklistForm>({
@@ -454,7 +329,7 @@ export function TicketDetailsPage() {
   });
 
   const updateTicket = useMutation({
-    mutationFn: (values: TicketUpdateForm) =>
+    mutationFn: (values: TicketForm) =>
       updateWorkspaceTicket(workspaceSlug ?? '', ticketId ?? '', {
         customer_id: Number(values.customer_id),
         title: values.title,
@@ -474,7 +349,7 @@ export function TicketDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
     },
     onError: (error) => {
-      applyTicketDetailsFieldErrors(editForm, error);
+      applyTicketFormFieldErrors(editForm, error);
     },
   });
 
@@ -1523,7 +1398,7 @@ export function TicketDetailsPage() {
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
-                onValueChange={(value) => editForm.setValue('status', value as TicketUpdateForm['status'])}
+                onValueChange={(value) => editForm.setValue('status', value as TicketForm['status'])}
                 value={editStatusValue ?? 'open'}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -1541,7 +1416,7 @@ export function TicketDetailsPage() {
             <div className="space-y-2">
               <Label>Priority</Label>
               <Select
-                onValueChange={(value) => editForm.setValue('priority', value as TicketUpdateForm['priority'])}
+                onValueChange={(value) => editForm.setValue('priority', value as TicketForm['priority'])}
                 value={editPriorityValue ?? 'medium'}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>

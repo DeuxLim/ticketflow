@@ -4,20 +4,36 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- `HARDEN-P1`
+- `MAINT-P1`
 
 ## MVP Items
 
-### `HARDEN-P1` Existing Feature Hardening and QA Closure
+### `MAINT-P1` Frontend Maintainability Decomposition
 
 - Status: `in_progress`
 - Priority: high
-- Scope: Audit the current product surface, tighten parity and edge-state behavior, and close regression coverage gaps before any new feature scope.
-- Current state: audit is complete, baseline frontend/backend verification passed, and the first hardening wave added regression coverage for login routing, route guards, workspace shell/logout, workspace dashboard states, and admin access edges.
+- Scope: Reduce complexity in oversized, high-churn frontend screens by centralizing duplicated ticket-form logic and splitting monolithic route views into smaller units without changing product behavior.
+- Current state: initialized from a codebase complexity scan after all tracked MVP feature work was complete. Shared ticket-form schema/defaults/helper logic now lives in `ticketForm.ts`, both ticket surfaces use it, helper regression coverage is in place, and `TicketsPage.tsx` now delegates dialog form rendering (`TicketFormFields.tsx`), the controls sheet (`TicketQueueControlsSheet.tsx`), and the queue list/table surface (`TicketQueueTable.tsx`).
 - Next actions:
-  - Run browser QA across login/logout, onboarding, workspace CRUD, ticket flows, settings tabs, and admin controls.
-  - Convert any browser-only defects into focused follow-up tasks.
-  - Re-run verification and close the epic once browser QA is complete.
+  - Decompose `TicketsPage.tsx` into focused filter, table, and dialog modules.
+  - Decompose `TicketDetailsPage.tsx` edit and mutation surfaces into smaller sections.
+  - Split oversized governance and admin sections, then run closeout verification.
+
+#### Child Items
+
+- `MAINT-P1-T01` Extract shared ticket form contract and helpers - `complete`
+- `MAINT-P1-T02` Decompose TicketsPage into focused modules - `incomplete`
+- `MAINT-P1-T03` Decompose TicketDetailsPage edit and mutation surfaces - `planned`
+- `MAINT-P1-T04` Decompose oversized admin and governance sections - `planned`
+- `MAINT-P1-T05` Run verification and close out maintainability epic - `planned`
+
+### `HARDEN-P1` Existing Feature Hardening and QA Closure
+
+- Status: `complete`
+- Priority: high
+- Scope: Audit the current product surface, tighten parity and edge-state behavior, and close regression coverage gaps before any new feature scope.
+- Current state: complete after the audit, expanded auth/workspace/admin regression coverage, live browser smoke validation for workspace-user and platform-admin paths, disposable onboarding validation with a fresh user and new workspace, and disposable customer/ticket create-delete validation all passed without exposing new defects.
+- Next actions: none for this item.
 
 #### Child Items
 
@@ -25,8 +41,8 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `HARDEN-P1-T02` Tighten auth and route-access regression coverage - `complete`
 - `HARDEN-P1-T03` Tighten workspace shell and dashboard regression coverage - `complete`
 - `HARDEN-P1-T04` Tighten admin access and edge-state regression coverage - `complete`
-- `HARDEN-P1-T05` Run browser critical-path QA - `incomplete`
-- `HARDEN-P1-T06` Run verification and close out the hardening epic - `planned`
+- `HARDEN-P1-T05` Run browser critical-path QA - `complete`
+- `HARDEN-P1-T06` Run verification and close out the hardening epic - `complete`
 
 ### `UX-OVERHAUL-P1` App-Wide UX Overhaul
 
@@ -115,4 +131,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `HARDEN-P1` with browser critical-path QA, convert any browser-only defects into focused child tasks, then run closeout verification before starting new feature scope.
+Continue `MAINT-P1-T02` by reducing the remaining `TicketsPage.tsx` orchestration and inline action helpers, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.
