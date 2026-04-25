@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-25T20:55:00+08:00"
+updated_at: "2026-04-25T22:41:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -31,22 +31,25 @@ items:
       - "2026-04-24: Started `MAINT-P1-T02` by extracting ticket dialog form rendering from `TicketsPage.tsx` into `TicketFormFields.tsx` while keeping behavior on the shared ticket-form contract."
       - "2026-04-24: Continued `MAINT-P1-T02` by extracting the saved-view, filter, and bulk-action sheet from `TicketsPage.tsx` into `TicketQueueControlsSheet.tsx`."
       - "2026-04-25: Continued `MAINT-P1-T02` by extracting the queue table, row actions, loading/error/empty states, selection handling, and pagination rendering from `TicketsPage.tsx` into `TicketQueueTable.tsx`."
-    incomplete_reason: "The main `TicketsPage` render surfaces are now extracted, but the page still owns a large amount of orchestration and inline handler logic that should be reduced before closing T02."
+      - "2026-04-25: Completed the remaining `TicketsPage` cleanup by extracting search/summary rendering into `TicketQueueSearchBar.tsx` and moving form-state shaping helpers into `ticketQueueHelpers.ts`."
+      - "2026-04-25: Completed `MAINT-P1-T03` by moving ticket-details dialog schemas and formatting helpers into `ticketDetailsHelpers.ts`, extracting the edit sheet into `TicketDetailsEditSheet.tsx`, and extracting checklist, attachments, watchers, related-ticket, and add-comment dialogs into `TicketDetailsSupportDialogs.tsx`."
+      - "2026-04-25: Started `MAINT-P1-T04` by extracting the admin workspace limits/feature-flags editor into `AdminWorkspaceEditorDialog.tsx` and `adminWorkspaceEditorHelpers.ts`, reducing duplicated modal/editor logic in `AdminDashboardPage.tsx`."
+      - "2026-04-25: Continued `MAINT-P1-T04` by extracting the governance dialog stack into `GovernanceSettingsDialogs.tsx`, leaving `GovernanceSettingsSection.tsx` focused on overview cards and mutation wiring."
+    incomplete_reason: "Ticket list and ticket details decomposition are complete. Remaining maintainability work is the rest of the oversized admin/governance extraction plus final closeout verification."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
-      - Reduce `TicketsPage.tsx` orchestration further by extracting inline handler and state-shaping logic where it clearly improves readability without changing behavior.
-      - Decompose `TicketDetailsPage.tsx` edit and mutation surfaces into smaller focused sections.
-      - Split oversized governance and admin sections into smaller maintainable modules, then run closeout verification.
+      - Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module.
+      - Run `MAINT-P1-T05` closeout verification after the remaining admin/governance decomposition lands.
     tags:
       - refactor
       - maintainability
       - frontend
       - mvp
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-25T20:55:00+08:00"
-    changed_at: "2026-04-25T20:55:00+08:00"
+    updated_at: "2026-04-25T21:35:00+08:00"
+    changed_at: "2026-04-25T21:35:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T01
@@ -85,7 +88,7 @@ items:
     title: Decompose TicketsPage into focused modules
     type: task
     parent_id: MAINT-P1
-    status: incomplete
+    status: complete
     priority: high
     mvp: true
     description: Split ticket queue filters, bulk controls, and form/dialog concerns out of `TicketsPage.tsx` to reduce coupling and make behavior changes safer.
@@ -99,27 +102,26 @@ items:
       - "2026-04-24: Began decomposition by extracting ticket dialog form rendering into `TicketFormFields.tsx`, removing one large local component from `TicketsPage.tsx` while preserving the shared ticket-form contract."
       - "2026-04-24: Extracted the controls sheet into `TicketQueueControlsSheet.tsx`, moving saved-view, filter, and bulk-action rendering out of `TicketsPage.tsx`."
       - "2026-04-25: Extracted the queue list rendering into `TicketQueueTable.tsx`, moving table markup, loading/error/empty states, row actions, selection UI, and pagination rendering out of `TicketsPage.tsx`."
-    incomplete_reason: "The form, controls sheet, and queue table are extracted, but `TicketsPage.tsx` still contains a large orchestration layer and inline ticket-action handlers."
+      - "2026-04-25: Extracted `TicketQueueSearchBar.tsx` and `ticketQueueHelpers.ts`, reducing the remaining inline orchestration and form-state shaping inside `TicketsPage.tsx`."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Reduce `TicketsPage.tsx` orchestration further by isolating list-level action handlers and state-shaping helpers where practical.
-      - Reassess whether the remaining `TicketsPage.tsx` orchestration is small enough to close `MAINT-P1-T02` before moving to `MAINT-P1-T03`.
+    next_actions: []
     tags:
       - refactor
       - tickets
       - frontend
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-25T20:55:00+08:00"
-    changed_at: "2026-04-25T20:55:00+08:00"
+    updated_at: "2026-04-25T21:35:00+08:00"
+    changed_at: "2026-04-25T21:35:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T03
     title: Decompose TicketDetailsPage edit and mutation surfaces
     type: task
     parent_id: MAINT-P1
-    status: planned
+    status: complete
     priority: high
     mvp: true
     description: Break the ticket details workbench into smaller edit, activity, and mutation sections to make the page easier to reason about and test.
@@ -129,27 +131,29 @@ items:
       - Relevant frontend verification passes after the extraction.
     dependencies:
       - MAINT-P1-T01
-    notes: []
+    notes:
+      - "2026-04-25: Added `ticketDetailsHelpers.ts` exports for dialog schemas, types, and shared formatting helpers so `TicketDetailsPage.tsx` no longer owns both mutation UI and support logic."
+      - "2026-04-25: Extracted the ticket edit sheet into `TicketDetailsEditSheet.tsx` while preserving the shared ticket-form contract."
+      - "2026-04-25: Extracted checklist, attachments, watchers, related tickets, and add-comment dialogs into `TicketDetailsSupportDialogs.tsx`, reducing `TicketDetailsPage.tsx` from 1322 lines to 1013 lines."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Extract edit sheet and supporting mutation sections without changing route behavior.
+    next_actions: []
     tags:
       - refactor
       - ticket-details
       - frontend
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-24T07:25:00+08:00"
-    changed_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-25T22:12:00+08:00"
+    changed_at: "2026-04-25T22:12:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T04
     title: Decompose oversized admin and governance sections
     type: task
     parent_id: MAINT-P1
-    status: planned
+    status: incomplete
     priority: medium
     mvp: true
     description: Split large admin and governance settings sections into smaller modules so future policy and platform changes do not accumulate in single files.
@@ -159,21 +163,24 @@ items:
       - Relevant frontend verification passes after the extraction.
     dependencies:
       - MAINT-P1-T01
-    notes: []
-    incomplete_reason: null
+    notes:
+      - "2026-04-25: Extracted the duplicated admin workspace limits and feature-flags modal/editor into `AdminWorkspaceEditorDialog.tsx` and `adminWorkspaceEditorHelpers.ts`, reducing `AdminDashboardPage.tsx` from 832 lines to 595 lines."
+      - "2026-04-25: Extracted the stacked retention, security-policy, SLA, break-glass, identity-provider, and SCIM-directory dialogs into `GovernanceSettingsDialogs.tsx`, reducing `GovernanceSettingsSection.tsx` from 830 lines to 565 lines."
+    incomplete_reason: "Admin workspace editor extraction is complete, but additional oversized admin or governance sections still need decomposition before the task can close."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
-      - Identify the highest-churn policy and admin editor sections for first extraction.
+      - Extract the next highest-churn governance settings editor section into a focused module.
+      - Reassess `AdminDashboardPage.tsx` and `GovernanceSettingsSection.tsx` after the next extraction to decide whether `MAINT-P1-T04` can close.
     tags:
       - refactor
       - admin
       - governance
       - frontend
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-24T07:25:00+08:00"
-    changed_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-25T22:28:00+08:00"
+    changed_at: "2026-04-25T22:28:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T05

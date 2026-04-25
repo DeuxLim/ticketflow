@@ -1181,3 +1181,91 @@ Verification:
 ## Resume From Here
 
 Continue `MAINT-P1-T02` by reducing the remaining `TicketsPage.tsx` orchestration and inline action helpers, then move to `MAINT-P1-T03` for `TicketDetailsPage.tsx`.
+
+## 2026-04-25 21:35 +08:00 - Closed TicketsPage Decomposition Task
+
+- Completed the remaining `MAINT-P1-T02` cleanup after the earlier form, controls-sheet, and queue-table extractions.
+- Added `frontend/src/features/workspace/pages/TicketQueueSearchBar.tsx` to own the search and active-summary strip above the queue.
+- Added `frontend/src/features/workspace/pages/ticketQueueHelpers.ts` to centralize:
+  - create-form defaults,
+  - edit-form value seeding from a ticket record,
+  - active-filter counting,
+  - selected saved-view label lookup.
+- Updated `TicketsPage.tsx` to consume the new helper module and search component.
+- Marked `MAINT-P1-T02` complete because the page now delegates its major render surfaces and no longer carries the original monolithic structure.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/ticketForm.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T03` by extracting `TicketDetailsPage.tsx` edit and mutation sections into focused modules, then move to the oversized governance/admin surfaces in `MAINT-P1-T04`.
+
+## 2026-04-25 22:12 +08:00 - Closed TicketDetailsPage Decomposition Task
+
+- Completed `MAINT-P1-T03` by extracting the remaining ticket-details mutation surfaces out of `frontend/src/features/workspace/pages/TicketDetailsPage.tsx`.
+- Added `frontend/src/features/workspace/pages/TicketDetailsEditSheet.tsx` for the shared ticket edit sheet UI and kept it on top of the centralized `ticketForm.ts` contract.
+- Added `frontend/src/features/workspace/pages/TicketDetailsSupportDialogs.tsx` to own:
+  - add-comment,
+  - checklist,
+  - attachments,
+  - watchers,
+  - related-ticket dialogs.
+- Expanded `frontend/src/features/workspace/pages/ticketDetailsHelpers.ts` so the details route no longer keeps dialog schemas, local helper types, and formatting utilities inline.
+- Reduced `TicketDetailsPage.tsx` from 1322 lines to 1013 lines while preserving route behavior and keeping the main page focused on query and mutation orchestration.
+- Marked `MAINT-P1-T03` complete and updated the epic next actions to move on to `MAINT-P1-T04`.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Start `MAINT-P1-T04` by extracting the highest-churn admin and governance editor sections into focused modules, then run `MAINT-P1-T05` closeout verification.
+
+## 2026-04-25 22:28 +08:00 - Started Admin and Governance Decomposition Task
+
+- Advanced `MAINT-P1-T04` from `planned` to `incomplete`.
+- Added `frontend/src/features/admin/pages/AdminWorkspaceEditorDialog.tsx` to own the shared workspace limits and feature-flags dialog/editor surface.
+- Added `frontend/src/features/admin/pages/adminWorkspaceEditorHelpers.ts` to centralize:
+  - draft-row typing,
+  - draft-row creation and parsing,
+  - admin mutation error message shaping.
+- Updated `frontend/src/features/admin/pages/AdminDashboardPage.tsx` to delegate both workspace editor dialogs to the new module, reducing the page from 832 lines to 595 lines.
+- Left `MAINT-P1-T04` open because additional oversized governance or admin sections still need extraction before the task can close.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module, then run `MAINT-P1-T05` closeout verification.
+
+## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
+
+- Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.
+- Added `frontend/src/features/workspace/settings/GovernanceSettingsDialogs.tsx` to own:
+  - retention policy,
+  - security policy,
+  - SLA policy,
+  - break-glass,
+  - identity provider,
+  - SCIM directory dialogs.
+- Updated `GovernanceSettingsSection.tsx` to delegate those dialogs and keep the route focused on summary cards, list rendering, and mutation wiring.
+- Reduced `GovernanceSettingsSection.tsx` from 830 lines to 565 lines.
+- Kept `MAINT-P1-T04` open because there is still room to extract another focused admin or governance subsection before closeout.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module, then run `MAINT-P1-T05` closeout verification.

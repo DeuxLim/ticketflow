@@ -2,20 +2,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { z } from 'zod';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   addWorkspaceTicketWatcher,
@@ -39,14 +32,29 @@ import {
   updateWorkspaceTicket,
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/pages/ticketDetailsApi';
+import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
+import { TicketDetailsSupportDialogs } from '@/features/workspace/pages/TicketDetailsSupportDialogs';
+import {
+  buildTicketDetailsFormValues,
+  bytesToReadable,
+  checklistSchema,
+  commentSchema,
+  createTicketDetailsFormDefaults,
+  formatTicketDetailsDate,
+  relatedTicketSchema,
+  statusLabel,
+  type ActivityLog,
+  type ChecklistForm,
+  type CommentForm,
+  type RelatedTicketForm,
+  type TicketDetailsAttachment,
+} from '@/features/workspace/pages/ticketDetailsHelpers';
 import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
 import {
   applyTicketFormFieldErrors,
   buildCustomFieldPayload,
-  customFieldOptions,
   filterCustomFieldsByTemplate,
   parseTicketTags,
-  ticketFormDefaultValues,
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
@@ -55,73 +63,15 @@ import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverag
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
 import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
 
-const commentSchema = z.object({
-  body: z.string().min(2, 'Comment must not be empty'),
-  is_internal: z.boolean(),
-});
-
-const checklistSchema = z.object({
-  title: z.string().min(2, 'Task title is required'),
-});
-
-const relatedTicketSchema = z.object({
-  related_ticket_id: z.string().min(1, 'Select a ticket'),
-  relationship_type: z.string().min(2, 'Relationship is required'),
-});
-
-type CommentForm = z.infer<typeof commentSchema>;
-type ChecklistForm = z.infer<typeof checklistSchema>;
-type RelatedTicketForm = z.infer<typeof relatedTicketSchema>;
-
-type ActivityLog = {
-  id: number;
-  action: string;
-  created_at: string;
-  user?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  } | null;
-  meta?: Record<string, unknown> | null;
-};
-
-type Attachment = {
-  id: number;
-  ticket_id: number;
-  comment_id: number | null;
-  original_name: string;
-  mime_type: string | null;
-  size_bytes: number;
-  uploader?: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  } | null;
-  created_at: string;
-};
-
 type AuthUser = {
   id: number;
   email: string;
   is_platform_admin: boolean;
 };
 
-function formatDate(value?: string | null): string {
-  if (!value) return '—';
-  return new Date(value).toLocaleString();
-}
-
 function fullName(person?: { first_name?: string; last_name?: string } | null): string {
   if (!person) return '—';
   return `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || '—';
-}
-
-function bytesToReadable(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function nextStatuses(current: Ticket['status']): Ticket['status'][] {
@@ -144,14 +94,6 @@ function customFieldValue(value: TicketCustomFieldValue['value']): string {
   if (Array.isArray(value)) return value.join(', ');
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   return String(value);
-}
-
-function statusLabel(value?: string | null): string {
-  return value ? value.replaceAll('_', ' ') : '—';
-}
-
-function mutationErrorMessage(error: unknown): string {
-  return error instanceof Error && error.message ? error.message : 'Action failed. Please try again.';
 }
 
 export function TicketDetailsPage() {
@@ -182,7 +124,7 @@ export function TicketDetailsPage() {
 
   const editForm = useForm<TicketForm>({
     resolver: zodResolver(ticketFormSchema),
-    defaultValues: ticketFormDefaultValues,
+    defaultValues: createTicketDetailsFormDefaults(),
   });
 
   const checklistForm = useForm<ChecklistForm>({
@@ -276,7 +218,7 @@ export function TicketDetailsPage() {
 
   const attachmentsQuery = useQuery({
     queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'],
-    queryFn: () => listWorkspaceTicketAttachments(workspaceSlug ?? '', ticketId ?? '') as Promise<{ data: Attachment[] }>,
+    queryFn: () => listWorkspaceTicketAttachments(workspaceSlug ?? '', ticketId ?? '') as Promise<{ data: TicketDetailsAttachment[] }>,
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
@@ -526,7 +468,7 @@ export function TicketDetailsPage() {
   const checklistMutationError = addChecklistItem.error ?? updateChecklistItem.error ?? deleteChecklistItem.error ?? reorderChecklistItems.error;
   const relatedTicketMutationError = addRelatedTicket.error ?? deleteRelatedTicket.error;
   const attachmentsByComment = useMemo(() => {
-    return attachments.reduce<Record<number, Attachment[]>>((acc, attachment) => {
+    return attachments.reduce<Record<number, TicketDetailsAttachment[]>>((acc, attachment) => {
       if (attachment.comment_id === null) {
         return acc;
       }
@@ -599,36 +541,7 @@ export function TicketDetailsPage() {
     if (!ticket) return;
 
     const activeConfigsForReset = (customFieldConfigsQuery.data?.data ?? []).filter((field) => field.is_active);
-
-    const persistedCustomFields = Object.fromEntries(
-      (ticket.custom_fields ?? []).map((field) => [
-        field.key ?? String(field.ticket_custom_field_id),
-        field.value === null || field.value === undefined
-          ? ''
-          : Array.isArray(field.value)
-            ? field.value.join(', ')
-            : String(field.value),
-      ]),
-    );
-
-    for (const config of activeConfigsForReset) {
-      if (!(config.key in persistedCustomFields)) {
-        persistedCustomFields[config.key] = '';
-      }
-    }
-
-    editForm.reset({
-      customer_id: String(ticket.customer_id),
-      title: ticket.title,
-      description: ticket.description,
-      status: ticket.status,
-      priority: ticket.priority,
-      assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
-      category: ticket.category ?? '',
-      queue_key: ticket.queue_key ?? '',
-      tags: (ticket.tags ?? []).join(', '),
-      custom_fields: persistedCustomFields,
-    });
+    editForm.reset(buildTicketDetailsFormValues(ticket, activeConfigsForReset));
   }, [ticket, customFieldConfigsQuery.data?.data, editForm]);
 
   if (accessQuery.isLoading) {
@@ -756,7 +669,7 @@ export function TicketDetailsPage() {
             />
             <DetailItem label="Automation" value={stateSummary?.automation.recent_count ? `${stateSummary.automation.recent_count} recent runs` : 'No recent runs'} />
             <DetailItem label="Tags" value={ticket.tags && ticket.tags.length > 0 ? ticket.tags.join(', ') : '—'} />
-            <DetailItem label="Updated" value={formatDate(ticket.updated_at)} />
+            <DetailItem label="Updated" value={formatTicketDetailsDate(ticket.updated_at)} />
           </CardContent>
         </Card>
 
@@ -781,11 +694,11 @@ export function TicketDetailsPage() {
                           : 'System'}
                     </span>
                     <span>•</span>
-                    <span>{formatDate(comment.created_at)}</span>
+                    <span>{formatTicketDetailsDate(comment.created_at)}</span>
                     {comment.updated_at && comment.updated_at !== comment.created_at && (
                       <>
                         <span>•</span>
-                        <span>edited {formatDate(comment.updated_at)}</span>
+                        <span>edited {formatTicketDetailsDate(comment.updated_at)}</span>
                       </>
                     )}
                   </div>
@@ -858,7 +771,7 @@ export function TicketDetailsPage() {
                         <div className="text-xs">
                           <p className="font-medium">{attachment.original_name}</p>
                           <p className="text-muted-foreground">
-                            {bytesToReadable(attachment.size_bytes)} • {formatDate(attachment.created_at)}
+                            {bytesToReadable(attachment.size_bytes)} • {formatTicketDetailsDate(attachment.created_at)}
                           </p>
                         </div>
                         <Button
@@ -888,7 +801,7 @@ export function TicketDetailsPage() {
             {activityLogs.map((event) => (
               <div key={event.id} className="rounded-md border border-border p-3 text-sm">
                 <p className="font-medium">{humanizeAction(event.action)}</p>
-                <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatDate(event.created_at)}</p>
+                <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatTicketDetailsDate(event.created_at)}</p>
               </div>
             ))}
             {!activityLogs.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
@@ -906,14 +819,14 @@ export function TicketDetailsPage() {
             <Badge variant={stateSummary?.sla.status === 'breached' ? 'destructive' : 'secondary'} className="w-fit">
               {statusLabel(stateSummary?.sla.status)}
             </Badge>
-            <DetailItem label="First response due" value={formatDate(ticket.first_response_due_at)} />
-            <DetailItem label="First responded" value={formatDate(ticket.first_responded_at)} />
-            <DetailItem label="Resolution due" value={formatDate(ticket.resolution_due_at)} />
-            <DetailItem label="Resolved at" value={formatDate(ticket.resolved_at)} />
+            <DetailItem label="First response due" value={formatTicketDetailsDate(ticket.first_response_due_at)} />
+            <DetailItem label="First responded" value={formatTicketDetailsDate(ticket.first_responded_at)} />
+            <DetailItem label="Resolution due" value={formatTicketDetailsDate(ticket.resolution_due_at)} />
+            <DetailItem label="Resolved at" value={formatTicketDetailsDate(ticket.resolved_at)} />
             <Separator />
             {slaSignals.map((signal) => (
               <p key={signal.key} className={signal.severity === 'warning' ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
-                {signal.label}{signal.time ? ` (${formatDate(signal.time)})` : ''}
+                {signal.label}{signal.time ? ` (${formatTicketDetailsDate(signal.time)})` : ''}
               </p>
             ))}
           </CardContent>
@@ -972,622 +885,120 @@ export function TicketDetailsPage() {
         </aside>
       </div>
 
-      <Dialog
-        onOpenChange={(open) => {
+      <TicketDetailsSupportDialogs
+        workspaceSlug={workspaceSlug}
+        canComment={canComment}
+        canManage={canManage}
+        isCommentOpen={isCommentOpen}
+        onCommentOpenChange={(open) => {
           setIsCommentOpen(open);
           if (!open) {
             commentForm.reset({ body: '', is_internal: false });
             setCommentFiles([]);
           }
         }}
-        open={isCommentOpen}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Comment</DialogTitle>
-            <DialogDescription>Internal comments are visible to workspace team members only.</DialogDescription>
-          </DialogHeader>
-
-          <form className="space-y-3" id="comment-form" onSubmit={commentForm.handleSubmit((values) => addComment.mutate(values))}>
-            <div className="space-y-2">
-              <Label htmlFor="comment-body">Comment</Label>
-              <Textarea id="comment-body" {...commentForm.register('body')} />
-              {commentForm.formState.errors.body && <p className="text-xs text-destructive">{commentForm.formState.errors.body.message}</p>}
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-              <input type="checkbox" {...commentForm.register('is_internal')} />
-              Internal comment
-            </label>
-
-            <div className="space-y-2">
-              <Label htmlFor="comment-files">Attachments (optional)</Label>
-              <Input
-                id="comment-files"
-                multiple
-                onChange={(event) => setCommentFiles(Array.from(event.target.files ?? []))}
-                type="file"
-              />
-              {commentFiles.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {commentFiles.length} file{commentFiles.length > 1 ? 's' : ''} selected
-                </p>
-              )}
-            </div>
-          </form>
-
-          <DialogFooter>
-            <Button onClick={() => setIsCommentOpen(false)} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={commentForm.formState.isSubmitting || addComment.isPending} form="comment-form" type="submit">
-              {addComment.isPending ? 'Posting...' : 'Post Comment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        onOpenChange={(open) => {
+        commentForm={commentForm}
+        onSubmitComment={(values) => addComment.mutate(values)}
+        isCommentPending={addComment.isPending}
+        commentFiles={commentFiles}
+        onCommentFilesChange={setCommentFiles}
+        isChecklistOpen={isChecklistOpen}
+        onChecklistOpenChange={(open) => {
           setIsChecklistOpen(open);
           if (!open) {
             checklistForm.reset({ title: '' });
           }
         }}
-        open={isChecklistOpen}
-      >
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Checklist</DialogTitle>
-            <DialogDescription>Track the operator tasks that still block closure or handoff.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            {checklistItems.map((item) => (
-              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
-                <label className="flex min-w-0 items-center gap-3 text-sm">
-                  <Checkbox
-                    checked={item.is_completed}
-                    disabled={!canManage || updateChecklistItem.isPending}
-                    onCheckedChange={(checked) => updateChecklistItem.mutate({ itemId: item.id, values: { is_completed: checked === true } })}
-                  />
-                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
-                  {canManage && (
-                    <>
-                      <Button
-                        disabled={reorderChecklistItems.isPending || checklistItems[0]?.id === item.id}
-                        onClick={() => moveChecklistItem(item.id, 'up')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Up
-                      </Button>
-                      <Button
-                        disabled={reorderChecklistItems.isPending || checklistItems[checklistItems.length - 1]?.id === item.id}
-                        onClick={() => moveChecklistItem(item.id, 'down')}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Down
-                      </Button>
-                      <Button disabled={deleteChecklistItem.isPending} onClick={() => deleteChecklistItem.mutate(item.id)} size="sm" type="button" variant="outline">
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
-
-            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit((values) => addChecklistItem.mutate(values))}>
-              <Input disabled={!canManage} placeholder="Add an operator task..." {...checklistForm.register('title')} />
-              <Button disabled={!canManage || addChecklistItem.isPending} type="submit">
-                {addChecklistItem.isPending ? 'Adding...' : 'Add Task'}
-              </Button>
-            </form>
-            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
-            {(addChecklistItem.isError || updateChecklistItem.isError || deleteChecklistItem.isError) && (
-              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        onOpenChange={setIsWatchersOpen}
-        open={isWatchersOpen}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Watchers</DialogTitle>
-            <DialogDescription>See who is following the ticket and keeping up with updates.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
-              {watchers.map((watcher) => (
-                <Badge key={watcher.id} variant="secondary">
-                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
-                </Badge>
-              ))}
-            </div>
-            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
-            {(addWatcher.isError || removeWatcher.isError) && (
-              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        onOpenChange={(open) => {
+        checklistForm={checklistForm}
+        checklistItems={checklistItems}
+        onSubmitChecklist={(values) => addChecklistItem.mutate(values)}
+        onToggleChecklistItem={(itemId, checked) => updateChecklistItem.mutate({ itemId, values: { is_completed: checked } })}
+        onMoveChecklistItem={moveChecklistItem}
+        onDeleteChecklistItem={(itemId) => deleteChecklistItem.mutate(itemId)}
+        isChecklistMutating={
+          addChecklistItem.isPending ||
+          updateChecklistItem.isPending ||
+          deleteChecklistItem.isPending ||
+          reorderChecklistItems.isPending
+        }
+        checklistMutationError={checklistMutationError}
+        isWatchersOpen={isWatchersOpen}
+        onWatchersOpenChange={setIsWatchersOpen}
+        watchers={watchers}
+        watcherMutationError={watcherMutationError}
+        isAttachmentsOpen={isAttachmentsOpen}
+        onAttachmentsOpenChange={(open) => {
           setIsAttachmentsOpen(open);
           if (!open) {
             setAttachmentFile(null);
           }
         }}
-        open={isAttachmentsOpen}
-      >
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Attachments</DialogTitle>
-            <DialogDescription>Upload or review files without pushing upload controls into the main ticket view.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                accept="*/*"
-                onChange={(event) => setAttachmentFile(event.target.files?.[0] ?? null)}
-                type="file"
-              />
-              <Button
-                disabled={!canComment || !attachmentFile || uploadAttachment.isPending}
-                onClick={() => uploadAttachment.mutate()}
-                size="sm"
-                type="button"
-              >
-                {uploadAttachment.isPending ? 'Uploading...' : 'Upload'}
-              </Button>
-            </div>
-            {uploadAttachment.isError && <p className="text-xs text-destructive">{(uploadAttachment.error as Error).message}</p>}
-
-            {ticketLevelAttachments.map((attachment) => (
-              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
-                <div>
-                  <p className="font-medium">{attachment.original_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatDate(attachment.created_at)}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    disabled={!canManage || deleteAttachment.isPending}
-                    onClick={() => {
-                      const ok = window.confirm(`Delete ${attachment.original_name}?`);
-                      if (ok) deleteAttachment.mutate(attachment.id);
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {!ticketLevelAttachments.length && (
-              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        onOpenChange={(open) => {
+        attachmentFile={attachmentFile}
+        onAttachmentFileChange={setAttachmentFile}
+        onUploadAttachment={() => uploadAttachment.mutate()}
+        isUploadingAttachment={uploadAttachment.isPending}
+        uploadAttachmentError={uploadAttachment.isError ? (uploadAttachment.error as Error).message : null}
+        ticketLevelAttachments={ticketLevelAttachments}
+        onDownloadAttachment={(attachmentId, originalName) => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}/download`, originalName)}
+        onDeleteAttachment={(attachmentId, originalName) => {
+          const ok = window.confirm(`Delete ${originalName}?`);
+          if (ok) {
+            deleteAttachment.mutate(attachmentId);
+          }
+        }}
+        isDeletingAttachment={deleteAttachment.isPending}
+        isRelatedOpen={isRelatedOpen}
+        onRelatedOpenChange={(open) => {
           setIsRelatedOpen(open);
           if (!open) {
             relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
           }
         }}
-        open={isRelatedOpen}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Related Tickets</DialogTitle>
-            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work from one focused panel.</DialogDescription>
-          </DialogHeader>
+        relatedTicketForm={relatedTicketForm}
+        onSubmitRelatedTicket={(values) => addRelatedTicket.mutate(values)}
+        relatedTickets={relatedTickets}
+        relatedTicketOptions={relatedTicketOptions}
+        relatedTicketsCoverageHint={relatedTicketsCoverageHint}
+        relatedTicketIdValue={relatedTicketIdValue}
+        relatedTicketRelationshipValue={relatedTicketRelationshipValue}
+        onDeleteRelatedTicket={(linkId) => deleteRelatedTicket.mutate(linkId)}
+        isRelatedTicketPending={addRelatedTicket.isPending || deleteRelatedTicket.isPending}
+        relatedTicketMutationError={relatedTicketMutationError}
+      />
 
-          <div className="mb-4 flex flex-col gap-3">
-            {relatedTickets.map((link) => (
-              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    {link.ticket ? (
-                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
-                        {link.ticket.ticket_number}
-                      </Link>
-                    ) : (
-                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
-                    )}
-                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
-                  </div>
-                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
-                </div>
-                {canManage && (
-                  <Button
-                    className="mt-2"
-                    disabled={deleteRelatedTicket.isPending}
-                    onClick={() => deleteRelatedTicket.mutate(link.id)}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
-            ))}
-            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
-          </div>
-
-          <form className="space-y-3" id="related-ticket-form" onSubmit={relatedTicketForm.handleSubmit((values) => addRelatedTicket.mutate(values))}>
-            <div className="space-y-2">
-              <Label>Ticket</Label>
-              <Select
-                onValueChange={(value) => relatedTicketForm.setValue('related_ticket_id', value ?? '', { shouldValidate: true })}
-                value={relatedTicketIdValue ?? ''}
-              >
-                <SelectTrigger><SelectValue placeholder="Select ticket" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {relatedTicketOptions.map((option) => (
-                      <SelectItem key={option.id} value={String(option.id)}>
-                        {option.ticket_number} — {option.title}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {relatedTicketsCoverageHint && (
-                <p className="text-xs text-muted-foreground">{relatedTicketsCoverageHint}</p>
-              )}
-              {relatedTicketForm.formState.errors.related_ticket_id && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.related_ticket_id.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Relationship</Label>
-              <Select
-                onValueChange={(value) => relatedTicketForm.setValue('relationship_type', value ?? 'related', { shouldValidate: true })}
-                value={relatedTicketRelationshipValue ?? 'related'}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="related">Related</SelectItem>
-                    <SelectItem value="blocks">Blocks</SelectItem>
-                    <SelectItem value="blocked_by">Blocked By</SelectItem>
-                    <SelectItem value="duplicate">Duplicate</SelectItem>
-                    <SelectItem value="caused_by">Caused By</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {relatedTicketForm.formState.errors.relationship_type && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.relationship_type.message}</p>}
-            </div>
-          </form>
-
-          {(addRelatedTicket.isError || deleteRelatedTicket.isError) && (
-            <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
-          )}
-
-          <DialogFooter>
-            <Button onClick={() => setIsRelatedOpen(false)} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={addRelatedTicket.isPending || relatedTicketForm.formState.isSubmitting} form="related-ticket-form" type="submit">
-              {addRelatedTicket.isPending ? 'Linking...' : 'Link Ticket'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Sheet
+      <TicketDetailsEditSheet
+        open={isEditOpen}
         onOpenChange={(open) => {
           if (!open) {
             setEditTemplateId(defaultTemplateId);
           }
           setIsEditOpen(open);
         }}
-        open={isEditOpen}
-      >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
-          <SheetHeader>
-            <SheetTitle>Edit Ticket</SheetTitle>
-            <SheetDescription>Update assignment, priority, status, and operational metadata without losing sight of the ticket.</SheetDescription>
-          </SheetHeader>
-
-          <form className="grid gap-4 md:grid-cols-2" id="edit-ticket-details-form" onSubmit={editForm.handleSubmit((values) => updateTicket.mutate(values))}>
-            <div className="space-y-2">
-              <Label>Customer</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('customer_id', value ?? '', { shouldValidate: true })}
-                value={editCustomerIdValue ?? ''}
-              >
-                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={String(customer.id)}>
-                        {customer.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {customersCoverageHint && (
-                <p className="text-xs text-muted-foreground">{customersCoverageHint}</p>
-              )}
-              {editForm.formState.errors.customer_id && <p className="text-xs text-destructive">{editForm.formState.errors.customer_id.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Assignee</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('assigned_to_user_id', value === 'none' || value === null ? '' : value)}
-                value={editAssigneeIdValue || 'none'}
-              >
-                <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">Unassigned</SelectItem>
-                    {ticket.assignee && !members.some((member) => member.user.id === ticket.assignee?.id) && (
-                      <SelectItem value={String(ticket.assignee.id)}>
-                        {ticket.assignee.first_name} {ticket.assignee.last_name}
-                      </SelectItem>
-                    )}
-                    {members.map((member) => (
-                      <SelectItem key={member.user.id} value={String(member.user.id)}>
-                        {member.user.first_name} {member.user.last_name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="details-template">Form Template</Label>
-              <Select
-                onValueChange={(value) => setEditTemplateId(value ?? 'none')}
-                value={effectiveEditTemplateId}
-              >
-                <SelectTrigger id="details-template"><SelectValue placeholder="All active fields" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">All active fields</SelectItem>
-                    {activeTemplateConfigs.map((template) => (
-                      <SelectItem key={template.id} value={String(template.id)}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="details-title">Title</Label>
-              <Input id="details-title" {...editForm.register('title')} />
-              {editForm.formState.errors.title && <p className="text-xs text-destructive">{editForm.formState.errors.title.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('status', value as TicketForm['status'])}
-                value={editStatusValue ?? 'open'}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="resolved">Resolved</SelectItem>
-                    <SelectItem value="closed">Closed</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('priority', value as TicketForm['priority'])}
-                value={editPriorityValue ?? 'medium'}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="details-category">Category</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('category', value === 'none' || value === null ? '' : value)}
-                value={editCategoryValue}
-              >
-                <SelectTrigger id="details-category"><SelectValue placeholder="No category" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">No category</SelectItem>
-                    {activeCategoryConfigs.map((category) => (
-                      <SelectItem key={category.id} value={category.key}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                    {hasLegacyEditCategoryValue && <SelectItem value={editCategoryValue}>{editCategoryValue} (legacy)</SelectItem>}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="details-queue">Queue</Label>
-              <Select
-                onValueChange={(value) => editForm.setValue('queue_key', value === 'none' || value === null ? '' : value)}
-                value={editQueueValue}
-              >
-                <SelectTrigger id="details-queue"><SelectValue placeholder="Default queue" /></SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="none">Default queue</SelectItem>
-                    {activeQueueConfigs.map((queue) => (
-                      <SelectItem key={queue.id} value={queue.key}>
-                        {queue.name}
-                      </SelectItem>
-                    ))}
-                    {hasLegacyEditQueueValue && <SelectItem value={editQueueValue}>{editQueueValue} (legacy)</SelectItem>}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="details-description">Description</Label>
-              <Textarea id="details-description" {...editForm.register('description')} />
-              {editForm.formState.errors.description && <p className="text-xs text-destructive">{editForm.formState.errors.description.message}</p>}
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="details-tags">Tags (comma separated)</Label>
-              <Input id="details-tags" list="details-tag-options" placeholder="network, vpn, urgent" {...editForm.register('tags')} />
-              {activeTagConfigs.length > 0 && (
-                <>
-                  <datalist id="details-tag-options">
-                    {activeTagConfigs.map((tag) => (
-                      <option key={tag.id} value={tag.name} />
-                    ))}
-                  </datalist>
-                  <p className="text-xs text-muted-foreground">Available tags: {activeTagConfigs.map((tag) => tag.name).join(', ')}</p>
-                </>
-              )}
-            </div>
-
-            {scopedCustomFieldConfigs.length > 0 && (
-              <div className="space-y-3 md:col-span-2">
-                <p className="text-sm font-medium">Dynamic Fields</p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {scopedCustomFieldConfigs.map((field) => {
-                    const fieldPath = `custom_fields.${field.key}` as const;
-
-                    if (field.field_type === 'textarea') {
-                      return (
-                        <div key={field.id} className="space-y-2 md:col-span-2">
-                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
-                          <Textarea id={`custom-field-${field.key}`} {...editForm.register(fieldPath)} />
-                        </div>
-                      );
-                    }
-
-                    if (field.field_type === 'select') {
-                      const options = customFieldOptions(field);
-                      const value = editCustomFieldsValue?.[field.key] ?? '';
-                      return (
-                        <div key={field.id} className="space-y-2">
-                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
-                          <Select
-                            onValueChange={(nextValue) => editForm.setValue(fieldPath, nextValue === 'none' || nextValue === null ? '' : nextValue)}
-                            value={value || 'none'}
-                          >
-                            <SelectTrigger id={`custom-field-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="none">Not set</SelectItem>
-                                {options.map((option) => (
-                                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    }
-
-                    if (field.field_type === 'checkbox') {
-                      const value = editCustomFieldsValue?.[field.key] ?? '';
-                      return (
-                        <div key={field.id} className="space-y-2">
-                          <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
-                          <Select
-                            onValueChange={(nextValue) => editForm.setValue(fieldPath, nextValue === 'none' || nextValue === null ? '' : nextValue)}
-                            value={value || 'none'}
-                          >
-                            <SelectTrigger id={`custom-field-${field.key}`}><SelectValue placeholder="Not set" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                <SelectItem value="none">Not set</SelectItem>
-                                <SelectItem value="true">True</SelectItem>
-                                <SelectItem value="false">False</SelectItem>
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    }
-
-                    const inputType = field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text';
-                    const placeholder = field.field_type === 'multiselect' ? 'Comma separated values' : undefined;
-
-                    return (
-                      <div key={field.id} className="space-y-2">
-                        <Label htmlFor={`custom-field-${field.key}`}>{field.label}</Label>
-                        <Input
-                          id={`custom-field-${field.key}`}
-                          placeholder={placeholder}
-                          type={inputType}
-                          {...editForm.register(fieldPath)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </form>
-
-          {updateTicket.isError && <p className="text-xs text-destructive">{(updateTicket.error as Error).message}</p>}
-
-          <SheetFooter className="border-t pt-4">
-            <Button onClick={() => setIsEditOpen(false)} type="button" variant="outline">
-              Cancel
-            </Button>
-            <Button disabled={updateTicket.isPending || editForm.formState.isSubmitting} form="edit-ticket-details-form" type="submit">
-              {updateTicket.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+        form={editForm}
+        onSubmit={(values) => updateTicket.mutate(values)}
+        isPending={updateTicket.isPending}
+        errorMessage={updateTicket.isError ? (updateTicket.error as Error).message : null}
+        customers={customers}
+        customersCoverageHint={customersCoverageHint}
+        members={members}
+        ticketAssignee={ticket.assignee}
+        activeTemplateConfigs={activeTemplateConfigs}
+        effectiveEditTemplateId={effectiveEditTemplateId}
+        onTemplateChange={setEditTemplateId}
+        editCustomerIdValue={editCustomerIdValue}
+        editAssigneeIdValue={editAssigneeIdValue}
+        editStatusValue={editStatusValue}
+        editPriorityValue={editPriorityValue}
+        editCategoryValue={editCategoryValue}
+        editQueueValue={editQueueValue}
+        editCustomFieldsValue={editCustomFieldsValue}
+        activeCategoryConfigs={activeCategoryConfigs}
+        hasLegacyEditCategoryValue={hasLegacyEditCategoryValue}
+        activeQueueConfigs={activeQueueConfigs}
+        hasLegacyEditQueueValue={hasLegacyEditQueueValue}
+        activeTagConfigs={activeTagConfigs}
+        scopedCustomFieldConfigs={scopedCustomFieldConfigs}
+      />
     </section>
   );
 }

@@ -1,14 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { GovernanceSettingsDialogs } from './GovernanceSettingsDialogs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   approveBreakGlassRequest,
   createIdentityProvider,
@@ -487,344 +482,84 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         </CardContent>
       </Card>
     </div>
-      <Dialog open={isRetentionDialogOpen} onOpenChange={setIsRetentionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Retention Policy</DialogTitle>
-            <DialogDescription>
-              Set the number of days each compliance data category should remain available.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            id="retention-policy-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              saveRetention.mutate();
-            }}
-          >
-            <FieldGroup>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="retention-tickets-days">Tickets (days)</FieldLabel>
-                  <Input id="retention-tickets-days" type="number" value={ticketsDays} onChange={(event) => setTicketsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="retention-comments-days">Comments (days)</FieldLabel>
-                  <Input id="retention-comments-days" type="number" value={commentsDays} onChange={(event) => setCommentsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="retention-attachments-days">Attachments (days)</FieldLabel>
-                  <Input id="retention-attachments-days" type="number" value={attachmentsDays} onChange={(event) => setAttachmentsDaysDraft(Number(event.target.value))} />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="retention-audit-days">Audit (days)</FieldLabel>
-                  <Input id="retention-audit-days" type="number" value={auditDays} onChange={(event) => setAuditDaysDraft(Number(event.target.value))} />
-                </Field>
-              </div>
-            </FieldGroup>
-            {saveRetention.isError && (
-              <p className="text-xs text-destructive">{(saveRetention.error as Error).message}</p>
-            )}
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsRetentionDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" form="retention-policy-form" disabled={saveRetention.isPending}>
-              {saveRetention.isPending ? 'Saving...' : 'Save retention policy'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSecurityPolicyDialogOpen} onOpenChange={setIsSecurityPolicyDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Security Policy</DialogTitle>
-            <DialogDescription>
-              Change workspace access requirements, tenant isolation mode, and trusted network restrictions.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            id="security-policy-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              saveSecurityPolicy.mutate();
-            }}
-          >
-            <FieldGroup>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
-                  <Checkbox checked={requireSso} onCheckedChange={(checked) => setRequireSsoDraft(checked === true)} />
-                  <span>Require SSO</span>
-                </label>
-                <label className="flex items-center gap-2 rounded border px-2 py-1.5 text-xs">
-                  <Checkbox checked={requireMfa} onCheckedChange={(checked) => setRequireMfaDraft(checked === true)} />
-                  <span>Require MFA</span>
-                </label>
-              </div>
-              <Field>
-                <FieldLabel htmlFor="security-session-ttl">Session TTL (minutes)</FieldLabel>
-                <Input id="security-session-ttl" type="number" value={sessionTtl} onChange={(event) => setSessionTtlDraft(Number(event.target.value))} />
-                <FieldDescription>Controls how long authenticated workspace sessions remain valid.</FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel>Tenant mode</FieldLabel>
-                <Select value={tenantMode} onValueChange={(value) => setTenantModeDraft((value as 'shared' | 'dedicated') ?? 'shared')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="shared">shared</SelectItem>
-                      <SelectItem value="dedicated">dedicated</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="security-data-plane-key">Dedicated data plane key</FieldLabel>
-                <Input id="security-data-plane-key" value={dataPlaneKey} onChange={(event) => setDataPlaneKeyDraft(event.target.value)} />
-                <FieldDescription>Leave blank unless this workspace has a dedicated data plane.</FieldDescription>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="security-ip-allowlist">IP allowlist (one IP per line)</FieldLabel>
-                <Textarea id="security-ip-allowlist" rows={4} value={ipAllowlist} onChange={(event) => setIpAllowlistDraft(event.target.value)} />
-              </Field>
-            </FieldGroup>
-            {saveSecurityPolicy.isError && (
-              <p className="text-xs text-destructive">{(saveSecurityPolicy.error as Error).message}</p>
-            )}
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsSecurityPolicyDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button disabled={saveSecurityPolicy.isPending} form="security-policy-form" type="submit">
-              {saveSecurityPolicy.isPending ? 'Saving...' : 'Save security policy'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSlaDialogOpen} onOpenChange={setIsSlaDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create SLA Policy</DialogTitle>
-            <DialogDescription>
-              Define the first-response and resolution targets for tickets with this priority.
-            </DialogDescription>
-          </DialogHeader>
-          <form id="sla-policy-form" onSubmit={(event) => {
-            event.preventDefault();
-            createSlaPolicyMutation.mutate();
-          }}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="sla-policy-name">Policy name</FieldLabel>
-                <Input id="sla-policy-name" value={slaName} onChange={(event) => setSlaName(event.target.value)} />
-              </Field>
-              <Field>
-                <FieldLabel>Priority</FieldLabel>
-                <Select value={slaPriority} onValueChange={(value) => setSlaPriority((value as 'low' | 'medium' | 'high' | 'urgent') ?? 'high')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="low">low</SelectItem>
-                      <SelectItem value="medium">medium</SelectItem>
-                      <SelectItem value="high">high</SelectItem>
-                      <SelectItem value="urgent">urgent</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field>
-                  <FieldLabel htmlFor="sla-first-response">First response (minutes)</FieldLabel>
-                  <Input
-                    id="sla-first-response"
-                    type="number"
-                    value={slaFirstResponseMinutes}
-                    onChange={(event) => setSlaFirstResponseMinutes(Number(event.target.value) || 0)}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="sla-resolution">Resolution (minutes)</FieldLabel>
-                  <Input
-                    id="sla-resolution"
-                    type="number"
-                    value={slaResolutionMinutes}
-                    onChange={(event) => setSlaResolutionMinutes(Number(event.target.value) || 0)}
-                  />
-                </Field>
-              </div>
-            </FieldGroup>
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsSlaDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={createSlaPolicyMutation.isPending || slaName.trim().length < 2}
-              form="sla-policy-form"
-              type="submit"
-            >
-              {createSlaPolicyMutation.isPending ? 'Creating policy...' : 'Create SLA policy'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isBreakGlassDialogOpen} onOpenChange={setIsBreakGlassDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Request Break-Glass Access</DialogTitle>
-            <DialogDescription>
-              Explain why emergency elevated access is required. Requests remain pending until approved.
-            </DialogDescription>
-          </DialogHeader>
-          <form id="break-glass-form" onSubmit={(event) => {
-            event.preventDefault();
-            requestBreakGlass.mutate();
-          }}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="break-glass-reason">Reason</FieldLabel>
-                <Input id="break-glass-reason" value={breakGlassReason} onChange={(event) => setBreakGlassReason(event.target.value)} />
-                <FieldDescription>Include the incident or ticket context for audit review.</FieldDescription>
-              </Field>
-            </FieldGroup>
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsBreakGlassDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button disabled={requestBreakGlass.isPending} form="break-glass-form" type="submit">
-              {requestBreakGlass.isPending ? 'Requesting...' : 'Request access'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isProviderDialogOpen} onOpenChange={setIsProviderDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Identity Provider</DialogTitle>
-            <DialogDescription>
-              Configure an OIDC or SAML provider for this workspace. Keep secrets available before saving.
-            </DialogDescription>
-          </DialogHeader>
-          <form id="identity-provider-form" onSubmit={(event) => {
-            event.preventDefault();
-            createProvider.mutate();
-          }}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel>Provider type</FieldLabel>
-                <Select value={providerType} onValueChange={(value) => setProviderType((value as 'saml' | 'oidc') ?? 'oidc')}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="oidc">OIDC</SelectItem>
-                      <SelectItem value="saml">SAML</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="identity-provider-name">Name</FieldLabel>
-                <Input id="identity-provider-name" value={providerName} onChange={(event) => setProviderName(event.target.value)} />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="identity-provider-issuer">Issuer</FieldLabel>
-                <Input id="identity-provider-issuer" value={providerIssuer} onChange={(event) => setProviderIssuer(event.target.value)} />
-              </Field>
-              {providerType === 'saml' ? (
-                <Field>
-                  <FieldLabel htmlFor="identity-provider-saml-url">SAML SSO URL</FieldLabel>
-                  <Input id="identity-provider-saml-url" value={providerSsoUrl} onChange={(event) => setProviderSsoUrl(event.target.value)} />
-                </Field>
-              ) : (
-                <>
-                  <Field>
-                    <FieldLabel htmlFor="identity-provider-auth-url">Authorization URL</FieldLabel>
-                    <Input id="identity-provider-auth-url" value={providerAuthUrl} onChange={(event) => setProviderAuthUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="identity-provider-token-url">Token URL</FieldLabel>
-                    <Input id="identity-provider-token-url" value={providerTokenUrl} onChange={(event) => setProviderTokenUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="identity-provider-redirect-uri">Redirect URI</FieldLabel>
-                    <Input id="identity-provider-redirect-uri" value={providerRedirectUrl} onChange={(event) => setProviderRedirectUrl(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="identity-provider-client-id">Client ID</FieldLabel>
-                    <Input id="identity-provider-client-id" value={providerClientId} onChange={(event) => setProviderClientId(event.target.value)} />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="identity-provider-client-secret">Client secret</FieldLabel>
-                    <Input
-                      id="identity-provider-client-secret"
-                      type="password"
-                      value={providerClientSecret}
-                      onChange={(event) => setProviderClientSecret(event.target.value)}
-                    />
-                  </Field>
-                </>
-              )}
-              {createProvider.isError && (
-                <p className="text-xs text-destructive">{(createProvider.error as Error).message}</p>
-              )}
-            </FieldGroup>
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsProviderDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={!providerName.trim() || createProvider.isPending}
-              form="identity-provider-form"
-              type="submit"
-            >
-              {createProvider.isPending ? 'Creating...' : 'Create provider'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDirectoryDialogOpen} onOpenChange={setIsDirectoryDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create SCIM Directory</DialogTitle>
-            <DialogDescription>
-              Name the provisioning directory. The SCIM token is shown once after creation.
-            </DialogDescription>
-          </DialogHeader>
-          <form id="scim-directory-form" onSubmit={(event) => {
-            event.preventDefault();
-            createDirectory.mutate();
-          }}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="directory-name">Directory name</FieldLabel>
-                <Input id="directory-name" value={directoryName} onChange={(event) => setDirectoryName(event.target.value)} />
-                <FieldDescription>Use the identity source name, for example Azure AD or Okta.</FieldDescription>
-              </Field>
-            </FieldGroup>
-          </form>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDirectoryDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={!directoryName.trim() || createDirectory.isPending}
-              form="scim-directory-form"
-              type="submit"
-            >
-              {createDirectory.isPending ? 'Creating...' : 'Create directory'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GovernanceSettingsDialogs
+        isRetentionDialogOpen={isRetentionDialogOpen}
+        onRetentionDialogOpenChange={setIsRetentionDialogOpen}
+        ticketsDays={ticketsDays}
+        commentsDays={commentsDays}
+        attachmentsDays={attachmentsDays}
+        auditDays={auditDays}
+        setTicketsDaysDraft={setTicketsDaysDraft}
+        setCommentsDaysDraft={setCommentsDaysDraft}
+        setAttachmentsDaysDraft={setAttachmentsDaysDraft}
+        setAuditDaysDraft={setAuditDaysDraft}
+        onSaveRetention={() => saveRetention.mutate()}
+        saveRetentionPending={saveRetention.isPending}
+        saveRetentionError={saveRetention.isError ? (saveRetention.error as Error).message : null}
+        isSecurityPolicyDialogOpen={isSecurityPolicyDialogOpen}
+        onSecurityPolicyDialogOpenChange={setIsSecurityPolicyDialogOpen}
+        requireSso={requireSso}
+        requireMfa={requireMfa}
+        sessionTtl={sessionTtl}
+        tenantMode={tenantMode}
+        dataPlaneKey={dataPlaneKey}
+        ipAllowlist={ipAllowlist}
+        setRequireSsoDraft={setRequireSsoDraft}
+        setRequireMfaDraft={setRequireMfaDraft}
+        setSessionTtlDraft={setSessionTtlDraft}
+        setTenantModeDraft={setTenantModeDraft}
+        setDataPlaneKeyDraft={setDataPlaneKeyDraft}
+        setIpAllowlistDraft={setIpAllowlistDraft}
+        onSaveSecurityPolicy={() => saveSecurityPolicy.mutate()}
+        saveSecurityPolicyPending={saveSecurityPolicy.isPending}
+        saveSecurityPolicyError={saveSecurityPolicy.isError ? (saveSecurityPolicy.error as Error).message : null}
+        isSlaDialogOpen={isSlaDialogOpen}
+        onSlaDialogOpenChange={setIsSlaDialogOpen}
+        slaName={slaName}
+        slaPriority={slaPriority}
+        slaFirstResponseMinutes={slaFirstResponseMinutes}
+        slaResolutionMinutes={slaResolutionMinutes}
+        setSlaName={setSlaName}
+        setSlaPriority={setSlaPriority}
+        setSlaFirstResponseMinutes={setSlaFirstResponseMinutes}
+        setSlaResolutionMinutes={setSlaResolutionMinutes}
+        onCreateSlaPolicy={() => createSlaPolicyMutation.mutate()}
+        createSlaPolicyPending={createSlaPolicyMutation.isPending}
+        isBreakGlassDialogOpen={isBreakGlassDialogOpen}
+        onBreakGlassDialogOpenChange={setIsBreakGlassDialogOpen}
+        breakGlassReason={breakGlassReason}
+        setBreakGlassReason={setBreakGlassReason}
+        onRequestBreakGlass={() => requestBreakGlass.mutate()}
+        requestBreakGlassPending={requestBreakGlass.isPending}
+        isProviderDialogOpen={isProviderDialogOpen}
+        onProviderDialogOpenChange={setIsProviderDialogOpen}
+        providerType={providerType}
+        providerName={providerName}
+        providerIssuer={providerIssuer}
+        providerSsoUrl={providerSsoUrl}
+        providerAuthUrl={providerAuthUrl}
+        providerTokenUrl={providerTokenUrl}
+        providerRedirectUrl={providerRedirectUrl}
+        providerClientId={providerClientId}
+        providerClientSecret={providerClientSecret}
+        setProviderType={setProviderType}
+        setProviderName={setProviderName}
+        setProviderIssuer={setProviderIssuer}
+        setProviderSsoUrl={setProviderSsoUrl}
+        setProviderAuthUrl={setProviderAuthUrl}
+        setProviderTokenUrl={setProviderTokenUrl}
+        setProviderRedirectUrl={setProviderRedirectUrl}
+        setProviderClientId={setProviderClientId}
+        setProviderClientSecret={setProviderClientSecret}
+        onCreateProvider={() => createProvider.mutate()}
+        createProviderPending={createProvider.isPending}
+        isDirectoryDialogOpen={isDirectoryDialogOpen}
+        onDirectoryDialogOpenChange={setIsDirectoryDialogOpen}
+        directoryName={directoryName}
+        setDirectoryName={setDirectoryName}
+        onCreateDirectory={() => createDirectory.mutate()}
+        createDirectoryPending={createDirectory.isPending}
+      />
     </>
   );
 }

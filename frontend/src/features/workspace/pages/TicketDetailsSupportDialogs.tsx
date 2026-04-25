@@ -1,0 +1,425 @@
+import type { UseFormReturn } from 'react-hook-form';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  bytesToReadable,
+  formatTicketDetailsDate,
+  mutationErrorMessage,
+  statusLabel,
+  type ChecklistForm,
+  type CommentForm,
+  type RelatedTicketForm,
+  type TicketDetailsAttachment,
+} from '@/features/workspace/pages/ticketDetailsHelpers';
+import type { Ticket, TicketChecklistItem } from '@/types/api';
+
+type RelatedTicketOption = {
+  id: number;
+  ticket_number: string;
+  title: string;
+};
+
+type Props = {
+  workspaceSlug?: string;
+  canComment: boolean;
+  canManage: boolean;
+  isCommentOpen: boolean;
+  onCommentOpenChange: (open: boolean) => void;
+  commentForm: UseFormReturn<CommentForm>;
+  onSubmitComment: (values: CommentForm) => void;
+  isCommentPending: boolean;
+  commentFiles: File[];
+  onCommentFilesChange: (files: File[]) => void;
+  isChecklistOpen: boolean;
+  onChecklistOpenChange: (open: boolean) => void;
+  checklistForm: UseFormReturn<ChecklistForm>;
+  checklistItems: TicketChecklistItem[];
+  onSubmitChecklist: (values: ChecklistForm) => void;
+  onToggleChecklistItem: (itemId: number, checked: boolean) => void;
+  onMoveChecklistItem: (itemId: number, direction: 'up' | 'down') => void;
+  onDeleteChecklistItem: (itemId: number) => void;
+  isChecklistMutating: boolean;
+  checklistMutationError: unknown;
+  isWatchersOpen: boolean;
+  onWatchersOpenChange: (open: boolean) => void;
+  watchers: NonNullable<Ticket['watchers']>;
+  watcherMutationError: unknown;
+  isAttachmentsOpen: boolean;
+  onAttachmentsOpenChange: (open: boolean) => void;
+  attachmentFile: File | null;
+  onAttachmentFileChange: (file: File | null) => void;
+  onUploadAttachment: () => void;
+  isUploadingAttachment: boolean;
+  uploadAttachmentError: string | null;
+  ticketLevelAttachments: TicketDetailsAttachment[];
+  onDownloadAttachment: (attachmentId: number, originalName: string) => void;
+  onDeleteAttachment: (attachmentId: number, originalName: string) => void;
+  isDeletingAttachment: boolean;
+  isRelatedOpen: boolean;
+  onRelatedOpenChange: (open: boolean) => void;
+  relatedTicketForm: UseFormReturn<RelatedTicketForm>;
+  onSubmitRelatedTicket: (values: RelatedTicketForm) => void;
+  relatedTickets: NonNullable<Ticket['related_tickets']>;
+  relatedTicketOptions: RelatedTicketOption[];
+  relatedTicketsCoverageHint: string | null;
+  relatedTicketIdValue?: string;
+  relatedTicketRelationshipValue?: string;
+  onDeleteRelatedTicket: (linkId: number) => void;
+  isRelatedTicketPending: boolean;
+  relatedTicketMutationError: unknown;
+};
+
+export function TicketDetailsSupportDialogs({
+  workspaceSlug,
+  canComment,
+  canManage,
+  isCommentOpen,
+  onCommentOpenChange,
+  commentForm,
+  onSubmitComment,
+  isCommentPending,
+  commentFiles,
+  onCommentFilesChange,
+  isChecklistOpen,
+  onChecklistOpenChange,
+  checklistForm,
+  checklistItems,
+  onSubmitChecklist,
+  onToggleChecklistItem,
+  onMoveChecklistItem,
+  onDeleteChecklistItem,
+  isChecklistMutating,
+  checklistMutationError,
+  isWatchersOpen,
+  onWatchersOpenChange,
+  watchers,
+  watcherMutationError,
+  isAttachmentsOpen,
+  onAttachmentsOpenChange,
+  attachmentFile,
+  onAttachmentFileChange,
+  onUploadAttachment,
+  isUploadingAttachment,
+  uploadAttachmentError,
+  ticketLevelAttachments,
+  onDownloadAttachment,
+  onDeleteAttachment,
+  isDeletingAttachment,
+  isRelatedOpen,
+  onRelatedOpenChange,
+  relatedTicketForm,
+  onSubmitRelatedTicket,
+  relatedTickets,
+  relatedTicketOptions,
+  relatedTicketsCoverageHint,
+  relatedTicketIdValue,
+  relatedTicketRelationshipValue,
+  onDeleteRelatedTicket,
+  isRelatedTicketPending,
+  relatedTicketMutationError,
+}: Props) {
+  return (
+    <>
+      <Dialog onOpenChange={onCommentOpenChange} open={isCommentOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Comment</DialogTitle>
+            <DialogDescription>Internal comments are visible to workspace team members only.</DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-3" id="comment-form" onSubmit={commentForm.handleSubmit(onSubmitComment)}>
+            <div className="space-y-2">
+              <Label htmlFor="comment-body">Comment</Label>
+              <Textarea id="comment-body" {...commentForm.register('body')} />
+              {commentForm.formState.errors.body && <p className="text-xs text-destructive">{commentForm.formState.errors.body.message}</p>}
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input type="checkbox" {...commentForm.register('is_internal')} />
+              Internal comment
+            </label>
+
+            <div className="space-y-2">
+              <Label htmlFor="comment-files">Attachments (optional)</Label>
+              <Input
+                id="comment-files"
+                multiple
+                onChange={(event) => onCommentFilesChange(Array.from(event.target.files ?? []))}
+                type="file"
+              />
+              {commentFiles.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {commentFiles.length} file{commentFiles.length > 1 ? 's' : ''} selected
+                </p>
+              )}
+            </div>
+          </form>
+
+          <DialogFooter>
+            <Button onClick={() => onCommentOpenChange(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button disabled={commentForm.formState.isSubmitting || isCommentPending} form="comment-form" type="submit">
+              {isCommentPending ? 'Posting...' : 'Post Comment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={onChecklistOpenChange} open={isChecklistOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Checklist</DialogTitle>
+            <DialogDescription>Track the operator tasks that still block closure or handoff.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            {checklistItems.map((item) => (
+              <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border p-3">
+                <label className="flex min-w-0 items-center gap-3 text-sm">
+                  <Checkbox
+                    checked={item.is_completed}
+                    disabled={!canManage || isChecklistMutating}
+                    onCheckedChange={(checked) => onToggleChecklistItem(item.id, checked === true)}
+                  />
+                  <span className={item.is_completed ? 'text-muted-foreground line-through' : ''}>{item.title}</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  {item.assignee && <Badge variant="secondary">{item.assignee.first_name} {item.assignee.last_name}</Badge>}
+                  {canManage && (
+                    <>
+                      <Button
+                        disabled={isChecklistMutating || checklistItems[0]?.id === item.id}
+                        onClick={() => onMoveChecklistItem(item.id, 'up')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Up
+                      </Button>
+                      <Button
+                        disabled={isChecklistMutating || checklistItems[checklistItems.length - 1]?.id === item.id}
+                        onClick={() => onMoveChecklistItem(item.id, 'down')}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Down
+                      </Button>
+                      <Button disabled={isChecklistMutating} onClick={() => onDeleteChecklistItem(item.id)} size="sm" type="button" variant="outline">
+                        Delete
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!checklistItems.length && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
+
+            <form className="flex flex-col gap-2 sm:flex-row" onSubmit={checklistForm.handleSubmit(onSubmitChecklist)}>
+              <Input disabled={!canManage} placeholder="Add an operator task..." {...checklistForm.register('title')} />
+              <Button disabled={!canManage || isChecklistMutating} type="submit">
+                {isChecklistMutating ? 'Adding...' : 'Add Task'}
+              </Button>
+            </form>
+            {checklistForm.formState.errors.title && <p className="text-xs text-destructive">{checklistForm.formState.errors.title.message}</p>}
+            {checklistMutationError ? (
+              <p className="text-xs text-destructive">{mutationErrorMessage(checklistMutationError)}</p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={onWatchersOpenChange} open={isWatchersOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Watchers</DialogTitle>
+            <DialogDescription>See who is following the ticket and keeping up with updates.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-2">
+              {watchers.map((watcher) => (
+                <Badge key={watcher.id} variant="secondary">
+                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
+                </Badge>
+              ))}
+            </div>
+            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
+            {watcherMutationError ? (
+              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={onAttachmentsOpenChange} open={isAttachmentsOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Attachments</DialogTitle>
+            <DialogDescription>Upload or review files without pushing upload controls into the main ticket view.</DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                accept="*/*"
+                onChange={(event) => onAttachmentFileChange(event.target.files?.[0] ?? null)}
+                type="file"
+              />
+              <Button
+                disabled={!canComment || !attachmentFile || isUploadingAttachment}
+                onClick={onUploadAttachment}
+                size="sm"
+                type="button"
+              >
+                {isUploadingAttachment ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+            {uploadAttachmentError && <p className="text-xs text-destructive">{uploadAttachmentError}</p>}
+
+            {ticketLevelAttachments.map((attachment) => (
+              <div key={attachment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3 text-sm">
+                <div>
+                  <p className="font-medium">{attachment.original_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {bytesToReadable(attachment.size_bytes)} • {attachment.mime_type ?? 'Unknown type'} • {formatTicketDetailsDate(attachment.created_at)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => onDownloadAttachment(attachment.id, attachment.original_name)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Download
+                  </Button>
+                  <Button
+                    disabled={!canManage || isDeletingAttachment}
+                    onClick={() => onDeleteAttachment(attachment.id, attachment.original_name)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {!ticketLevelAttachments.length && (
+              <p className="text-sm text-muted-foreground">No ticket-level attachments yet.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog onOpenChange={onRelatedOpenChange} open={isRelatedOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Related Tickets</DialogTitle>
+            <DialogDescription>Connect incidents, blockers, duplicates, or follow-up work from one focused panel.</DialogDescription>
+          </DialogHeader>
+
+          <div className="mb-4 flex flex-col gap-3">
+            {relatedTickets.map((link) => (
+              <div key={link.id} className="rounded-md border border-border p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    {link.ticket ? (
+                      <Link className="font-medium underline-offset-4 hover:underline" to={`/workspaces/${workspaceSlug}/tickets/${link.ticket.id}`}>
+                        {link.ticket.ticket_number}
+                      </Link>
+                    ) : (
+                      <p className="font-medium">Ticket {link.related_ticket_id}</p>
+                    )}
+                    <p className="truncate text-xs text-muted-foreground">{link.ticket?.title ?? 'Related ticket'}</p>
+                  </div>
+                  <Badge variant="outline">{statusLabel(link.relationship_type)}</Badge>
+                </div>
+                {canManage && (
+                  <Button
+                    className="mt-2"
+                    disabled={isRelatedTicketPending}
+                    onClick={() => onDeleteRelatedTicket(link.id)}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ))}
+            {!relatedTickets.length && <p className="text-sm text-muted-foreground">No related tickets yet.</p>}
+          </div>
+
+          <form className="space-y-3" id="related-ticket-form" onSubmit={relatedTicketForm.handleSubmit(onSubmitRelatedTicket)}>
+            <div className="space-y-2">
+              <Label>Ticket</Label>
+              <Select
+                onValueChange={(value) => relatedTicketForm.setValue('related_ticket_id', value ?? '', { shouldValidate: true })}
+                value={relatedTicketIdValue ?? ''}
+              >
+                <SelectTrigger><SelectValue placeholder="Select ticket" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {relatedTicketOptions.map((option) => (
+                      <SelectItem key={option.id} value={String(option.id)}>
+                        {option.ticket_number} — {option.title}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {relatedTicketsCoverageHint && (
+                <p className="text-xs text-muted-foreground">{relatedTicketsCoverageHint}</p>
+              )}
+              {relatedTicketForm.formState.errors.related_ticket_id && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.related_ticket_id.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Relationship</Label>
+              <Select
+                onValueChange={(value) => relatedTicketForm.setValue('relationship_type', value ?? 'related', { shouldValidate: true })}
+                value={relatedTicketRelationshipValue ?? 'related'}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="related">Related</SelectItem>
+                    <SelectItem value="blocks">Blocks</SelectItem>
+                    <SelectItem value="blocked_by">Blocked By</SelectItem>
+                    <SelectItem value="duplicate">Duplicate</SelectItem>
+                    <SelectItem value="caused_by">Caused By</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {relatedTicketForm.formState.errors.relationship_type && <p className="text-xs text-destructive">{relatedTicketForm.formState.errors.relationship_type.message}</p>}
+            </div>
+          </form>
+
+          {relatedTicketMutationError ? (
+            <p className="text-xs text-destructive">{mutationErrorMessage(relatedTicketMutationError)}</p>
+          ) : null}
+
+          <DialogFooter>
+            <Button onClick={() => onRelatedOpenChange(false)} type="button" variant="outline">
+              Cancel
+            </Button>
+            <Button disabled={isRelatedTicketPending || relatedTicketForm.formState.isSubmitting} form="related-ticket-form" type="submit">
+              {isRelatedTicketPending ? 'Linking...' : 'Link Ticket'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

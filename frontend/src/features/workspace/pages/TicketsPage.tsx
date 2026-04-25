@@ -8,9 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { Input } from '@/components/ui/input';
 import { ApiError } from '@/services/api/client';
 import {
   bulkUpdateWorkspaceTickets,
@@ -33,16 +31,22 @@ import {
 } from '@/features/workspace/settings/settings-api';
 import { TicketFormFields } from '@/features/workspace/pages/TicketFormFields';
 import { TicketQueueControlsSheet } from '@/features/workspace/pages/TicketQueueControlsSheet';
+import { TicketQueueSearchBar } from '@/features/workspace/pages/TicketQueueSearchBar';
 import { TicketQueueTable } from '@/features/workspace/pages/TicketQueueTable';
 import {
   applyTicketFormFieldErrors,
   buildCustomFieldPayload,
   filterCustomFieldsByTemplate,
   parseTicketTags,
-  ticketFormDefaultValues,
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
+import {
+  buildEditTicketFormValues,
+  countActiveTicketFilters,
+  createTicketFormDefaults,
+  findSavedViewName,
+} from '@/features/workspace/pages/ticketQueueHelpers';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import type { Ticket } from '@/types/api';
 
@@ -77,12 +81,12 @@ export function TicketsPage() {
 
   const createForm = useForm<TicketForm>({
     resolver: zodResolver(ticketFormSchema),
-    defaultValues: ticketFormDefaultValues,
+    defaultValues: createTicketFormDefaults(),
   });
 
   const editForm = useForm<TicketForm>({
     resolver: zodResolver(ticketFormSchema),
-    defaultValues: ticketFormDefaultValues,
+    defaultValues: createTicketFormDefaults(),
   });
 
   const customersQuery = useQuery({
@@ -209,18 +213,7 @@ export function TicketsPage() {
         custom_fields: buildCustomFieldPayload(values.custom_fields, createTemplateFields),
       }),
     onSuccess: () => {
-      createForm.reset({
-        customer_id: '',
-        title: '',
-        description: '',
-        status: 'open',
-        priority: 'medium',
-        assigned_to_user_id: '',
-        category: '',
-        queue_key: '',
-        tags: '',
-        custom_fields: {},
-      });
+      createForm.reset(createTicketFormDefaults());
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
     },
@@ -317,8 +310,14 @@ export function TicketsPage() {
   const pagination = ticketsQuery.data?.meta;
   const ticketIds = new Set(tickets.map((ticket) => ticket.id));
   const selectedVisibleTicketIds = selectedTicketIds.filter((id) => ticketIds.has(id));
-  const activeFilterCount = [statusFilter, priorityFilter, queueFilter, categoryFilter, customerFilter, assigneeFilter]
-    .filter((value) => value !== 'all').length + (search.trim().length > 0 ? 1 : 0);
+  const activeFilterCount = countActiveTicketFilters(search, [
+    statusFilter,
+    priorityFilter,
+    queueFilter,
+    categoryFilter,
+    customerFilter,
+    assigneeFilter,
+  ]);
 
   const resetPageAndSelection = () => {
     setPage(1);
@@ -354,27 +353,7 @@ export function TicketsPage() {
   const openEditTicket = (ticket: Ticket) => {
     setEditTarget(ticket);
     setEditTemplateId(defaultTemplateId);
-    editForm.reset({
-      customer_id: String(ticket.customer_id),
-      title: ticket.title,
-      description: ticket.description,
-      status: ticket.status,
-      priority: ticket.priority,
-      assigned_to_user_id: ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : '',
-      category: ticket.category ?? '',
-      queue_key: ticket.queue_key ?? '',
-      tags: (ticket.tags ?? []).join(', '),
-      custom_fields: Object.fromEntries(
-        (ticket.custom_fields ?? []).map((field) => [
-          field.key ?? String(field.ticket_custom_field_id),
-          field.value === null || field.value === undefined
-            ? ''
-            : Array.isArray(field.value)
-              ? field.value.join(', ')
-              : String(field.value),
-        ]),
-      ),
-    });
+    editForm.reset(buildEditTicketFormValues(ticket));
   };
 
   const requestDeleteTicket = (ticket: Ticket) => {
@@ -412,6 +391,7 @@ export function TicketsPage() {
   const members = membersQuery.data?.data ?? [];
   const savedViews = savedViewsQuery.data?.data ?? [];
   const canSaveView = savedViewName.trim().length > 0;
+  const selectedSavedViewName = findSavedViewName(savedViews, selectedSavedViewId);
 
   return (
     <section className="flex flex-col gap-6">
@@ -448,37 +428,17 @@ export function TicketsPage() {
           <CardDescription>Keep the queue readable by leaving search inline and moving heavier control work into a dedicated panel.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 p-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <Field className="min-w-[240px] flex-1">
-              <FieldLabel htmlFor="ticket-search">Search</FieldLabel>
-              <Input
-                id="ticket-search"
-                onChange={(event) => {
-                  setSearch(event.target.value);
-                  resetPageAndSelection();
-                }}
-                placeholder="Ticket number, title, or description…"
-                value={search}
-              />
-              <FieldDescription>Use search for quick narrowing, then open "Views & Filters" for deeper queue controls.</FieldDescription>
-            </Field>
-            <div className="flex flex-wrap items-center gap-2">
-              {selectedSavedViewId !== 'none' && (
-                <Badge variant="outline">
-                  Saved view: {savedViews.find((view) => String(view.id) === selectedSavedViewId)?.name ?? 'Custom'}
-                </Badge>
-              )}
-              {activeFilterCount > 0 && <Badge variant="outline">{activeFilterCount} active filter{activeFilterCount === 1 ? '' : 's'}</Badge>}
-              {selectedVisibleTicketIds.length > 0 && (
-                <Badge variant="secondary">{selectedVisibleTicketIds.length} selected</Badge>
-              )}
-              {(activeFilterCount > 0 || selectedSavedViewId !== 'none') && (
-                <Button onClick={resetAllControls} size="sm" type="button" variant="outline">
-                  Reset
-                </Button>
-              )}
-            </div>
-          </div>
+          <TicketQueueSearchBar
+            search={search}
+            onSearchChange={(value) => {
+              setSearch(value);
+              resetPageAndSelection();
+            }}
+            savedViewName={selectedSavedViewName}
+            activeFilterCount={activeFilterCount}
+            selectedVisibleTicketIdsCount={selectedVisibleTicketIds.length}
+            onResetControls={resetAllControls}
+          />
 
           <TicketQueueTable
             workspaceSlug={workspaceSlug}
@@ -568,18 +528,7 @@ export function TicketsPage() {
           setIsCreateOpen(open);
           if (!open) {
             setCreateTemplateId(defaultTemplateId);
-            createForm.reset({
-              customer_id: '',
-              title: '',
-              description: '',
-              status: 'open',
-              priority: 'medium',
-              assigned_to_user_id: '',
-              category: '',
-              queue_key: '',
-              tags: '',
-              custom_fields: {},
-            });
+            createForm.reset(createTicketFormDefaults());
           }
         }}
         open={isCreateOpen}
