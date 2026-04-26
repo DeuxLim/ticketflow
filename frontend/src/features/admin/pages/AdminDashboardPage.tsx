@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AdminDashboardTabs } from '@/features/admin/pages/AdminDashboardTabs';
 import {
   AdminWorkspaceEditorDialog,
 } from '@/features/admin/pages/AdminWorkspaceEditorDialog';
@@ -11,14 +12,9 @@ import {
   type WorkspaceEditorKind,
 } from '@/features/admin/pages/adminWorkspaceEditorHelpers';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiRequest } from '@/services/api/client';
 import type {
   AdminDashboardStats,
@@ -268,244 +264,26 @@ export function AdminDashboardPage() {
 
       <Separator />
 
-      <Tabs defaultValue="workspaces" className="flex flex-col gap-4">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="workspaces" className="mt-0">
-          <Card className="shadow-none">
-            <CardHeader className="border-b">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div className="flex flex-col gap-1">
-                  <CardTitle>Workspaces</CardTitle>
-                  <CardDescription>{workspacesMeta?.total ?? 0} tenant records</CardDescription>
-                </div>
-                <FieldGroup className="w-full md:max-w-sm">
-                  <Field>
-                    <FieldLabel htmlFor="workspace-search">Search workspaces</FieldLabel>
-                    <Input
-                      id="workspace-search"
-                      onChange={(event) => setWorkspaceSearch(event.target.value)}
-                      placeholder="Name or slug"
-                      value={workspaceSearch}
-                    />
-                  </Field>
-                </FieldGroup>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {workspacesQuery.isLoading ? (
-                <p className="p-4 text-sm text-muted-foreground">Loading workspaces...</p>
-              ) : workspacesQuery.isError ? (
-                <p className="p-4 text-sm text-destructive">Unable to load workspaces.</p>
-              ) : workspaces.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">No workspaces found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-[1040px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Workspace</TableHead>
-                        <TableHead>Owner</TableHead>
-                        <TableHead>Members</TableHead>
-                        <TableHead>Tickets</TableHead>
-                        <TableHead>Tenant</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {workspaces.map((workspace) => (
-                        <TableRow key={workspace.id}>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              <p className="font-medium">{workspace.name}</p>
-                              <p className="text-xs text-muted-foreground">{workspace.slug}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {workspace.owner ? (
-                              <div className="flex flex-col gap-1">
-                                <p className="text-sm">
-                                  {workspace.owner.first_name} {workspace.owner.last_name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{workspace.owner.email}</p>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">Not assigned</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{workspace.memberships_count}</TableCell>
-                          <TableCell>{workspace.tickets_count}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              <Badge variant={workspace.tenant_mode === 'dedicated' ? 'default' : 'secondary'}>
-                                {workspace.tenant_mode}
-                              </Badge>
-                              {workspace.maintenance_mode && <Badge variant="outline">maintenance</Badge>}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={workspace.lifecycle_status === 'active' ? 'secondary' : 'destructive'}>
-                              {workspace.lifecycle_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {new Date(workspace.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex flex-col items-end gap-2">
-                              <div className="flex flex-wrap justify-end gap-2">
-                                {workspace.lifecycle_status === 'active' ? (
-                                  <Button
-                                    disabled={workspaceActionPending}
-                                    onClick={() => suspendWorkspace.mutate(workspace)}
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    Suspend
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    disabled={workspaceActionPending}
-                                    onClick={() => reactivateWorkspace.mutate(workspace)}
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    Reactivate
-                                  </Button>
-                                )}
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => toggleMaintenance.mutate(workspace)}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  {workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance'}
-                                </Button>
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => toggleIsolation.mutate(workspace)}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  {workspace.tenant_mode === 'shared' ? 'Move to dedicated' : 'Move to shared'}
-                                </Button>
-                              </div>
-
-                              <div className="flex flex-col items-end gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
-                                <p className="text-xs text-muted-foreground">
-                                  {Object.keys(workspace.usage_limits ?? {}).length} limits /{' '}
-                                  {Object.keys(workspace.feature_flags ?? {}).length} flags
-                                </p>
-                                <div className="flex flex-wrap justify-end gap-2">
-                                  <Button
-                                    disabled={workspaceActionPending}
-                                    onClick={() => openWorkspaceEditor(workspace, 'limits')}
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    Manage limits
-                                  </Button>
-                                  <Button
-                                    disabled={workspaceActionPending}
-                                    onClick={() => openWorkspaceEditor(workspace, 'featureFlags')}
-                                    size="sm"
-                                    type="button"
-                                    variant="outline"
-                                  >
-                                    Manage feature flags
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="users" className="mt-0">
-          <Card className="shadow-none">
-            <CardHeader className="border-b">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div className="flex flex-col gap-1">
-                  <CardTitle>Users</CardTitle>
-                  <CardDescription>{usersMeta?.total ?? 0} platform accounts</CardDescription>
-                </div>
-                <FieldGroup className="w-full md:max-w-sm">
-                  <Field>
-                    <FieldLabel htmlFor="user-search">Search users</FieldLabel>
-                    <Input
-                      id="user-search"
-                      onChange={(event) => setUserSearch(event.target.value)}
-                      placeholder="Name, username, or email"
-                      value={userSearch}
-                    />
-                  </Field>
-                </FieldGroup>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {usersQuery.isLoading ? (
-                <p className="p-4 text-sm text-muted-foreground">Loading users...</p>
-              ) : usersQuery.isError ? (
-                <p className="p-4 text-sm text-destructive">Unable to load users.</p>
-              ) : users.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">No users found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table className="min-w-[720px]">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Username</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.first_name} {user.last_name}
-                          </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.username}</TableCell>
-                          <TableCell>
-                            {user.is_platform_admin ? (
-                              <Badge>Platform admin</Badge>
-                            ) : (
-                              <Badge variant="secondary">User</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {new Date(user.created_at).toLocaleDateString()}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <AdminDashboardTabs
+        userSearch={userSearch}
+        onUserSearchChange={setUserSearch}
+        users={users}
+        usersMeta={usersMeta}
+        usersLoading={usersQuery.isLoading}
+        usersError={usersQuery.isError}
+        workspaceSearch={workspaceSearch}
+        onWorkspaceSearchChange={setWorkspaceSearch}
+        workspaces={workspaces}
+        workspacesMeta={workspacesMeta}
+        workspacesLoading={workspacesQuery.isLoading}
+        workspacesError={workspacesQuery.isError}
+        workspaceActionPending={workspaceActionPending}
+        onSuspendWorkspace={(workspace) => suspendWorkspace.mutate(workspace)}
+        onReactivateWorkspace={(workspace) => reactivateWorkspace.mutate(workspace)}
+        onToggleMaintenance={(workspace) => toggleMaintenance.mutate(workspace)}
+        onToggleIsolation={(workspace) => toggleIsolation.mutate(workspace)}
+        onOpenWorkspaceEditor={openWorkspaceEditor}
+      />
 
       <AdminWorkspaceEditorDialog
         open={workspaceEditor?.kind === 'limits'}

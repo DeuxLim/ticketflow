@@ -1247,6 +1247,27 @@ Verification:
 
 Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module, then run `MAINT-P1-T05` closeout verification.
 
+## 2026-04-26 00:05 +08:00 - Closed Admin and Governance Decomposition Task
+
+- Completed `MAINT-P1-T04` by extracting the remaining admin tab rendering from `frontend/src/features/admin/pages/AdminDashboardPage.tsx`.
+- Added `frontend/src/features/admin/pages/AdminDashboardTabs.tsx` to own:
+  - workspace tab search and table rendering,
+  - user tab search and table rendering,
+  - workspace action button layout.
+- Reduced `AdminDashboardPage.tsx` from 595 lines to 375 lines while keeping platform metrics, queries, and mutation orchestration in the route component.
+- Marked `MAINT-P1-T04` complete because both targeted oversized surfaces now delegate focused child modules:
+  - `AdminDashboardPage.tsx`
+  - `GovernanceSettingsSection.tsx`
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Run `MAINT-P1-T05` closeout verification for the maintainability epic.
+
 ## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
 
 - Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.

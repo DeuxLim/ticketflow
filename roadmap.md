@@ -13,9 +13,8 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Reduce complexity in oversized, high-churn frontend screens by centralizing duplicated ticket-form logic and splitting monolithic route views into smaller units without changing product behavior.
-- Current state: initialized from a codebase complexity scan after all tracked MVP feature work was complete. Shared ticket-form and ticket-details helper logic now live in dedicated modules, `TicketsPage.tsx` decomposition is complete through `TicketFormFields.tsx`, `TicketQueueControlsSheet.tsx`, `TicketQueueTable.tsx`, `TicketQueueSearchBar.tsx`, and `ticketQueueHelpers.ts`, `TicketDetailsPage.tsx` now delegates its edit and support dialogs to `TicketDetailsEditSheet.tsx` and `TicketDetailsSupportDialogs.tsx`, and `MAINT-P1-T04` has active extractions in both oversized surfaces through `AdminWorkspaceEditorDialog.tsx`, `adminWorkspaceEditorHelpers.ts`, and `GovernanceSettingsDialogs.tsx`.
+- Current state: initialized from a codebase complexity scan after all tracked MVP feature work was complete. Shared ticket-form and ticket-details helper logic now live in dedicated modules, `TicketsPage.tsx` decomposition is complete through `TicketFormFields.tsx`, `TicketQueueControlsSheet.tsx`, `TicketQueueTable.tsx`, `TicketQueueSearchBar.tsx`, and `ticketQueueHelpers.ts`, `TicketDetailsPage.tsx` now delegates its edit and support dialogs to `TicketDetailsEditSheet.tsx` and `TicketDetailsSupportDialogs.tsx`, and `MAINT-P1-T04` is complete after the admin/governance extractions into `AdminWorkspaceEditorDialog.tsx`, `adminWorkspaceEditorHelpers.ts`, `AdminDashboardTabs.tsx`, and `GovernanceSettingsDialogs.tsx`.
 - Next actions:
-  - Continue the oversized governance and admin decomposition with the next highest-churn section.
   - Run closeout verification for the maintainability epic.
 
 #### Child Items
@@ -23,7 +22,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `MAINT-P1-T01` Extract shared ticket form contract and helpers - `complete`
 - `MAINT-P1-T02` Decompose TicketsPage into focused modules - `complete`
 - `MAINT-P1-T03` Decompose TicketDetailsPage edit and mutation surfaces - `complete`
-- `MAINT-P1-T04` Decompose oversized admin and governance sections - `incomplete`
+- `MAINT-P1-T04` Decompose oversized admin and governance sections - `complete`
 - `MAINT-P1-T05` Run verification and close out maintainability epic - `planned`
 
 ### `HARDEN-P1` Existing Feature Hardening and QA Closure
@@ -130,4 +129,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module, then run `MAINT-P1-T05` closeout verification.
+Run `MAINT-P1-T05` closeout verification for the maintainability epic.

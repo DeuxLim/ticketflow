@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-25T22:41:00+08:00"
+updated_at: "2026-04-26T00:05:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -35,13 +35,13 @@ items:
       - "2026-04-25: Completed `MAINT-P1-T03` by moving ticket-details dialog schemas and formatting helpers into `ticketDetailsHelpers.ts`, extracting the edit sheet into `TicketDetailsEditSheet.tsx`, and extracting checklist, attachments, watchers, related-ticket, and add-comment dialogs into `TicketDetailsSupportDialogs.tsx`."
       - "2026-04-25: Started `MAINT-P1-T04` by extracting the admin workspace limits/feature-flags editor into `AdminWorkspaceEditorDialog.tsx` and `adminWorkspaceEditorHelpers.ts`, reducing duplicated modal/editor logic in `AdminDashboardPage.tsx`."
       - "2026-04-25: Continued `MAINT-P1-T04` by extracting the governance dialog stack into `GovernanceSettingsDialogs.tsx`, leaving `GovernanceSettingsSection.tsx` focused on overview cards and mutation wiring."
-    incomplete_reason: "Ticket list and ticket details decomposition are complete. Remaining maintainability work is the rest of the oversized admin/governance extraction plus final closeout verification."
+      - "2026-04-26: Completed `MAINT-P1-T04` by extracting the admin workspaces/users tabs into `AdminDashboardTabs.tsx`, reducing `AdminDashboardPage.tsx` to 375 lines while keeping metrics, queries, and mutation orchestration local."
+    incomplete_reason: "All planned decomposition tasks are complete. Remaining work is `MAINT-P1-T05` closeout verification for the maintainability epic."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
-      - Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module.
-      - Run `MAINT-P1-T05` closeout verification after the remaining admin/governance decomposition lands.
+      - Run `MAINT-P1-T05` closeout verification and confirm the maintainability epic can close.
     tags:
       - refactor
       - maintainability
@@ -153,7 +153,7 @@ items:
     title: Decompose oversized admin and governance sections
     type: task
     parent_id: MAINT-P1
-    status: incomplete
+    status: complete
     priority: medium
     mvp: true
     description: Split large admin and governance settings sections into smaller modules so future policy and platform changes do not accumulate in single files.
@@ -166,21 +166,20 @@ items:
     notes:
       - "2026-04-25: Extracted the duplicated admin workspace limits and feature-flags modal/editor into `AdminWorkspaceEditorDialog.tsx` and `adminWorkspaceEditorHelpers.ts`, reducing `AdminDashboardPage.tsx` from 832 lines to 595 lines."
       - "2026-04-25: Extracted the stacked retention, security-policy, SLA, break-glass, identity-provider, and SCIM-directory dialogs into `GovernanceSettingsDialogs.tsx`, reducing `GovernanceSettingsSection.tsx` from 830 lines to 565 lines."
-    incomplete_reason: "Admin workspace editor extraction is complete, but additional oversized admin or governance sections still need decomposition before the task can close."
+      - "2026-04-26: Extracted the workspaces/users tab rendering into `AdminDashboardTabs.tsx`, reducing `AdminDashboardPage.tsx` from 595 lines to 375 lines."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Extract the next highest-churn governance settings editor section into a focused module.
-      - Reassess `AdminDashboardPage.tsx` and `GovernanceSettingsSection.tsx` after the next extraction to decide whether `MAINT-P1-T04` can close.
+    next_actions: []
     tags:
       - refactor
       - admin
       - governance
       - frontend
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-25T22:28:00+08:00"
-    changed_at: "2026-04-25T22:28:00+08:00"
+    updated_at: "2026-04-26T00:05:00+08:00"
+    changed_at: "2026-04-26T00:05:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T05
