@@ -4,18 +4,17 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- `MAINT-P1`
+- No active items. All tracked work is currently complete.
 
 ## MVP Items
 
 ### `MAINT-P1` Frontend Maintainability Decomposition
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Reduce complexity in oversized, high-churn frontend screens by centralizing duplicated ticket-form logic and splitting monolithic route views into smaller units without changing product behavior.
-- Current state: initialized from a codebase complexity scan after all tracked MVP feature work was complete. Shared ticket-form and ticket-details helper logic now live in dedicated modules, `TicketsPage.tsx` decomposition is complete through `TicketFormFields.tsx`, `TicketQueueControlsSheet.tsx`, `TicketQueueTable.tsx`, `TicketQueueSearchBar.tsx`, and `ticketQueueHelpers.ts`, `TicketDetailsPage.tsx` now delegates its edit and support dialogs to `TicketDetailsEditSheet.tsx` and `TicketDetailsSupportDialogs.tsx`, and `MAINT-P1-T04` is complete after the admin/governance extractions into `AdminWorkspaceEditorDialog.tsx`, `adminWorkspaceEditorHelpers.ts`, `AdminDashboardTabs.tsx`, and `GovernanceSettingsDialogs.tsx`.
-- Next actions:
-  - Run closeout verification for the maintainability epic.
+- Current state: complete after centralizing shared ticket form/details helpers, decomposing `TicketsPage.tsx`, decomposing `TicketDetailsPage.tsx`, splitting the admin workspace editor and dashboard tabs, splitting the governance dialog stack, and passing the full frontend closeout gate (`npm test`, `npm run lint`, `npm run build`) plus tracker validation.
+- Next actions: none for this item.
 
 #### Child Items
 
@@ -23,7 +22,7 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - `MAINT-P1-T02` Decompose TicketsPage into focused modules - `complete`
 - `MAINT-P1-T03` Decompose TicketDetailsPage edit and mutation surfaces - `complete`
 - `MAINT-P1-T04` Decompose oversized admin and governance sections - `complete`
-- `MAINT-P1-T05` Run verification and close out maintainability epic - `planned`
+- `MAINT-P1-T05` Run verification and close out maintainability epic - `complete`
 
 ### `HARDEN-P1` Existing Feature Hardening and QA Closure
 
@@ -129,4 +128,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Run `MAINT-P1-T05` closeout verification for the maintainability epic.
+Select the next intentional epic before doing more implementation work.

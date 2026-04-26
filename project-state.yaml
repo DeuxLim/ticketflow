@@ -1,19 +1,18 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-26T00:05:00+08:00"
+updated_at: "2026-04-26T00:22:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus:
-  - MAINT-P1
+current_focus: []
 items:
   - id: MAINT-P1
     title: Frontend Maintainability Decomposition
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Reduce complexity in oversized, high-churn frontend screens by centralizing duplicated ticket-form logic and splitting monolithic route views into smaller units without changing product behavior.
@@ -36,20 +35,20 @@ items:
       - "2026-04-25: Started `MAINT-P1-T04` by extracting the admin workspace limits/feature-flags editor into `AdminWorkspaceEditorDialog.tsx` and `adminWorkspaceEditorHelpers.ts`, reducing duplicated modal/editor logic in `AdminDashboardPage.tsx`."
       - "2026-04-25: Continued `MAINT-P1-T04` by extracting the governance dialog stack into `GovernanceSettingsDialogs.tsx`, leaving `GovernanceSettingsSection.tsx` focused on overview cards and mutation wiring."
       - "2026-04-26: Completed `MAINT-P1-T04` by extracting the admin workspaces/users tabs into `AdminDashboardTabs.tsx`, reducing `AdminDashboardPage.tsx` to 375 lines while keeping metrics, queries, and mutation orchestration local."
-    incomplete_reason: "All planned decomposition tasks are complete. Remaining work is `MAINT-P1-T05` closeout verification for the maintainability epic."
+      - "2026-04-26: Completed `MAINT-P1-T05` closeout verification with `frontend` `npm test`, `npm run lint`, `npm run build`, plus YAML validation and `git diff --check`."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Run `MAINT-P1-T05` closeout verification and confirm the maintainability epic can close.
+    next_actions: []
     tags:
       - refactor
       - maintainability
       - frontend
       - mvp
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-25T21:35:00+08:00"
-    changed_at: "2026-04-25T21:35:00+08:00"
+    updated_at: "2026-04-26T00:22:00+08:00"
+    changed_at: "2026-04-26T00:22:00+08:00"
     changed_source: codex
 
   - id: MAINT-P1-T01
@@ -186,7 +185,7 @@ items:
     title: Run verification and close out maintainability epic
     type: task
     parent_id: MAINT-P1
-    status: planned
+    status: complete
     priority: medium
     mvp: true
     description: Re-run the relevant frontend verification suite and close the maintainability epic once the decomposition tasks are complete.
@@ -198,20 +197,20 @@ items:
       - MAINT-P1-T02
       - MAINT-P1-T03
       - MAINT-P1-T04
-    notes: []
+    notes:
+      - "2026-04-26: Verified the maintainability refactor with `frontend` `npm test`, `npm run lint`, `npm run build`, root YAML validation, and `git diff --check`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Re-run the frontend verification suite after decomposition work lands.
+    next_actions: []
     tags:
       - verification
       - refactor
       - frontend
     created_at: "2026-04-24T07:25:00+08:00"
-    updated_at: "2026-04-24T07:25:00+08:00"
-    changed_at: "2026-04-24T07:25:00+08:00"
+    updated_at: "2026-04-26T00:22:00+08:00"
+    changed_at: "2026-04-26T00:22:00+08:00"
     changed_source: codex
 
   - id: HARDEN-P1

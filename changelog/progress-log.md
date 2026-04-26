@@ -1268,6 +1268,25 @@ Verification:
 
 Run `MAINT-P1-T05` closeout verification for the maintainability epic.
 
+## 2026-04-26 00:22 +08:00 - Closed Maintainability Epic
+
+- Completed `MAINT-P1-T05` and closed `MAINT-P1`.
+- A targeted governance regression surfaced during closeout:
+  - `GovernanceSettingsSection.test.tsx` failed because the extracted dialog changed visible label text from `Client secret` to `Client Secret`.
+- Restored the original label text in `frontend/src/features/workspace/settings/GovernanceSettingsDialogs.tsx` to preserve existing UI wording and keep the test contract intact.
+- Re-ran the full closeout verification set successfully:
+  - `frontend`: `npm test`
+  - `frontend`: `npm run lint`
+  - `frontend`: `npm run build`
+  - root: YAML validation for `project-state.yaml`
+  - root: `git diff --check`
+- Cleared `current_focus` because all tracked maintainability work is complete.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+## Resume From Here
+
+Select the next intentional epic before doing more implementation work.
+
 ## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
 
 - Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.

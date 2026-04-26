@@ -457,7 +457,7 @@ export function GovernanceSettingsDialogs({
                     <Input id="identity-provider-client-id" value={providerClientId} onChange={(event) => setProviderClientId(event.target.value)} />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="identity-provider-client-secret">Client Secret</FieldLabel>
+                    <FieldLabel htmlFor="identity-provider-client-secret">Client secret</FieldLabel>
                     <Input id="identity-provider-client-secret" type="password" value={providerClientSecret} onChange={(event) => setProviderClientSecret(event.target.value)} />
                   </Field>
                 </>
