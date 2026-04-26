@@ -1,12 +1,13 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-26T00:22:00+08:00"
+updated_at: "2026-04-27T07:27:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus: []
+current_focus:
+  - MAINT-P2
 items:
   - id: MAINT-P1
     title: Frontend Maintainability Decomposition
@@ -211,6 +212,165 @@ items:
     created_at: "2026-04-24T07:25:00+08:00"
     updated_at: "2026-04-26T00:22:00+08:00"
     changed_at: "2026-04-26T00:22:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P2
+    title: Settings Surface Maintainability Decomposition
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: medium
+    mvp: true
+    description: Continue decomposing oversized workspace settings surfaces so future policy, workflow, and form changes do not accumulate in monolithic route sections.
+    definition_of_done:
+      - High-churn settings sections are split into focused modules without changing API contracts or visible behavior.
+      - Relevant frontend verification passes after each decomposition slice and at epic closeout.
+      - Canonical tracker files stay synchronized through the new maintainability pass.
+    dependencies:
+      - MAINT-P1
+    notes:
+      - "2026-04-27: Initialized after `MAINT-P1` closed and a follow-up scan showed the remaining oversized settings surfaces were `WorkflowAutomationSettingsSection.tsx`, `TicketingSettingsSection.tsx`, and `FormsSettingsSection.tsx`."
+      - "2026-04-27: Completed `MAINT-P2-T01` by extracting the workflow and automation creation dialogs into `WorkflowAutomationDialogs.tsx`, reducing `WorkflowAutomationSettingsSection.tsx` from 564 lines to 457 lines."
+    incomplete_reason: "Workflow automation decomposition has started. Remaining work is the ticketing/forms settings slices plus epic closeout verification."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`.
+      - Continue with `MAINT-P2-T03`, then run `MAINT-P2-T04` closeout verification.
+    tags:
+      - refactor
+      - maintainability
+      - settings
+      - frontend
+    created_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-27T07:27:00+08:00"
+    changed_at: "2026-04-27T07:27:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P2-T01
+    title: Decompose workflow automation settings creation dialogs
+    type: task
+    parent_id: MAINT-P2
+    status: complete
+    priority: medium
+    mvp: true
+    description: Extract the workflow and automation creation dialogs from `WorkflowAutomationSettingsSection.tsx` so the main section keeps list rendering and mutation orchestration.
+    definition_of_done:
+      - "`WorkflowAutomationSettingsSection.tsx` is materially smaller and delegates the creation dialogs to a focused module."
+      - Visible dialog wording and workflow behavior remain unchanged.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P1
+    notes:
+      - "2026-04-27: Added `WorkflowAutomationDialogs.tsx` for the create-workflow and create-automation-rule dialogs, reducing `WorkflowAutomationSettingsSection.tsx` from 564 lines to 457 lines."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - refactor
+      - workflow
+      - settings
+      - frontend
+    created_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-27T07:27:00+08:00"
+    changed_at: "2026-04-27T07:27:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P2-T02
+    title: Decompose ticketing settings editors
+    type: task
+    parent_id: MAINT-P2
+    status: planned
+    priority: medium
+    mvp: true
+    description: Split the remaining high-churn editor surfaces in `TicketingSettingsSection.tsx` into focused modules.
+    definition_of_done:
+      - "`TicketingSettingsSection.tsx` is materially smaller and delegates focused editor sections."
+      - Dictionary editor behavior and visible wording remain unchanged.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P2-T01
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Identify the largest self-contained editor or dialog surface inside `TicketingSettingsSection.tsx`.
+    tags:
+      - refactor
+      - ticketing
+      - settings
+      - frontend
+    created_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-27T07:27:00+08:00"
+    changed_at: "2026-04-27T07:27:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P2-T03
+    title: Decompose forms settings surfaces
+    type: task
+    parent_id: MAINT-P2
+    status: planned
+    priority: low
+    mvp: true
+    description: Reduce the remaining monolithic render blocks in `FormsSettingsSection.tsx` after the higher-churn settings surfaces are handled.
+    definition_of_done:
+      - "`FormsSettingsSection.tsx` is materially smaller or delegates focused child modules."
+      - Existing behavior and API usage remain unchanged.
+      - Relevant frontend verification passes after the extraction.
+    dependencies:
+      - MAINT-P2-T02
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Reassess `FormsSettingsSection.tsx` after the ticketing settings extraction lands.
+    tags:
+      - refactor
+      - forms
+      - settings
+      - frontend
+    created_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-27T07:27:00+08:00"
+    changed_at: "2026-04-27T07:27:00+08:00"
+    changed_source: codex
+
+  - id: MAINT-P2-T04
+    title: Run verification and close out settings maintainability epic
+    type: task
+    parent_id: MAINT-P2
+    status: planned
+    priority: low
+    mvp: true
+    description: Re-run the relevant frontend verification suite and close the settings maintainability epic when the remaining decomposition tasks are complete.
+    definition_of_done:
+      - Relevant frontend tests, lint, and build checks pass after the settings refactor work.
+      - "`project-state.yaml`, `roadmap.md`, and `changelog/progress-log.md` are synchronized."
+      - "`MAINT-P2` and its children meet their definitions of done before being marked complete."
+    dependencies:
+      - MAINT-P2-T02
+      - MAINT-P2-T03
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Re-run the relevant frontend verification suite after the remaining settings decomposition slices land.
+    tags:
+      - verification
+      - refactor
+      - frontend
+      - settings
+    created_at: "2026-04-27T07:27:00+08:00"
+    updated_at: "2026-04-27T07:27:00+08:00"
+    changed_at: "2026-04-27T07:27:00+08:00"
     changed_source: codex
 
   - id: HARDEN-P1

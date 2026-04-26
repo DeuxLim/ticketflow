@@ -1287,6 +1287,26 @@ Run `MAINT-P1-T05` closeout verification for the maintainability epic.
 
 Select the next intentional epic before doing more implementation work.
 
+## 2026-04-27 07:27 +08:00 - Started Settings Maintainability Epic
+
+- Initialized new epic `MAINT-P2` after `MAINT-P1` closed and the tracker returned to no active items.
+- Selected the next maintainability target from the remaining oversized settings surfaces:
+  - `WorkflowAutomationSettingsSection.tsx`
+  - `TicketingSettingsSection.tsx`
+  - `FormsSettingsSection.tsx`
+- Completed `MAINT-P2-T01` by extracting the workflow and automation creation dialogs from `frontend/src/features/workspace/settings/WorkflowAutomationSettingsSection.tsx`.
+- Added `frontend/src/features/workspace/settings/WorkflowAutomationDialogs.tsx` and reduced `WorkflowAutomationSettingsSection.tsx` from 564 lines to 457 lines while preserving visible dialog wording and flow behavior.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/settings/WorkflowAutomationSettingsSection.test.tsx`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`.
+
 ## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
 
 - Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.

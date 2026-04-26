@@ -4,9 +4,26 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- No active items. All tracked work is currently complete.
+- `MAINT-P2`
 
 ## MVP Items
+
+### `MAINT-P2` Settings Surface Maintainability Decomposition
+
+- Status: `in_progress`
+- Priority: medium
+- Scope: Continue decomposing oversized workspace settings surfaces so workflow, ticketing, and forms changes do not accumulate in monolithic route sections.
+- Current state: initialized after `MAINT-P1` closed and a follow-up scan showed the main remaining settings hotspots were `WorkflowAutomationSettingsSection.tsx`, `TicketingSettingsSection.tsx`, and `FormsSettingsSection.tsx`. `MAINT-P2-T01` is already complete after extracting the workflow and automation creation dialogs into `WorkflowAutomationDialogs.tsx`.
+- Next actions:
+  - Decompose `TicketingSettingsSection.tsx`.
+  - Continue with forms settings decomposition, then run epic closeout verification.
+
+#### Child Items
+
+- `MAINT-P2-T01` Decompose workflow automation settings creation dialogs - `complete`
+- `MAINT-P2-T02` Decompose ticketing settings editors - `planned`
+- `MAINT-P2-T03` Decompose forms settings surfaces - `planned`
+- `MAINT-P2-T04` Run verification and close out settings maintainability epic - `planned`
 
 ### `MAINT-P1` Frontend Maintainability Decomposition
 
@@ -128,4 +145,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Select the next intentional epic before doing more implementation work.
+Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`.
