@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-27T07:27:00+08:00"
+updated_at: "2026-04-27T20:13:21+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -371,6 +371,169 @@ items:
     created_at: "2026-04-27T07:27:00+08:00"
     updated_at: "2026-04-27T07:27:00+08:00"
     changed_at: "2026-04-27T07:27:00+08:00"
+    changed_source: codex
+
+  - id: CUST-P1
+    title: Customer Profile Enrichment
+    type: epic
+    parent_id: null
+    status: planned
+    priority: high
+    mvp: true
+    description: Expand customer records beyond the current basic contact fields so support teams can see the operational context they need without leaving the workspace.
+    definition_of_done:
+      - Customer records support a clearly scoped set of helpdesk-relevant profile, operational, and internal-reference fields.
+      - Backend schema, validation, resources, search behavior, and activity logging support the new fields without breaking workspace boundaries.
+      - Frontend customer create/edit/list/detail surfaces expose the new fields with clear grouping, validation, and error handling.
+      - Ticket-related customer selectors and views continue to behave correctly after the profile expansion.
+      - Backend and frontend regression coverage exists for the added customer profile behavior.
+    dependencies:
+      - HARDEN-P1
+    notes:
+      - "2026-04-27: Added to the roadmap after reviewing the current customer contract and confirming records only store `name`, `email`, `phone`, and `company`."
+      - "2026-04-27: Scope is intentionally helpdesk-focused, not a full CRM. The main missing context buckets are customer identity, operational preferences, account context, and internal support notes."
+      - "2026-04-27: Recommended fields for planning and implementation are `job_title`, `website`, `timezone`, `preferred_contact_method`, `preferred_language`, `address`, `external_reference`, `support_tier`, `status`, and `internal_notes`."
+      - "2026-04-27: Nice-to-have follow-ups such as multiple contacts, billing records, or full account hierarchies should stay out of this epic unless the first pass proves they are required."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Finish `MAINT-P2`, then start `CUST-P1-T01` to lock the exact customer-profile field set and UI boundaries.
+    tags:
+      - customers
+      - product
+      - support-ops
+      - mvp
+    created_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-27T20:13:21+08:00"
+    changed_at: "2026-04-27T20:13:21+08:00"
+    changed_source: codex
+
+  - id: CUST-P1-T01
+    title: Define enriched customer profile schema and boundaries
+    type: task
+    parent_id: CUST-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Lock the first-pass customer fields, decide which are workspace-visible versus internal-only, and keep the scope focused on support operations instead of CRM sprawl.
+    definition_of_done:
+      - The first-pass field set is explicitly defined and grouped by purpose.
+      - Internal-only versus externally meaningful fields are identified.
+      - Search and listing expectations are defined for the new profile fields.
+      - The approved scope is reflected in the canonical roadmap state.
+    dependencies:
+      - CUST-P1
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Validate the proposed field set against the current customer list, ticket assignment flows, and support workflows.
+    tags:
+      - customers
+      - schema
+      - planning
+    created_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-27T20:13:21+08:00"
+    changed_at: "2026-04-27T20:13:21+08:00"
+    changed_source: codex
+
+  - id: CUST-P1-T02
+    title: Extend backend customer model and API contract
+    type: task
+    parent_id: CUST-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Add the approved customer profile fields to persistence, validation, API resources, and search behavior while preserving tenant and permission boundaries.
+    definition_of_done:
+      - Customer persistence supports the approved field set.
+      - Store, update, list, and show contracts validate and return the new fields.
+      - Search behavior includes the right new customer fields without becoming ambiguous or noisy.
+      - Backend regression tests cover validation and workspace boundary behavior for the expanded profile.
+    dependencies:
+      - CUST-P1-T01
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Extend the migration/model/request/resource stack after the first-pass field set is finalized.
+    tags:
+      - customers
+      - backend
+      - api
+      - tests
+    created_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-27T20:13:21+08:00"
+    changed_at: "2026-04-27T20:13:21+08:00"
+    changed_source: codex
+
+  - id: CUST-P1-T03
+    title: Expand customer workspace UI and ticket touchpoints
+    type: task
+    parent_id: CUST-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Update the customer directory and related ticket surfaces so operators can capture and review richer customer context without cluttering fast ticket work.
+    definition_of_done:
+      - Customer create and edit flows expose the approved fields with sensible grouping and validation.
+      - Customer list and detail presentation surface the highest-value new fields without overwhelming the table view.
+      - Ticket-related customer touchpoints remain fast and usable after the profile expansion.
+      - Frontend regression coverage exists for the expanded customer profile behavior.
+    dependencies:
+      - CUST-P1-T02
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Decide which fields belong in the customer table, which belong in dialogs, and which should be shown only in a detail view or support context panel.
+    tags:
+      - customers
+      - frontend
+      - tickets
+      - ux
+    created_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-27T20:13:21+08:00"
+    changed_at: "2026-04-27T20:13:21+08:00"
+    changed_source: codex
+
+  - id: CUST-P1-T04
+    title: Verify customer profile enrichment and close out epic
+    type: task
+    parent_id: CUST-P1
+    status: planned
+    priority: medium
+    mvp: true
+    description: Run the relevant verification suite and close the customer profile epic when the expanded data model and UI are complete.
+    definition_of_done:
+      - Backend and frontend verification for the expanded customer profile passes.
+      - "`project-state.yaml`, `roadmap.md`, and `changelog/progress-log.md` are synchronized."
+      - "`CUST-P1` and its children meet their definitions of done before being marked complete."
+    dependencies:
+      - CUST-P1-T03
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Run the relevant backend and frontend verification after implementation lands.
+    tags:
+      - customers
+      - verification
+      - backend
+      - frontend
+    created_at: "2026-04-27T20:13:21+08:00"
+    updated_at: "2026-04-27T20:13:21+08:00"
+    changed_at: "2026-04-27T20:13:21+08:00"
     changed_source: codex
 
   - id: HARDEN-P1
