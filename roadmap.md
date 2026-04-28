@@ -4,43 +4,39 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-- `MAINT-P2`
+None.
 
 ## MVP Items
 
 ### `MAINT-P2` Settings Surface Maintainability Decomposition
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: medium
 - Scope: Continue decomposing oversized workspace settings surfaces so workflow, ticketing, and forms changes do not accumulate in monolithic route sections.
-- Current state: initialized after `MAINT-P1` closed and a follow-up scan showed the main remaining settings hotspots were `WorkflowAutomationSettingsSection.tsx`, `TicketingSettingsSection.tsx`, and `FormsSettingsSection.tsx`. `MAINT-P2-T01` is already complete after extracting the workflow and automation creation dialogs into `WorkflowAutomationDialogs.tsx`.
-- Next actions:
-  - Decompose `TicketingSettingsSection.tsx`.
-  - Continue with forms settings decomposition, then run epic closeout verification.
+- Current state: complete after extracting workflow/automation creation dialogs, ticketing dictionary overview and management dialogs, and forms custom-field/template overview and management dialogs. Closeout verification passed.
+- Next actions: none for this item.
 
 #### Child Items
 
 - `MAINT-P2-T01` Decompose workflow automation settings creation dialogs - `complete`
-- `MAINT-P2-T02` Decompose ticketing settings editors - `planned`
-- `MAINT-P2-T03` Decompose forms settings surfaces - `planned`
-- `MAINT-P2-T04` Run verification and close out settings maintainability epic - `planned`
+- `MAINT-P2-T02` Decompose ticketing settings editors - `complete`
+- `MAINT-P2-T03` Decompose forms settings surfaces - `complete`
+- `MAINT-P2-T04` Run verification and close out settings maintainability epic - `complete`
 
 ### `CUST-P1` Customer Profile Enrichment
 
-- Status: `planned`
+- Status: `complete`
 - Priority: high
 - Scope: Expand customer records beyond basic contact info so support teams can keep the account context they actually need inside the workspace.
-- Current state: planned after reviewing the current customer contract and confirming records only store `name`, `email`, `phone`, and `company`. The recommended first-pass additions are helpdesk-focused fields such as role/title, website, timezone, preferred contact method, preferred language, address, external reference, support tier, lifecycle status, and internal notes.
-- Next actions:
-  - Finish `MAINT-P2`, then lock the exact customer-profile field set and UI boundaries.
-  - Extend the backend contract, then update the workspace customer UI and ticket touchpoints.
+- Current state: complete after locking the profile scope, expanding backend persistence/validation/resources/search, updating frontend API typing, adding grouped customer create/edit fields, surfacing compact customer table indicators, adding a focused profile details dialog, preserving lightweight ticket customer touchpoints, and passing backend/frontend closeout verification.
+- Next actions: none for this item.
 
 #### Child Items
 
-- `CUST-P1-T01` Define enriched customer profile schema and boundaries - `planned`
-- `CUST-P1-T02` Extend backend customer model and API contract - `planned`
-- `CUST-P1-T03` Expand customer workspace UI and ticket touchpoints - `planned`
-- `CUST-P1-T04` Verify customer profile enrichment and close out epic - `planned`
+- `CUST-P1-T01` Define enriched customer profile schema and boundaries - `complete`
+- `CUST-P1-T02` Extend backend customer model and API contract - `complete`
+- `CUST-P1-T03` Expand customer workspace UI and ticket touchpoints - `complete`
+- `CUST-P1-T04` Verify customer profile enrichment and close out epic - `complete`
 
 ### `MAINT-P1` Frontend Maintainability Decomposition
 
@@ -162,4 +158,4 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Resume From Here
 
-Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`. After `MAINT-P2`, begin `CUST-P1-T01`.
+Select the next intentional epic before doing more implementation work.

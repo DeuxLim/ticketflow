@@ -1340,6 +1340,159 @@ Verification:
 
 Start `MAINT-P2-T02` by decomposing `TicketingSettingsSection.tsx`. After `MAINT-P2`, begin `CUST-P1-T01`.
 
+## 2026-04-28 18:38 +08:00 - Completed Ticketing Settings Decomposition
+
+- Completed `MAINT-P2-T02` by extracting the ticketing dictionary UI from `frontend/src/features/workspace/settings/TicketingSettingsSection.tsx`.
+- Added `frontend/src/features/workspace/settings/TicketingDictionaryDialogs.tsx` to own:
+  - dictionary counts and summary cards,
+  - category/type/tag management dialogs,
+  - inline create forms,
+  - the reusable dictionary editor.
+- Kept query, mutation, and draft-state orchestration in `TicketingSettingsSection.tsx` to preserve existing behavior.
+- Reduced `TicketingSettingsSection.tsx` from 522 lines to 312 lines.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/settings/TicketingSettingsSection.test.tsx`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Start `MAINT-P2-T03` by decomposing `FormsSettingsSection.tsx`. After that, run `MAINT-P2-T04` closeout verification, then begin `CUST-P1-T01`.
+
+## 2026-04-28 18:59 +08:00 - Closed Settings Maintainability Epic
+
+- Completed `MAINT-P2-T03` by extracting forms settings UI from `frontend/src/features/workspace/settings/FormsSettingsSection.tsx`.
+- Added `frontend/src/features/workspace/settings/FormsSettingsDialogs.tsx` to own:
+  - custom-field and form-template summaries,
+  - overview tables,
+  - management dialogs,
+  - create forms and edit controls.
+- Kept query, mutation, and draft-state orchestration in `FormsSettingsSection.tsx` to preserve existing behavior.
+- Reduced `FormsSettingsSection.tsx` from 450 lines to 272 lines.
+- Completed `MAINT-P2-T04` and closed `MAINT-P2`.
+- Moved `current_focus` to `CUST-P1`.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/settings/FormsSettingsSection.test.tsx`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm test`
+- root: YAML validation for `project-state.yaml`
+- root: `git diff --check`
+
+## Resume From Here
+
+Start `CUST-P1-T01` by locking the exact customer-profile field set and UI boundaries.
+
+## 2026-04-28 20:19 +08:00 - Completed Customer Profile Scope Definition
+
+- Completed `CUST-P1-T01` after validating the current customer surface:
+  - backend `Customer` model, request validation, resource, controller, and route permissions,
+  - frontend `Customer` type, customer API helper, customer directory page, and ticket selector usage.
+- Locked the first-pass customer profile fields:
+  - `job_title`
+  - `website`
+  - `timezone`
+  - `preferred_contact_method`
+  - `preferred_language`
+  - `address`
+  - `external_reference`
+  - `support_tier`
+  - `status`
+  - `internal_notes`
+- Set `internal_notes` as the only internal-only field for this pass.
+- Kept ticket selectors and embedded ticket customer summaries lightweight at `id`, `name`, and `email`.
+- Defined search expansion for `phone`, `job_title`, `website`, `external_reference`, `support_tier`, and `status`; excluded `address` and `internal_notes` from default search.
+- Moved `CUST-P1` to `in_progress` and synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- root: YAML validation for `project-state.yaml`
+- root: `git diff --check`
+
+## Resume From Here
+
+Start `CUST-P1-T02` by extending backend customer persistence, validation, resources, and search behavior for the locked field set.
+
+## 2026-04-28 20:33 +08:00 - Completed Customer Backend Profile Contract
+
+- Completed `CUST-P1-T02`.
+- Added `backend/database/migrations/2026_04_28_201913_add_profile_fields_to_customers_table.php` for:
+  - `job_title`
+  - `website`
+  - `timezone`
+  - `preferred_contact_method`
+  - `preferred_language`
+  - `address`
+  - `external_reference`
+  - `support_tier`
+  - `status`
+  - `internal_notes`
+- Updated backend customer fillable fields, store/update validation, and `CustomerResource` output.
+- Expanded customer search to include approved operational fields:
+  - `phone`
+  - `job_title`
+  - `website`
+  - `external_reference`
+  - `support_tier`
+  - `status`
+- Kept `address` and `internal_notes` out of default customer search.
+- Updated frontend `Customer` API typing for the expanded resource contract.
+- Added backend regression coverage for:
+  - create/update profile output,
+  - invalid website/timezone validation,
+  - searchable enriched fields,
+  - excluded address/internal-notes search behavior.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `backend`: `php artisan test --filter=CustomersCrudTest`
+- `backend`: `php artisan test --filter='customer_list_supports_search_filter'`
+- `backend`: `./vendor/bin/pint --dirty --test`
+- `backend`: `composer test`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Start `CUST-P1-T03` by expanding customer create/edit/list/detail UI for the locked profile fields while keeping ticket touchpoints lightweight.
+
+## 2026-04-28 21:21 +08:00 - Closed Customer Profile Enrichment Epic
+
+- Completed `CUST-P1-T03`.
+- Expanded `frontend/src/features/workspace/pages/CustomersPage.tsx` with grouped profile fields:
+  - Identity
+  - Account
+  - Preferences
+  - Support
+- Updated customer create/edit payload mapping for all approved profile fields.
+- Updated the customer table with compact support and account indicators instead of adding every profile field as a column.
+- Added a focused customer profile details dialog for full profile review, including address and internal notes.
+- Kept ticket selectors and ticket embedded customer summaries lightweight.
+- Updated `frontend/src/features/workspace/pages/customerApi.ts` and `customerApi.test.ts` for the expanded payload contract.
+- Added `frontend/src/features/workspace/pages/CustomersPage.test.tsx` for enriched profile display, details, and create payload coverage.
+- Completed `CUST-P1-T04` and closed `CUST-P1`.
+- Cleared `current_focus` because all tracked customer profile work is complete.
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `frontend`: `npm test -- --run src/features/workspace/pages/CustomersPage.test.tsx`
+- `frontend`: `npm test -- --run src/features/workspace/pages/customerApi.test.ts`
+- `frontend`: `npm test -- --run src/features/workspace/pages/CustomersPage.test.tsx src/features/workspace/pages/customerApi.test.ts`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm test`
+- `backend`: `./vendor/bin/pint --dirty --test`
+- `backend`: `composer test`
+- root: YAML validation for `project-state.yaml`
+- root: `git diff --check`
+
+## Resume From Here
+
+Select the next intentional epic before doing more implementation work.
+
 ## 2026-04-25 22:41 +08:00 - Continued Governance Decomposition
 
 - Continued `MAINT-P1-T04` by extracting the stacked governance dialog surfaces out of `frontend/src/features/workspace/settings/GovernanceSettingsSection.tsx`.

@@ -9,9 +9,9 @@ use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use App\Models\Workspace;
 use App\Support\ActivityLogger;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\QueryException;
 
 class CustomerController extends Controller
 {
@@ -23,7 +23,13 @@ class CustomerController extends Controller
             $query->where(function ($builder) use ($search): void {
                 $builder->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('company', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('company', 'like', "%{$search}%")
+                    ->orWhere('job_title', 'like', "%{$search}%")
+                    ->orWhere('website', 'like', "%{$search}%")
+                    ->orWhere('external_reference', 'like', "%{$search}%")
+                    ->orWhere('support_tier', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
             });
         }
 

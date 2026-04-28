@@ -33,6 +33,16 @@ describe('customerApi', () => {
       email: 'john@example.test',
       company: null,
       phone: null,
+      job_title: 'Operations Lead',
+      website: 'https://example.test',
+      timezone: 'Asia/Manila',
+      preferred_contact_method: 'email',
+      preferred_language: 'English',
+      address: null,
+      external_reference: 'CRM-1001',
+      support_tier: 'enterprise',
+      status: 'active',
+      internal_notes: null,
     });
 
     expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/customers', {
@@ -42,6 +52,16 @@ describe('customerApi', () => {
         email: 'john@example.test',
         company: null,
         phone: null,
+        job_title: 'Operations Lead',
+        website: 'https://example.test',
+        timezone: 'Asia/Manila',
+        preferred_contact_method: 'email',
+        preferred_language: 'English',
+        address: null,
+        external_reference: 'CRM-1001',
+        support_tier: 'enterprise',
+        status: 'active',
+        internal_notes: null,
       }),
     });
   });
@@ -52,6 +72,16 @@ describe('customerApi', () => {
       email: null,
       company: 'Acme',
       phone: '123',
+      job_title: null,
+      website: null,
+      timezone: null,
+      preferred_contact_method: null,
+      preferred_language: null,
+      address: null,
+      external_reference: null,
+      support_tier: null,
+      status: null,
+      internal_notes: null,
     });
 
     expect(apiRequest).toHaveBeenCalledWith('/workspaces/acme/customers/12', {
@@ -61,6 +91,16 @@ describe('customerApi', () => {
         email: null,
         company: 'Acme',
         phone: '123',
+        job_title: null,
+        website: null,
+        timezone: null,
+        preferred_contact_method: null,
+        preferred_language: null,
+        address: null,
+        external_reference: null,
+        support_tier: null,
+        status: null,
+        internal_notes: null,
       }),
     });
   });
