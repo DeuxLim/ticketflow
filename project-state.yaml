@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-28T21:21:42+08:00"
+updated_at: "2026-04-29T18:13:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -8,6 +8,40 @@ source_files:
   progress_log: changelog/progress-log.md
 current_focus: []
 items:
+  - id: CLEAN-P1
+    title: Repository Cleanup Pass
+    type: refactor
+    parent_id: null
+    status: complete
+    priority: medium
+    mvp: true
+    description: Remove stale scaffold files, ignored local leftovers, duplicate root tooling, and backend starter web assets so the repository reflects the active Laravel backend and React frontend structure.
+    definition_of_done:
+      - Ignored/generated local leftovers and stale duplicate root app folders are removed.
+      - Unused Vite starter frontend files and Laravel starter web assets are removed.
+      - Backend scripts no longer run the removed backend Vite starter workflow.
+      - Backend and frontend verification pass after cleanup.
+    dependencies: []
+    notes:
+      - "2026-04-29: Removed ignored local leftovers, stale root duplicate app scaffolding, unused Vite starter assets, Laravel welcome-view assets, duplicate root npm tooling, and Laravel skeleton example tests."
+      - "2026-04-29: Updated backend root web route to return a minimal JSON status response and trimmed backend package/composer scripts around the removed Vite starter workflow."
+      - "2026-04-29: Verified cleanup with backend `composer test`, frontend `npm run lint`, `npm run build`, and `npm run test`."
+      - "2026-04-29: Removed ignored Playwright/browser output folders (`.playwright-cli/` and `output/`) from the repo root while keeping canonical root coordination files in place."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - cleanup
+      - repo-maintenance
+      - backend
+      - frontend
+    created_at: "2026-04-29T18:13:00+08:00"
+    updated_at: "2026-04-29T18:13:00+08:00"
+    changed_at: "2026-04-29T18:13:00+08:00"
+    changed_source: codex
+
   - id: MAINT-P1
     title: Frontend Maintainability Decomposition
     type: epic

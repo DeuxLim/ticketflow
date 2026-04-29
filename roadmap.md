@@ -8,6 +8,14 @@ None.
 
 ## MVP Items
 
+### `CLEAN-P1` Repository Cleanup Pass
+
+- Status: `complete`
+- Priority: medium
+- Scope: Remove stale scaffold files, ignored local leftovers, duplicate root tooling, and backend starter web assets so the repository reflects the active Laravel backend and React frontend structure.
+- Current state: complete after removing ignored/generated leftovers, stale root duplicate scaffolding, unused Vite starter frontend files, Laravel starter web assets, duplicate root npm tooling, and Laravel skeleton example tests. Backend composer/package scripts were trimmed around the removed Vite starter workflow.
+- Next actions: none for this item.
+
 ### `MAINT-P2` Settings Surface Maintainability Decomposition
 
 - Status: `complete`

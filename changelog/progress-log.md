@@ -1515,3 +1515,32 @@ Verification:
 ## Resume From Here
 
 Continue `MAINT-P1-T04` by extracting the next highest-churn governance or admin editor section into a focused module, then run `MAINT-P1-T05` closeout verification.
+
+## 2026-04-29 18:13 +08:00 - Completed Repository Cleanup Pass
+
+- Added and completed `CLEAN-P1` in `project-state.yaml`.
+- Removed ignored/generated local leftovers:
+  - root `.DS_Store`
+  - root `node_modules/`
+  - `frontend/dist/`
+  - `backend/storage/framework/testing/`
+  - stale root `app/`, `src/`, and `test/` scaffolding
+- Removed unused Vite starter frontend files and assets.
+- Removed Laravel starter welcome-view assets, zero-byte backend favicon, backend Vite config, and Laravel skeleton example tests.
+- Removed duplicate root npm package files.
+- Updated `backend/routes/web.php` so `/` returns a minimal backend status response.
+- Trimmed backend composer/package scripts around the removed backend Vite starter workflow.
+- Removed ignored Playwright/browser output folders from the repo root:
+  - `.playwright-cli/`
+  - `output/`
+- Synchronized `roadmap.md` from `project-state.yaml`.
+
+Verification:
+- `backend`: `composer test`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`
+
+## Resume From Here
+
+Start the separate refactor audit only when requested; cleanup-only scope is complete.
