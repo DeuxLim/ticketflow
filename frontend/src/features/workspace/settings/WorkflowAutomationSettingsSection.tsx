@@ -23,7 +23,7 @@ import {
   toggleAutomationRule,
   updateAutomationRule,
   updateWorkflow,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 import { apiRequest } from '@/services/api/client';
 import type { ApiPaginationMeta, Ticket } from '@/types/api';
 

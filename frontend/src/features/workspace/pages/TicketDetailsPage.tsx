@@ -31,7 +31,7 @@ import {
   updateWorkspaceTicketComment,
   updateWorkspaceTicket,
   uploadWorkspaceTicketAttachment,
-} from '@/features/workspace/pages/ticketDetailsApi';
+} from '@/features/workspace/api/ticketDetailsApi';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
 import { TicketDetailsSupportDialogs } from '@/features/workspace/pages/TicketDetailsSupportDialogs';
 import {
@@ -49,7 +49,7 @@ import {
   type RelatedTicketForm,
   type TicketDetailsAttachment,
 } from '@/features/workspace/pages/ticketDetailsHelpers';
-import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/pages/ticketPageApi';
+import { listAssignableMembersForTickets, listRelatedTicketOptions, listTicketCustomersForSelectors } from '@/features/workspace/api/ticketPageApi';
 import {
   applyTicketFormFieldErrors,
   buildCustomFieldPayload,
@@ -58,7 +58,7 @@ import {
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
-import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/settings/settings-api';
+import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
 import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';

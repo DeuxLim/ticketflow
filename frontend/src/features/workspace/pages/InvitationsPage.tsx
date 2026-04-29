@@ -16,7 +16,7 @@ import {
   createWorkspaceInvitation,
   listWorkspaceInvitations,
   listWorkspaceRoles,
-} from '@/features/workspace/pages/invitationsApi';
+} from '@/features/workspace/api/invitationsApi';
 import { Input } from '@/components/ui/input';
 import { ApiError } from '@/services/api/client';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

@@ -4,9 +4,17 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-None.
+`REFACTOR-P1`
 
 ## MVP Items
+
+### `REFACTOR-P1` Laravel and React Standards Alignment
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Align the active Laravel backend and React frontend with project-specific conventions, framework standards, and maintainability best practices without changing product behavior.
+- Current state: documentation/metadata alignment is complete, and workspace API modules/tests now live under `frontend/src/features/workspace/api/` instead of page/settings folders.
+- Next actions: rank remaining oversized app-owned files and backend route/controller grouping pressure before choosing the next safe component or controller extraction.
 
 ### `CLEAN-P1` Repository Cleanup Pass
 

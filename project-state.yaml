@@ -1,13 +1,53 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-29T18:13:00+08:00"
+updated_at: "2026-04-29T18:24:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus: []
+current_focus:
+  - REFACTOR-P1
 items:
+  - id: REFACTOR-P1
+    title: Laravel and React Standards Alignment
+    type: refactor
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Align the active Laravel backend and React frontend with project-specific conventions, framework standards, and maintainability best practices without changing product behavior.
+    definition_of_done:
+      - Starter framework metadata and documentation are replaced with project-specific guidance.
+      - Remaining app-owned oversized backend/frontend surfaces are ranked by risk and implementation value.
+      - Safe convention fixes are landed incrementally with relevant verification.
+      - Backend/frontend API boundaries remain behavior-compatible throughout the refactor.
+    dependencies:
+      - CLEAN-P1
+    notes:
+      - "2026-04-29: Started after repository cleanup completed and the working tree was pushed clean."
+      - "2026-04-29: Completed first safe alignment slice by replacing backend/frontend starter READMEs, updating backend Composer metadata, removing the stale Laravel asset publish hook, refreshing the Composer lock content hash, and preserving the Laravel Unit test suite directory with `.gitkeep`."
+      - "2026-04-29: Audit found next likely targets: app-owned oversized screens/controllers, frontend API modules currently colocated under page folders, and backend route/controller grouping pressure."
+      - "2026-04-29: Completed the frontend API boundary slice by moving workspace API modules and their tests from `pages/` and `settings/` into `frontend/src/features/workspace/api/`, then updating route/settings imports and mocks."
+    incomplete_reason: "Documentation, metadata, and frontend API boundary alignment are complete, but oversized app-owned screens/controllers still need to be ranked and implemented in safe slices."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Rank remaining app-owned oversized files by risk and value, excluding shadcn primitives and broad test files.
+      - Pick the safest next component or controller extraction with focused tests.
+      - Run backend and frontend verification after each behavior-preserving slice.
+    tags:
+      - refactor
+      - standards
+      - laravel
+      - react
+      - maintainability
+    created_at: "2026-04-29T18:24:00+08:00"
+    updated_at: "2026-04-29T18:28:00+08:00"
+    changed_at: "2026-04-29T18:28:00+08:00"
+    changed_source: codex
+
   - id: CLEAN-P1
     title: Repository Cleanup Pass
     type: refactor

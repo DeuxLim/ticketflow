@@ -20,7 +20,7 @@ import {
   updateTicketTag,
   updateTicketType,
   updateTicketingSettings,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 import { type DictionaryKind, TicketingDictionaryDialogs } from './TicketingDictionaryDialogs';
 
 type TicketingSettingsSectionProps = {

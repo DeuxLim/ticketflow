@@ -1544,3 +1544,45 @@ Verification:
 ## Resume From Here
 
 Start the separate refactor audit only when requested; cleanup-only scope is complete.
+
+## 2026-04-29 18:24 +08:00 - Started Standards Alignment Refactor
+
+- Added `REFACTOR-P1` as the active tracker item.
+- Replaced Laravel starter backend README content with project-specific backend setup, development, and verification notes.
+- Replaced Vite starter frontend README content with project-specific frontend setup, development, and verification notes.
+- Updated backend Composer metadata from Laravel skeleton defaults to Ticketing backend metadata.
+- Removed the stale Laravel asset publish hook from Composer scripts because backend Vite starter assets were removed during cleanup.
+- Refreshed `backend/composer.lock` content hash with `composer update --lock`; package versions did not change.
+- Restored the Laravel-standard `backend/tests/Unit/` suite directory with `.gitkeep` so PHPUnit can run without bringing back fake example tests.
+- Recorded next audit targets:
+  - app-owned oversized frontend screens and backend controllers,
+  - frontend API modules currently colocated under page folders,
+  - backend route/controller grouping pressure.
+
+Verification:
+- `backend`: `composer validate --no-check-publish`
+- `backend`: `composer test`
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by ranking the remaining code-structure targets, then choose one safe extraction with focused tests.
+
+## 2026-04-29 18:28 +08:00 - Aligned Workspace Frontend API Boundary
+
+- Moved workspace API modules and their tests into `frontend/src/features/workspace/api/`.
+- Removed API modules from UI-focused folders:
+  - `frontend/src/features/workspace/pages/`
+  - `frontend/src/features/workspace/settings/`
+- Updated page and settings imports to use `@/features/workspace/api/...`.
+- Updated Vitest mocks so component tests mock the same API module paths used by production imports.
+- Kept function names and request behavior unchanged.
+
+Verification:
+- `frontend`: focused API/settings/page test run passed, 14 files / 49 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by ranking oversized app-owned screens/controllers. Avoid shadcn primitives and broad test files unless a specific defect requires it.

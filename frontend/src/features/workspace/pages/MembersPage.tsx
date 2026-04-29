@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { ApiError } from '@/services/api/client';
-import { listWorkspaceMembers } from '@/features/workspace/pages/membersApi';
+import { listWorkspaceMembers } from '@/features/workspace/api/membersApi';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export function MembersPage() {

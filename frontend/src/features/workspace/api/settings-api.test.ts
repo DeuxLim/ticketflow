@@ -37,7 +37,7 @@ import {
   updateAutomationRule,
   updateWorkflow,
   updateTenantSecurityPolicy,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
 vi.mock('@/services/api/client', () => ({
   apiRequest: vi.fn(),

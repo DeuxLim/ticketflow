@@ -16,9 +16,9 @@ import {
   updateTicketTag,
   updateTicketType,
   updateTicketingSettings,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
-vi.mock('./settings-api', () => ({
+vi.mock('@/features/workspace/api/settings-api', () => ({
   createTicketCategory: vi.fn(),
   createTicketTag: vi.fn(),
   createTicketType: vi.fn(),

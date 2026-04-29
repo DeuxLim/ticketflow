@@ -10,9 +10,9 @@ import {
   listWebhookDeliveries,
   listWebhookEndpoints,
   retryWebhookDelivery,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
-vi.mock('./settings-api', () => ({
+vi.mock('@/features/workspace/api/settings-api', () => ({
   createWebhookEndpoint: vi.fn(),
   listWebhookDeliveries: vi.fn(),
   listWebhookEndpoints: vi.fn(),

@@ -12,7 +12,7 @@ import {
   listWebhookDeliveries,
   listWebhookEndpoints,
   retryWebhookDelivery,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
 type IntegrationsSettingsSectionProps = {
   workspaceSlug: string;

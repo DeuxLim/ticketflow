@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { createWorkspace as createWorkspaceRequest, listUserWorkspaces } from '@/features/workspace/pages/workspaceOnboardingApi';
+import { createWorkspace as createWorkspaceRequest, listUserWorkspaces } from '@/features/workspace/api/workspaceOnboardingApi';
 import { getLastWorkspaceSlug, setLastWorkspaceSlug } from '@/lib/workspace-session';
 import { ApiError } from '@/services/api/client';
 

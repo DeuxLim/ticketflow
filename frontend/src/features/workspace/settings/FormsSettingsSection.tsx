@@ -13,7 +13,7 @@ import {
   listTicketTypes,
   updateTicketCustomField,
   updateTicketFormTemplate,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
 type FormsSettingsSectionProps = {
   workspaceSlug: string;

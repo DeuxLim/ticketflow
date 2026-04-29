@@ -19,10 +19,10 @@ import {
   toggleAutomationRule,
   updateAutomationRule,
   updateWorkflow,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 import { apiRequest } from '@/services/api/client';
 
-vi.mock('./settings-api', () => ({
+vi.mock('@/features/workspace/api/settings-api', () => ({
   activateWorkflow: vi.fn(),
   approveApproval: vi.fn(),
   createAutomationRule: vi.fn(),

@@ -25,9 +25,9 @@ import {
   startOidcSso,
   updateRetentionPolicy,
   updateTenantSecurityPolicy,
-} from './settings-api';
+} from '@/features/workspace/api/settings-api';
 
-vi.mock('./settings-api', () => ({
+vi.mock('@/features/workspace/api/settings-api', () => ({
   approveBreakGlassRequest: vi.fn(),
   createBreakGlassRequest: vi.fn(),
   createExport: vi.fn(),
