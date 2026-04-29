@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-04-29T18:24:00+08:00"
+updated_at: "2026-04-29T18:40:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -29,13 +29,15 @@ items:
       - "2026-04-29: Completed first safe alignment slice by replacing backend/frontend starter READMEs, updating backend Composer metadata, removing the stale Laravel asset publish hook, refreshing the Composer lock content hash, and preserving the Laravel Unit test suite directory with `.gitkeep`."
       - "2026-04-29: Audit found next likely targets: app-owned oversized screens/controllers, frontend API modules currently colocated under page folders, and backend route/controller grouping pressure."
       - "2026-04-29: Completed the frontend API boundary slice by moving workspace API modules and their tests from `pages/` and `settings/` into `frontend/src/features/workspace/api/`, then updating route/settings imports and mocks."
-    incomplete_reason: "Documentation, metadata, and frontend API boundary alignment are complete, but oversized app-owned screens/controllers still need to be ranked and implemented in safe slices."
+      - "2026-04-29: Completed the first function-level `TicketDetailsPage.tsx` slice by centralizing repeated ticket query invalidation blocks into local invalidation helpers while preserving mutation behavior."
+      - "2026-04-29: Extracted read-only ticket details presentation cards into `TicketDetailsOverviewCards.tsx`, moving summary, activity, SLA, tools, and custom-field rendering out of the route component."
+    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and two TicketDetails slices are complete, but the route still owns comments, mutation orchestration, and dialog wiring."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
       - Rank remaining app-owned oversized files by risk and value, excluding shadcn primitives and broad test files.
-      - Pick the safest next component or controller extraction with focused tests.
+      - Continue `TicketDetailsPage.tsx` extraction by moving comments rendering/editing or a mutation group into a focused module.
       - Run backend and frontend verification after each behavior-preserving slice.
     tags:
       - refactor
@@ -44,8 +46,8 @@ items:
       - react
       - maintainability
     created_at: "2026-04-29T18:24:00+08:00"
-    updated_at: "2026-04-29T18:28:00+08:00"
-    changed_at: "2026-04-29T18:28:00+08:00"
+    updated_at: "2026-04-29T18:40:00+08:00"
+    changed_at: "2026-04-29T18:40:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1

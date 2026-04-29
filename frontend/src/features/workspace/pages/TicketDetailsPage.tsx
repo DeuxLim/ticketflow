@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
   addWorkspaceTicketWatcher,
@@ -33,6 +32,13 @@ import {
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/api/ticketDetailsApi';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
+import {
+  TicketActivityCard,
+  TicketCustomFieldsCard,
+  TicketSlaCard,
+  TicketDetailsSummaryCard,
+  TicketToolsCard,
+} from '@/features/workspace/pages/TicketDetailsOverviewCards';
 import { TicketDetailsSupportDialogs } from '@/features/workspace/pages/TicketDetailsSupportDialogs';
 import {
   buildTicketDetailsFormValues,
@@ -42,7 +48,6 @@ import {
   createTicketDetailsFormDefaults,
   formatTicketDetailsDate,
   relatedTicketSchema,
-  statusLabel,
   type ActivityLog,
   type ChecklistForm,
   type CommentForm,
@@ -61,18 +66,13 @@ import {
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
 import { ApiError, apiDownload, apiRequest } from '@/services/api/client';
-import type { Ticket, TicketChecklistItem, TicketComment, TicketCustomFieldValue } from '@/types/api';
+import type { Ticket, TicketChecklistItem, TicketComment } from '@/types/api';
 
 type AuthUser = {
   id: number;
   email: string;
   is_platform_admin: boolean;
 };
-
-function fullName(person?: { first_name?: string; last_name?: string } | null): string {
-  if (!person) return '—';
-  return `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || '—';
-}
 
 function nextStatuses(current: Ticket['status']): Ticket['status'][] {
   const map: Record<Ticket['status'], Ticket['status'][]> = {
@@ -83,17 +83,6 @@ function nextStatuses(current: Ticket['status']): Ticket['status'][] {
   };
 
   return map[current] ?? [];
-}
-
-function humanizeAction(action: string): string {
-  return action.replaceAll('.', ' ').replaceAll('_', ' ').replace(/\b\w/g, (match) => match.toUpperCase());
-}
-
-function customFieldValue(value: TicketCustomFieldValue['value']): string {
-  if (value === null || value === undefined || value === '') return '—';
-  if (Array.isArray(value)) return value.join(', ');
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
 }
 
 export function TicketDetailsPage() {
@@ -222,6 +211,38 @@ export function TicketDetailsPage() {
     enabled: Boolean(workspaceSlug && ticketId && canView),
   });
 
+  const invalidateTicket = () => {
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+  };
+
+  const invalidateTicketActivity = () => {
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+  };
+
+  const invalidateTicketAttachments = () => {
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+  };
+
+  const invalidateTicketComments = () => {
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
+  };
+
+  const invalidateTicketList = () => {
+    queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+  };
+
+  const invalidateTicketAndActivity = () => {
+    invalidateTicket();
+    invalidateTicketActivity();
+  };
+
+  const invalidateTicketThread = () => {
+    invalidateTicket();
+    invalidateTicketActivity();
+    invalidateTicketAttachments();
+    invalidateTicketComments();
+  };
+
   const addComment = useMutation({
     mutationFn: async (values: CommentForm) => {
       const response = await createWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', values) as { data: TicketComment };
@@ -242,10 +263,7 @@ export function TicketDetailsPage() {
       commentForm.reset({ body: '', is_internal: false });
       setCommentFiles([]);
       setIsCommentOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
+      invalidateTicketThread();
     },
   });
 
@@ -255,8 +273,8 @@ export function TicketDetailsPage() {
     onSuccess: () => {
       setEditingCommentId(null);
       setEditingCommentBody('');
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketComments();
+      invalidateTicketActivity();
     },
   });
 
@@ -264,9 +282,9 @@ export function TicketDetailsPage() {
     mutationFn: (commentId: number) =>
       deleteWorkspaceTicketComment(workspaceSlug ?? '', ticketId ?? '', commentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'comments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
+      invalidateTicketComments();
+      invalidateTicketActivity();
+      invalidateTicketAttachments();
     },
   });
 
@@ -283,12 +301,12 @@ export function TicketDetailsPage() {
         queue_key: values.queue_key || null,
         tags: parseTicketTags(values.tags),
         custom_fields: buildCustomFieldPayload(values.custom_fields, scopedCustomFieldConfigs),
-      }),
+    }),
     onSuccess: () => {
       setIsEditOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicket();
+      invalidateTicketList();
+      invalidateTicketActivity();
     },
     onError: (error) => {
       applyTicketFormFieldErrors(editForm, error);
@@ -312,9 +330,9 @@ export function TicketDetailsPage() {
       } else {
         setQuickActionMessage(null);
       }
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+      invalidateTicket();
+      invalidateTicketActivity();
+      invalidateTicketList();
     },
   });
 
@@ -328,32 +346,30 @@ export function TicketDetailsPage() {
     },
     onSuccess: () => {
       setAttachmentFile(null);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAttachments();
+      invalidateTicketActivity();
     },
   });
 
   const deleteAttachment = useMutation({
     mutationFn: (attachmentId: number) => deleteWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', attachmentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'attachments'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAttachments();
+      invalidateTicketActivity();
     },
   });
 
   const addWatcher = useMutation({
     mutationFn: () => addWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? ''),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
   const removeWatcher = useMutation({
     mutationFn: (watcherId: number) => removeWorkspaceTicketWatcher(workspaceSlug ?? '', ticketId ?? '', watcherId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
@@ -362,8 +378,7 @@ export function TicketDetailsPage() {
       createWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', { title: values.title }),
     onSuccess: () => {
       checklistForm.reset({ title: '' });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
@@ -371,16 +386,14 @@ export function TicketDetailsPage() {
     mutationFn: ({ itemId, values }: { itemId: number; values: Partial<TicketChecklistItem> }) =>
       updateWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId, values as Record<string, unknown>),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
   const deleteChecklistItem = useMutation({
     mutationFn: (itemId: number) => deleteWorkspaceChecklistItem(workspaceSlug ?? '', ticketId ?? '', itemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
@@ -388,8 +401,7 @@ export function TicketDetailsPage() {
     mutationFn: (items: Array<{ id: number; sort_order: number }>) =>
       reorderWorkspaceChecklistItems(workspaceSlug ?? '', ticketId ?? '', items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
@@ -402,23 +414,21 @@ export function TicketDetailsPage() {
     onSuccess: () => {
       relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
       setIsRelatedOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
   const deleteRelatedTicket = useMutation({
     mutationFn: (linkId: number) => deleteWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', linkId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId] });
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket', ticketId, 'activity'] });
+      invalidateTicketAndActivity();
     },
   });
 
   const deleteTicket = useMutation({
     mutationFn: () => deleteWorkspaceTicket(workspaceSlug ?? '', ticketId ?? ''),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+      invalidateTicketList();
       navigate(`/workspaces/${workspaceSlug}/tickets`);
     },
   });
@@ -456,7 +466,6 @@ export function TicketDetailsPage() {
   const checklistItems = ticket?.checklist_items ?? [];
   const relatedTickets = ticket?.related_tickets ?? [];
   const customFields = ticket?.custom_fields ?? [];
-  const stateSummary = ticket?.state_summary;
   const currentUserId = meQuery.data?.data.id;
   const ticketLevelAttachments = attachments.filter((attachment) => attachment.comment_id === null);
   const selfWatcher = watchers.find((watcher) => watcher.user_id === currentUserId);
@@ -651,27 +660,7 @@ export function TicketDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-6">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Ticket Summary</CardTitle>
-            <CardDescription>Customer, ownership, and workflow state.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 text-sm md:grid-cols-2">
-            <DetailItem label="Customer" value={ticket.customer?.name ?? '—'} />
-            <DetailItem label="Assignee" value={ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'} />
-            <DetailItem label="Created by" value={fullName(ticket.creator)} />
-            <DetailItem label="Queue" value={ticket.queue_key ?? '—'} />
-            <DetailItem label="Category" value={ticket.category ?? '—'} />
-            <DetailItem label="Assignment" value={statusLabel(stateSummary?.assignment.strategy)} />
-            <DetailItem
-              label="Approval"
-              value={stateSummary?.approval.pending_count ? `${stateSummary.approval.pending_count} pending` : statusLabel(stateSummary?.approval.latest_status) === '—' ? 'No active approval' : statusLabel(stateSummary?.approval.latest_status)}
-            />
-            <DetailItem label="Automation" value={stateSummary?.automation.recent_count ? `${stateSummary.automation.recent_count} recent runs` : 'No recent runs'} />
-            <DetailItem label="Tags" value={ticket.tags && ticket.tags.length > 0 ? ticket.tags.join(', ') : '—'} />
-            <DetailItem label="Updated" value={formatTicketDetailsDate(ticket.updated_at)} />
-          </CardContent>
-        </Card>
+        <TicketDetailsSummaryCard ticket={ticket} />
 
         <Card className="shadow-none">
           <CardHeader>
@@ -792,96 +781,24 @@ export function TicketDetailsPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Activity Timeline</CardTitle>
-            <CardDescription>State changes, automation, and assignment events in one running history.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {activityLogs.map((event) => (
-              <div key={event.id} className="rounded-md border border-border p-3 text-sm">
-                <p className="font-medium">{humanizeAction(event.action)}</p>
-                <p className="text-xs text-muted-foreground">{fullName(event.user)} • {formatTicketDetailsDate(event.created_at)}</p>
-              </div>
-            ))}
-            {!activityLogs.length && <p className="text-sm text-muted-foreground">No activity yet.</p>}
-          </CardContent>
-        </Card>
+        <TicketActivityCard activityLogs={activityLogs} />
         </div>
 
         <aside className="flex flex-col gap-6">
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>SLA</CardTitle>
-            <CardDescription>Response and resolution timing.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            <Badge variant={stateSummary?.sla.status === 'breached' ? 'destructive' : 'secondary'} className="w-fit">
-              {statusLabel(stateSummary?.sla.status)}
-            </Badge>
-            <DetailItem label="First response due" value={formatTicketDetailsDate(ticket.first_response_due_at)} />
-            <DetailItem label="First responded" value={formatTicketDetailsDate(ticket.first_responded_at)} />
-            <DetailItem label="Resolution due" value={formatTicketDetailsDate(ticket.resolution_due_at)} />
-            <DetailItem label="Resolved at" value={formatTicketDetailsDate(ticket.resolved_at)} />
-            <Separator />
-            {slaSignals.map((signal) => (
-              <p key={signal.key} className={signal.severity === 'warning' ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
-                {signal.label}{signal.time ? ` (${formatTicketDetailsDate(signal.time)})` : ''}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+        <TicketSlaCard ticket={ticket} slaSignals={slaSignals} />
 
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Ticket Tools</CardTitle>
-            <CardDescription>Open focused panels instead of stacking every operator task on the page.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <div className="rounded-md border border-border p-3 text-sm">
-              <p className="font-medium">Checklist</p>
-              <p className="text-xs text-muted-foreground">{checklistItems.length} task{checklistItems.length === 1 ? '' : 's'} tracked</p>
-            </div>
-            <div className="rounded-md border border-border p-3 text-sm">
-              <p className="font-medium">Attachments</p>
-              <p className="text-xs text-muted-foreground">{ticketLevelAttachments.length} ticket-level file{ticketLevelAttachments.length === 1 ? '' : 's'}</p>
-            </div>
-            <div className="rounded-md border border-border p-3 text-sm">
-              <p className="font-medium">Watchers</p>
-              <p className="text-xs text-muted-foreground">{watchers.length} follower{watchers.length === 1 ? '' : 's'}</p>
-            </div>
-            <div className="rounded-md border border-border p-3 text-sm">
-              <p className="font-medium">Related Tickets</p>
-              <p className="text-xs text-muted-foreground">{relatedTickets.length} linked ticket{relatedTickets.length === 1 ? '' : 's'}</p>
-            </div>
-            <div className="flex flex-col gap-2 pt-1">
-              <Button onClick={() => setIsChecklistOpen(true)} size="sm" type="button" variant="outline">
-                Open Checklist
-              </Button>
-              <Button onClick={() => setIsAttachmentsOpen(true)} size="sm" type="button" variant="outline">
-                Open Attachments
-              </Button>
-              <Button onClick={() => setIsWatchersOpen(true)} size="sm" type="button" variant="outline">
-                Open Watchers
-              </Button>
-              <Button onClick={() => setIsRelatedOpen(true)} size="sm" type="button" variant="outline">
-                Open Related Tickets
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <TicketToolsCard
+          checklistCount={checklistItems.length}
+          ticketLevelAttachmentCount={ticketLevelAttachments.length}
+          watcherCount={watchers.length}
+          relatedTicketCount={relatedTickets.length}
+          onOpenChecklist={() => setIsChecklistOpen(true)}
+          onOpenAttachments={() => setIsAttachmentsOpen(true)}
+          onOpenWatchers={() => setIsWatchersOpen(true)}
+          onOpenRelatedTickets={() => setIsRelatedOpen(true)}
+        />
 
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Custom Fields</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm">
-            {customFields.map((field) => (
-              <DetailItem key={field.id} label={field.label ?? field.key ?? 'Field'} value={customFieldValue(field.value)} />
-            ))}
-            {!customFields.length && <p className="text-sm text-muted-foreground">No dynamic fields configured for this ticket.</p>}
-          </CardContent>
-        </Card>
+        <TicketCustomFieldsCard customFields={customFields} />
         </aside>
       </div>
 
@@ -1000,14 +917,5 @@ export function TicketDetailsPage() {
         scopedCustomFieldConfigs={scopedCustomFieldConfigs}
       />
     </section>
-  );
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 truncate font-medium">{value}</p>
-    </div>
   );
 }
