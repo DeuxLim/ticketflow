@@ -1679,3 +1679,20 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting one mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
+
+## 2026-04-30 22:26 +08:00 - Extracted Ticket Watcher Mutations
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsWatcherMutations.ts`.
+- Moved follow/unfollow watcher mutations out of `TicketDetailsPage.tsx`.
+- Kept route-owned query invalidation as an injected callback so the hook owns only the watcher mutation group.
+- Reduced `TicketDetailsPage.tsx` to 758 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
