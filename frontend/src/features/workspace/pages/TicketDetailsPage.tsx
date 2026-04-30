@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
   addWorkspaceTicketWatcher,
@@ -31,6 +29,7 @@ import {
 } from '@/features/workspace/api/ticketDetailsApi';
 import { TicketDetailsCommentsCard } from '@/features/workspace/pages/TicketDetailsCommentsCard';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
+import { TicketDetailsHeader } from '@/features/workspace/pages/TicketDetailsHeader';
 import {
   TicketActivityCard,
   TicketCustomFieldsCard,
@@ -70,17 +69,6 @@ type AuthUser = {
   email: string;
   is_platform_admin: boolean;
 };
-
-function nextStatuses(current: Ticket['status']): Ticket['status'][] {
-  const map: Record<Ticket['status'], Ticket['status'][]> = {
-    open: ['in_progress', 'closed'],
-    in_progress: ['resolved', 'closed'],
-    resolved: ['closed', 'in_progress'],
-    closed: ['in_progress'],
-  };
-
-  return map[current] ?? [];
-}
 
 export function TicketDetailsPage() {
   const { workspaceSlug, ticketId } = useParams();
@@ -582,78 +570,29 @@ export function TicketDetailsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <header className="rounded-xl border bg-card p-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{ticket.ticket_number}</Badge>
-          <Badge variant="secondary">{ticket.status}</Badge>
-          <Badge variant="outline">{ticket.priority}</Badge>
-        </div>
-
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">{ticket.title}</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">{ticket.description}</p>
-        <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
-          Keep the thread readable by leaving summary and activity in view, then open focused panels when you need to edit metadata or manage supporting work.
-        </p>
-
-        {quickActionMessage && <p className="text-xs text-muted-foreground">{quickActionMessage}</p>}
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {nextStatuses(ticket.status).map((next) => (
-            <Button
-              key={next}
-              disabled={!canManage || quickTransition.isPending}
-              onClick={() => quickTransition.mutate(next)}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              Move to {next.replace('_', ' ')}
-            </Button>
-          ))}
-          <Button disabled={!canComment} onClick={() => setIsCommentOpen(true)} size="sm" type="button">
-            Add Comment
-          </Button>
-          <Button
-            disabled={!canComment || addWatcher.isPending || removeWatcher.isPending || meQuery.isLoading}
-            onClick={() => {
-              if (selfWatcher) {
-                removeWatcher.mutate(selfWatcher.id);
-              } else {
-                addWatcher.mutate();
-              }
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {selfWatcher ? 'Unfollow' : 'Follow'}
-          </Button>
-          <Button
-            disabled={!canManage}
-            onClick={() => {
-              setEditTemplateId(defaultTemplateId);
-              setIsEditOpen(true);
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Edit Ticket
-          </Button>
-          <Button
-            disabled={!canManage || deleteTicket.isPending}
-            onClick={() => {
-              const ok = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
-              if (ok) deleteTicket.mutate();
-            }}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            {deleteTicket.isPending ? 'Deleting...' : 'Delete Ticket'}
-          </Button>
-        </div>
-      </header>
+      <TicketDetailsHeader
+        ticket={ticket}
+        quickActionMessage={quickActionMessage}
+        canComment={canComment}
+        canManage={canManage}
+        selfWatcher={selfWatcher}
+        isTransitioning={quickTransition.isPending}
+        isWatcherMutating={addWatcher.isPending || removeWatcher.isPending}
+        isLoadingCurrentUser={meQuery.isLoading}
+        isDeletingTicket={deleteTicket.isPending}
+        onTransition={(status) => quickTransition.mutate(status)}
+        onOpenComment={() => setIsCommentOpen(true)}
+        onFollowTicket={() => addWatcher.mutate()}
+        onUnfollowTicket={(watcherId) => removeWatcher.mutate(watcherId)}
+        onOpenEdit={() => {
+          setEditTemplateId(defaultTemplateId);
+          setIsEditOpen(true);
+        }}
+        onDeleteTicket={() => {
+          const ok = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
+          if (ok) deleteTicket.mutate();
+        }}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-6">
