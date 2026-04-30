@@ -1636,3 +1636,25 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting comments rendering/editing or one mutation group from `TicketDetailsPage.tsx`.
+
+## 2026-04-30 22:21 +08:00 - Extracted Ticket Details Comments Card
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsCommentsCard.tsx`.
+- Moved comments rendering/editing out of `TicketDetailsPage.tsx`:
+  - public/internal comment badges
+  - author and edited metadata
+  - edit/save/cancel controls
+  - delete action callback
+  - comment attachment display and download callback
+- Kept data fetching, mutation orchestration, confirmation prompts, and query invalidation in `TicketDetailsPage.tsx`.
+- Reduced `TicketDetailsPage.tsx` to 828 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting one mutation group or dialog wiring group from `TicketDetailsPage.tsx`.

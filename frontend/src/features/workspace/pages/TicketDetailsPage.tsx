@@ -6,9 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
-import { Textarea } from '@/components/ui/textarea';
 import {
   addWorkspaceTicketWatcher,
   createWorkspaceChecklistItem,
@@ -31,6 +29,7 @@ import {
   updateWorkspaceTicket,
   uploadWorkspaceTicketAttachment,
 } from '@/features/workspace/api/ticketDetailsApi';
+import { TicketDetailsCommentsCard } from '@/features/workspace/pages/TicketDetailsCommentsCard';
 import { TicketDetailsEditSheet } from '@/features/workspace/pages/TicketDetailsEditSheet';
 import {
   TicketActivityCard,
@@ -42,11 +41,9 @@ import {
 import { TicketDetailsSupportDialogs } from '@/features/workspace/pages/TicketDetailsSupportDialogs';
 import {
   buildTicketDetailsFormValues,
-  bytesToReadable,
   checklistSchema,
   commentSchema,
   createTicketDetailsFormDefaults,
-  formatTicketDetailsDate,
   relatedTicketSchema,
   type ActivityLog,
   type ChecklistForm,
@@ -660,145 +657,55 @@ export function TicketDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="flex flex-col gap-6">
-        <TicketDetailsSummaryCard ticket={ticket} />
+          <TicketDetailsSummaryCard ticket={ticket} />
 
-        <Card className="shadow-none">
-          <CardHeader>
-            <CardTitle>Comments</CardTitle>
-            <CardDescription>Conversation stays visible so handoffs and context are easy to follow.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {(commentsQuery.data?.data ?? []).map((comment) => (
-              <div key={comment.id} className="rounded-md border border-border p-3">
-                <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={comment.is_internal ? 'secondary' : 'outline'}>
-                      {comment.is_internal ? 'Internal' : 'Public'}
-                    </Badge>
-                    <span>
-                      {comment.user
-                        ? `${comment.user.first_name} ${comment.user.last_name}`
-                        : comment.customer
-                          ? comment.customer.name
-                          : 'System'}
-                    </span>
-                    <span>•</span>
-                    <span>{formatTicketDetailsDate(comment.created_at)}</span>
-                    {comment.updated_at && comment.updated_at !== comment.created_at && (
-                      <>
-                        <span>•</span>
-                        <span>edited {formatTicketDetailsDate(comment.updated_at)}</span>
-                      </>
-                    )}
-                  </div>
-                  {canComment && (
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => {
-                          setEditingCommentId(comment.id);
-                          setEditingCommentBody(comment.body);
-                        }}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        disabled={deleteComment.isPending}
-                        onClick={() => {
-                          const ok = window.confirm('Delete this comment?');
-                          if (ok) {
-                            deleteComment.mutate(comment.id);
-                          }
-                        }}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {editingCommentId === comment.id ? (
-                  <div className="space-y-2">
-                    <Textarea
-                      onChange={(event) => setEditingCommentBody(event.target.value)}
-                      value={editingCommentBody}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        disabled={updateComment.isPending || editingCommentBody.trim().length < 2}
-                        onClick={() => updateComment.mutate({ commentId: comment.id, body: editingCommentBody })}
-                        size="sm"
-                        type="button"
-                      >
-                        {updateComment.isPending ? 'Saving...' : 'Save'}
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setEditingCommentId(null);
-                          setEditingCommentBody('');
-                        }}
-                        size="sm"
-                        type="button"
-                        variant="outline"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm">{comment.body}</p>
-                )}
+          <TicketDetailsCommentsCard
+            comments={commentsQuery.data?.data ?? []}
+            attachmentsByComment={attachmentsByComment}
+            canComment={canComment}
+            editingCommentId={editingCommentId}
+            editingCommentBody={editingCommentBody}
+            isUpdatingComment={updateComment.isPending}
+            isDeletingComment={deleteComment.isPending}
+            onStartEdit={(comment) => {
+              setEditingCommentId(comment.id);
+              setEditingCommentBody(comment.body);
+            }}
+            onEditingCommentBodyChange={setEditingCommentBody}
+            onSaveEdit={(commentId, body) => updateComment.mutate({ commentId, body })}
+            onCancelEdit={() => {
+              setEditingCommentId(null);
+              setEditingCommentBody('');
+            }}
+            onDeleteComment={(commentId) => {
+              const ok = window.confirm('Delete this comment?');
+              if (ok) {
+                deleteComment.mutate(commentId);
+              }
+            }}
+            onDownloadAttachment={(attachmentId, originalName) =>
+              apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachmentId}/download`, originalName)
+            }
+          />
 
-                {(attachmentsByComment[comment.id] ?? []).length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {(attachmentsByComment[comment.id] ?? []).map((attachment) => (
-                      <div key={attachment.id} className="flex items-center justify-between rounded border border-border p-2">
-                        <div className="text-xs">
-                          <p className="font-medium">{attachment.original_name}</p>
-                          <p className="text-muted-foreground">
-                            {bytesToReadable(attachment.size_bytes)} • {formatTicketDetailsDate(attachment.created_at)}
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => apiDownload(`/workspaces/${workspaceSlug}/tickets/${ticketId}/attachments/${attachment.id}/download`, attachment.original_name)}
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          Download
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            {!commentsQuery.data?.data.length && <p className="text-sm text-muted-foreground">No comments yet.</p>}
-          </CardContent>
-        </Card>
-
-        <TicketActivityCard activityLogs={activityLogs} />
+          <TicketActivityCard activityLogs={activityLogs} />
         </div>
 
         <aside className="flex flex-col gap-6">
-        <TicketSlaCard ticket={ticket} slaSignals={slaSignals} />
+          <TicketSlaCard ticket={ticket} slaSignals={slaSignals} />
 
-        <TicketToolsCard
-          checklistCount={checklistItems.length}
-          ticketLevelAttachmentCount={ticketLevelAttachments.length}
-          watcherCount={watchers.length}
-          relatedTicketCount={relatedTickets.length}
-          onOpenChecklist={() => setIsChecklistOpen(true)}
-          onOpenAttachments={() => setIsAttachmentsOpen(true)}
-          onOpenWatchers={() => setIsWatchersOpen(true)}
-          onOpenRelatedTickets={() => setIsRelatedOpen(true)}
-        />
+          <TicketToolsCard
+            checklistCount={checklistItems.length}
+            ticketLevelAttachmentCount={ticketLevelAttachments.length}
+            watcherCount={watchers.length}
+            relatedTicketCount={relatedTickets.length}
+            onOpenChecklist={() => setIsChecklistOpen(true)}
+            onOpenAttachments={() => setIsAttachmentsOpen(true)}
+            onOpenWatchers={() => setIsWatchersOpen(true)}
+            onOpenRelatedTickets={() => setIsRelatedOpen(true)}
+          />
 
-        <TicketCustomFieldsCard customFields={customFields} />
+          <TicketCustomFieldsCard customFields={customFields} />
         </aside>
       </div>
 

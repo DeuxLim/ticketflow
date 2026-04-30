@@ -13,8 +13,8 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 - Status: `in_progress`
 - Priority: high
 - Scope: Align the active Laravel backend and React frontend with project-specific conventions, framework standards, and maintainability best practices without changing product behavior.
-- Current state: documentation/metadata alignment is complete, workspace API modules/tests now live under `frontend/src/features/workspace/api/`, repeated ticket-detail query invalidation blocks are centralized, and read-only ticket detail cards now live in `TicketDetailsOverviewCards.tsx`.
-- Next actions: continue `TicketDetailsPage.tsx` extraction by moving comments rendering/editing or a mutation group into a focused module, then rerun frontend verification.
+- Current state: documentation/metadata alignment is complete, workspace API modules/tests now live under `frontend/src/features/workspace/api/`, repeated ticket-detail query invalidation blocks are centralized, read-only ticket detail cards now live in `TicketDetailsOverviewCards.tsx`, and comments rendering/editing now lives in `TicketDetailsCommentsCard.tsx`.
+- Next actions: continue `TicketDetailsPage.tsx` extraction by moving one mutation group or dialog wiring group into a focused module, then rerun frontend verification.
 
 ### `CLEAN-P1` Repository Cleanup Pass
 
