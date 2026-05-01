@@ -12,7 +12,6 @@ import {
   deleteWorkspaceChecklistItem,
   deleteWorkspaceRelatedTicket,
   deleteWorkspaceTicket,
-  deleteWorkspaceTicketAttachment,
   deleteWorkspaceTicketComment,
   getWorkspaceTicket,
   listWorkspaceTicketActivity,
@@ -57,6 +56,7 @@ import {
   ticketFormSchema,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
+import { useTicketDetailsAttachmentMutations } from '@/features/workspace/pages/useTicketDetailsAttachmentMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
@@ -320,24 +320,16 @@ export function TicketDetailsPage() {
     },
   });
 
-  const uploadAttachment = useMutation({
-    mutationFn: () => {
-      if (!attachmentFile) throw new Error('Please select a file first.');
-      const formData = new FormData();
-      formData.append('file', attachmentFile);
-
-      return uploadWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', formData);
-    },
-    onSuccess: () => {
+  const { uploadAttachment, deleteAttachment } = useTicketDetailsAttachmentMutations({
+    workspaceSlug,
+    ticketId,
+    attachmentFile,
+    onUploadSuccess: () => {
       setAttachmentFile(null);
       invalidateTicketAttachments();
       invalidateTicketActivity();
     },
-  });
-
-  const deleteAttachment = useMutation({
-    mutationFn: (attachmentId: number) => deleteWorkspaceTicketAttachment(workspaceSlug ?? '', ticketId ?? '', attachmentId),
-    onSuccess: () => {
+    onDeleteSuccess: () => {
       invalidateTicketAttachments();
       invalidateTicketActivity();
     },

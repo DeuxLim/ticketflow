@@ -1696,3 +1696,20 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
+
+## 2026-05-01 08:22 +08:00 - Extracted Ticket Attachment Mutations
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsAttachmentMutations.ts`.
+- Moved ticket-level attachment upload/delete mutations out of `TicketDetailsPage.tsx`.
+- Kept selected attachment file state and query invalidation in the route through injected success callbacks.
+- Reduced `TicketDetailsPage.tsx` to 750 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
