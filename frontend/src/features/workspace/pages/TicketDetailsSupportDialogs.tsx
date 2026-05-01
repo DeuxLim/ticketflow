@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { TicketDetailsChecklistDialog } from '@/features/workspace/pages/TicketDetailsChecklistDialog';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TicketDetailsCommentDialog } from '@/features/workspace/pages/TicketDetailsCommentDialog';
+import { TicketDetailsWatchersDialog } from '@/features/workspace/pages/TicketDetailsWatchersDialog';
 import {
   bytesToReadable,
   formatTicketDetailsDate,
@@ -151,28 +152,12 @@ export function TicketDetailsSupportDialogs({
         mutationError={checklistMutationError}
       />
 
-      <Dialog onOpenChange={onWatchersOpenChange} open={isWatchersOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Watchers</DialogTitle>
-            <DialogDescription>See who is following the ticket and keeping up with updates.</DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap gap-2">
-              {watchers.map((watcher) => (
-                <Badge key={watcher.id} variant="secondary">
-                  {watcher.user ? `${watcher.user.first_name} ${watcher.user.last_name}` : `User ${watcher.user_id}`}
-                </Badge>
-              ))}
-            </div>
-            {!watchers.length && <p className="text-sm text-muted-foreground">No followers yet.</p>}
-            {watcherMutationError ? (
-              <p className="text-xs text-destructive">{mutationErrorMessage(watcherMutationError)}</p>
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TicketDetailsWatchersDialog
+        open={isWatchersOpen}
+        onOpenChange={onWatchersOpenChange}
+        watchers={watchers}
+        mutationError={watcherMutationError}
+      />
 
       <Dialog onOpenChange={onAttachmentsOpenChange} open={isAttachmentsOpen}>
         <DialogContent className="sm:max-w-xl">
