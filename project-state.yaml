@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-01T08:22:00+08:00"
+updated_at: "2026-05-01T08:24:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -35,7 +35,8 @@ items:
       - "2026-04-30: Extracted ticket header badges, primary actions, follow/unfollow controls, transition buttons, and delete/edit triggers into `TicketDetailsHeader.tsx`, reducing the route component to 767 lines while preserving mutation ownership in the route."
       - "2026-04-30: Extracted watcher follow/unfollow mutations into `useTicketDetailsWatcherMutations.ts`, keeping query invalidation injected by the route and reducing `TicketDetailsPage.tsx` to 758 lines."
       - "2026-05-01: Extracted ticket-level attachment upload/delete mutations into `useTicketDetailsAttachmentMutations.ts`, keeping selected-file state and query invalidation in the route and reducing `TicketDetailsPage.tsx` to 750 lines."
-    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and six TicketDetails slices are complete, but the route still owns several mutation groups and support dialog wiring."
+      - "2026-05-01: Extracted checklist add/update/delete/reorder mutations into `useTicketDetailsChecklistMutations.ts`, keeping form reset and query invalidation injected by the route and reducing `TicketDetailsPage.tsx` to 730 lines."
+    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and seven TicketDetails slices are complete, but the route still owns comment, ticket update/transition/delete, related-ticket mutations, and support dialog wiring."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
@@ -50,8 +51,8 @@ items:
       - react
       - maintainability
     created_at: "2026-04-29T18:24:00+08:00"
-    updated_at: "2026-05-01T08:22:00+08:00"
-    changed_at: "2026-05-01T08:22:00+08:00"
+    updated_at: "2026-05-01T08:24:00+08:00"
+    changed_at: "2026-05-01T08:24:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1
