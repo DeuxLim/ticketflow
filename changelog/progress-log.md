@@ -1714,6 +1714,23 @@ Verification:
 
 Continue support dialog decomposition by extracting checklist, watchers, attachments, and related-ticket dialogs.
 
+## 2026-05-01 08:57 +08:00 - Extracted Checklist Dialog
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsChecklistDialog.tsx`.
+- Moved checklist dialog rendering out of `TicketDetailsSupportDialogs.tsx`.
+- Kept checklist form state, mutation callbacks, move/delete/toggle handlers, and close/reset behavior unchanged.
+- Reduced `TicketDetailsSupportDialogs.tsx` to 339 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue support dialog decomposition by extracting watchers, attachments, and related-ticket dialogs.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.
