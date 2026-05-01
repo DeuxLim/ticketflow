@@ -1748,6 +1748,28 @@ Verification:
 
 Continue `REFACTOR-P1` by extracting ticket action mutations or support dialog wiring from `TicketDetailsPage.tsx`.
 
+## 2026-05-01 08:31 +08:00 - Extracted Ticket Action Mutations
+
+- Added `frontend/src/features/workspace/pages/useTicketDetailsTicketMutations.ts`.
+- Moved ticket edit, quick-transition, and delete mutations out of `TicketDetailsPage.tsx`.
+- Kept route-owned UI effects in injected callbacks:
+  - edit dialog close and field-error mapping
+  - quick action message state
+  - query invalidation
+  - post-delete navigation
+- Fixed the extracted hook call placement so scoped custom-field configs are computed before use.
+- Reduced `TicketDetailsPage.tsx` to 661 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue `REFACTOR-P1` by extracting support dialog wiring or derived page orchestration from `TicketDetailsPage.tsx`.
+
 ## 2026-05-01 08:22 +08:00 - Extracted Ticket Attachment Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsAttachmentMutations.ts`.
