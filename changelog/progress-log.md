@@ -1748,6 +1748,23 @@ Verification:
 
 Continue support dialog decomposition by extracting attachments and related-ticket dialogs.
 
+## 2026-05-01 09:01 +08:00 - Extracted Attachments Dialog
+
+- Added `frontend/src/features/workspace/pages/TicketDetailsAttachmentsDialog.tsx`.
+- Moved ticket-level attachments dialog rendering out of `TicketDetailsSupportDialogs.tsx`.
+- Kept upload, download, delete, selected-file state, and error wiring unchanged.
+- Reduced `TicketDetailsSupportDialogs.tsx` to 277 lines.
+
+Verification:
+- `frontend`: focused ticket-details tests passed, 2 files / 13 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+- `frontend`: `npm run test`, 26 files / 93 tests
+
+## Resume From Here
+
+Continue support dialog decomposition by extracting the related-ticket dialog.
+
 ## 2026-05-01 08:24 +08:00 - Extracted Ticket Checklist Mutations
 
 - Added `frontend/src/features/workspace/pages/useTicketDetailsChecklistMutations.ts`.
