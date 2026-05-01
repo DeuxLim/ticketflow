@@ -6,9 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import {
-  createWorkspaceRelatedTicket,
   createWorkspaceTicketComment,
-  deleteWorkspaceRelatedTicket,
   deleteWorkspaceTicket,
   deleteWorkspaceTicketComment,
   getWorkspaceTicket,
@@ -54,6 +52,7 @@ import {
 } from '@/features/workspace/pages/ticketForm';
 import { useTicketDetailsAttachmentMutations } from '@/features/workspace/pages/useTicketDetailsAttachmentMutations';
 import { useTicketDetailsChecklistMutations } from '@/features/workspace/pages/useTicketDetailsChecklistMutations';
+import { useTicketDetailsRelatedTicketMutations } from '@/features/workspace/pages/useTicketDetailsRelatedTicketMutations';
 import { useTicketDetailsWatcherMutations } from '@/features/workspace/pages/useTicketDetailsWatcherMutations';
 import { listTicketCategories, listTicketCustomFields, listTicketFormTemplates, listTicketQueues, listTicketTags } from '@/features/workspace/api/settings-api';
 import { selectorCoverageHint } from '@/features/workspace/utils/selectorCoverage';
@@ -353,24 +352,15 @@ export function TicketDetailsPage() {
     onMutationSuccess: invalidateTicketAndActivity,
   });
 
-  const addRelatedTicket = useMutation({
-    mutationFn: (values: RelatedTicketForm) =>
-      createWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', {
-        related_ticket_id: Number(values.related_ticket_id),
-        relationship_type: values.relationship_type,
-      }),
-    onSuccess: () => {
+  const { addRelatedTicket, deleteRelatedTicket } = useTicketDetailsRelatedTicketMutations({
+    workspaceSlug,
+    ticketId,
+    onAddSuccess: () => {
       relatedTicketForm.reset({ related_ticket_id: '', relationship_type: 'related' });
       setIsRelatedOpen(false);
       invalidateTicketAndActivity();
     },
-  });
-
-  const deleteRelatedTicket = useMutation({
-    mutationFn: (linkId: number) => deleteWorkspaceRelatedTicket(workspaceSlug ?? '', ticketId ?? '', linkId),
-    onSuccess: () => {
-      invalidateTicketAndActivity();
-    },
+    onDeleteSuccess: invalidateTicketAndActivity,
   });
 
   const deleteTicket = useMutation({
