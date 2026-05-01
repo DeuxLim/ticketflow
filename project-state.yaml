@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-01T08:26:00+08:00"
+updated_at: "2026-05-01T08:28:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
@@ -37,13 +37,14 @@ items:
       - "2026-05-01: Extracted ticket-level attachment upload/delete mutations into `useTicketDetailsAttachmentMutations.ts`, keeping selected-file state and query invalidation in the route and reducing `TicketDetailsPage.tsx` to 750 lines."
       - "2026-05-01: Extracted checklist add/update/delete/reorder mutations into `useTicketDetailsChecklistMutations.ts`, keeping form reset and query invalidation injected by the route and reducing `TicketDetailsPage.tsx` to 730 lines."
       - "2026-05-01: Extracted related-ticket add/delete mutations into `useTicketDetailsRelatedTicketMutations.ts`, keeping form reset, panel close, and query invalidation injected by the route and reducing `TicketDetailsPage.tsx` to 720 lines."
-    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and eight TicketDetails slices are complete, but the route still owns comment mutations, ticket update/transition/delete mutations, and support dialog wiring."
+      - "2026-05-01: Extracted comment add/update/delete mutations into `useTicketDetailsCommentMutations.ts`, keeping form reset, editing state, panel close, and query invalidation injected by the route and reducing `TicketDetailsPage.tsx` to 695 lines."
+    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and nine TicketDetails slices are complete, but the route still owns ticket update/transition/delete mutations and support dialog wiring."
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
     next_actions:
       - Rank remaining app-owned oversized files by risk and value, excluding shadcn primitives and broad test files.
-      - Continue `TicketDetailsPage.tsx` extraction by moving comment mutations, ticket action mutations, or support dialog wiring into focused modules.
+      - Continue `TicketDetailsPage.tsx` extraction by moving ticket action mutations or support dialog wiring into focused modules.
       - Run backend and frontend verification after each behavior-preserving slice.
     tags:
       - refactor
@@ -52,8 +53,8 @@ items:
       - react
       - maintainability
     created_at: "2026-04-29T18:24:00+08:00"
-    updated_at: "2026-05-01T08:26:00+08:00"
-    changed_at: "2026-05-01T08:26:00+08:00"
+    updated_at: "2026-05-01T08:28:00+08:00"
+    changed_at: "2026-05-01T08:28:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1
