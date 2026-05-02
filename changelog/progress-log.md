@@ -1770,6 +1770,28 @@ Progress:
 
 Continue `REFACTOR-P2` with another narrow `TicketsPage.tsx` slice if one is clearly safe; otherwise move to governance/settings dialogs, which remain the next high-value oversized frontend surface.
 
+## 2026-05-02 18:35 +08:00 - Extracted Ticket Queue Config Options
+
+- Added `frontend/src/features/workspace/pages/useTicketQueueConfigOptions.ts`.
+- Moved active queue/category/tag/custom-field/template sorting out of `TicketsPage.tsx`.
+- Moved create/edit selected template field derivation out of `TicketsPage.tsx`.
+- Kept route-owned query state, selected template ids, mutations, and dialog state in `TicketsPage.tsx`.
+- Reduced `TicketsPage.tsx` from 579 to 551 lines.
+- Removed generated `frontend/dist/` output after the production build.
+
+Verification:
+- `frontend`: `npm run test -- TicketsPageInteractions.test.tsx TicketRoutePermissions.test.tsx`, 2 files / 8 tests
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+Progress:
+- Overall tracker progress: 63 of 64 work items complete, 98.4% overall.
+- `REFACTOR-P2`: in progress.
+
+## Resume From Here
+
+Continue `REFACTOR-P2` with governance/settings dialogs unless another clearly safer `TicketsPage.tsx` slice is identified.
+
 ## 2026-05-01 08:54 +08:00 - Extracted Add Comment Dialog
 
 - Added `frontend/src/features/workspace/pages/TicketDetailsCommentDialog.tsx`.
