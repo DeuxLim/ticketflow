@@ -18,11 +18,15 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ### `REFACTOR-P2` High-Churn Workspace Surface Decomposition
 
-- Status: `planned`
+- Status: `in_progress`
 - Priority: high
 - Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
-- Current state: planned from the latest size/risk re-rank. Priority order is `CustomersPage.tsx` (678 lines), `TicketsPage.tsx` (608 lines), `GovernanceSettingsSection.tsx` plus `GovernanceSettingsDialogs.tsx` (565/520 lines), `frontend/src/types/api.ts` (529 lines), `TicketController.php` (511 lines), `settings-api.ts` (477 lines), and `WorkflowAutomationSettingsSection.tsx` (457 lines).
-- Next actions: start with `CustomersPage.tsx`, extract customer table, profile/details dialog, or form sections without changing API behavior, then verify with focused frontend tests, lint, and build before committing and pushing.
+- Current state: in progress after extracting customer form helpers, form fields, profile details, and table rendering from `CustomersPage.tsx`. The customer route now focuses on access, query state, and mutations and dropped from 678 to 312 lines.
+- Next actions: continue with `TicketsPage.tsx` as the next highest-value workspace surface; extract one behavior-preserving ticket queue section at a time and verify with focused tests, lint, and build before committing and pushing.
+
+#### Child Items
+
+- `REFACTOR-P2-T01` Decompose customer directory route - `complete`
 
 ### `CLEAN-P1` Repository Cleanup Pass
 

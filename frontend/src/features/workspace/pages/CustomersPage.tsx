@@ -1,128 +1,35 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
-import { useForm, type UseFormReturn } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { z } from 'zod';
 import { ForbiddenState } from '@/components/forbidden-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
-import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  type CustomerPayload,
   createWorkspaceCustomer,
   deleteWorkspaceCustomer,
   listWorkspaceCustomers,
   updateWorkspaceCustomer,
 } from '@/features/workspace/api/customerApi';
+import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { ApiError } from '@/services/api/client';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Customer } from '@/types/api';
-
-const customerSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  email: z.string().email('Enter a valid email').optional().or(z.literal('')),
-  company: z.string().optional(),
-  phone: z.string().optional(),
-  job_title: z.string().optional(),
-  website: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  timezone: z.string().optional(),
-  preferred_contact_method: z.string().optional(),
-  preferred_language: z.string().optional(),
-  address: z.string().optional(),
-  external_reference: z.string().optional(),
-  support_tier: z.string().optional(),
-  status: z.string().optional(),
-  internal_notes: z.string().optional(),
-});
-
-type CustomerForm = z.infer<typeof customerSchema>;
-
-const emptyCustomerForm: CustomerForm = {
-  name: '',
-  email: '',
-  company: '',
-  phone: '',
-  job_title: '',
-  website: '',
-  timezone: '',
-  preferred_contact_method: '',
-  preferred_language: '',
-  address: '',
-  external_reference: '',
-  support_tier: '',
-  status: '',
-  internal_notes: '',
-};
-
-const customerFormFields = Object.keys(emptyCustomerForm) as Array<keyof CustomerForm>;
-const emptySelectValue = '__none__';
-const contactMethods = ['email', 'phone', 'portal', 'sms'] as const;
-const supportTiers = ['standard', 'priority', 'enterprise', 'strategic'] as const;
-const lifecycleStatuses = ['active', 'onboarding', 'at_risk', 'inactive'] as const;
-
-function nullable(value?: string): string | null {
-  const trimmed = value?.trim() ?? '';
-  return trimmed === '' ? null : trimmed;
-}
-
-function customerToForm(customer: Customer): CustomerForm {
-  return {
-    name: customer.name,
-    email: customer.email ?? '',
-    company: customer.company ?? '',
-    phone: customer.phone ?? '',
-    job_title: customer.job_title ?? '',
-    website: customer.website ?? '',
-    timezone: customer.timezone ?? '',
-    preferred_contact_method: customer.preferred_contact_method ?? '',
-    preferred_language: customer.preferred_language ?? '',
-    address: customer.address ?? '',
-    external_reference: customer.external_reference ?? '',
-    support_tier: customer.support_tier ?? '',
-    status: customer.status ?? '',
-    internal_notes: customer.internal_notes ?? '',
-  };
-}
-
-function formToCustomerPayload(values: CustomerForm): CustomerPayload {
-  return {
-    name: values.name,
-    email: nullable(values.email),
-    company: nullable(values.company),
-    phone: nullable(values.phone),
-    job_title: nullable(values.job_title),
-    website: nullable(values.website),
-    timezone: nullable(values.timezone),
-    preferred_contact_method: nullable(values.preferred_contact_method),
-    preferred_language: nullable(values.preferred_language),
-    address: nullable(values.address),
-    external_reference: nullable(values.external_reference),
-    support_tier: nullable(values.support_tier),
-    status: nullable(values.status),
-    internal_notes: nullable(values.internal_notes),
-  };
-}
-
-function applyCustomerFormFieldErrors(form: UseFormReturn<CustomerForm>, error: unknown) {
-  if (!(error instanceof ApiError)) return;
-
-  for (const [field, messages] of Object.entries(error.fieldErrors)) {
-    if (!messages.length) continue;
-
-    const customerField = field as keyof CustomerForm;
-    if (customerFormFields.includes(customerField)) {
-      form.setError(customerField, { type: 'server', message: messages[0] });
-    }
-  }
-}
+import { CustomerFormFields } from './CustomerFormFields';
+import { CustomerProfileDetails } from './CustomerProfileDetails';
+import { CustomersTable } from './CustomersTable';
+import {
+  applyCustomerFormFieldErrors,
+  customerSchema,
+  customerToForm,
+  emptyCustomerForm,
+  formToCustomerPayload,
+  type CustomerForm,
+} from './customerForm';
 
 export function CustomersPage() {
   const { workspaceSlug } = useParams();
@@ -243,82 +150,17 @@ export function CustomersPage() {
           ) : customers.length === 0 ? (
             <p className="text-sm text-muted-foreground">No customers match the current search. Try a broader term or add a new customer.</p>
           ) : (
-            <div className="overflow-x-auto">
-            <Table className="min-w-[900px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Support</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>
-                      <div className="font-medium">{customer.name}</div>
-                      <div className="text-xs text-muted-foreground">{customer.job_title ?? '—'}</div>
-                    </TableCell>
-                    <TableCell>{customer.email ?? '—'}</TableCell>
-                    <TableCell>
-                      <div>{customer.company ?? '—'}</div>
-                      <div className="text-xs text-muted-foreground">{customer.external_reference ?? customer.website ?? '—'}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        <Badge variant="outline">{customer.support_tier ?? 'No tier'}</Badge>
-                        <Badge variant={customer.status ? 'secondary' : 'outline'}>{customer.status ?? 'No status'}</Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>{customer.preferred_contact_method ?? customer.phone ?? '—'}</div>
-                      <div className="text-xs text-muted-foreground">{customer.timezone ?? customer.preferred_language ?? '—'}</div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {customer.updated_at ? new Date(customer.updated_at).toLocaleDateString() : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                      <Button
-                        onClick={() => setViewTarget(customer)}
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                      >
-                        View
-                      </Button>
-                      <Button
-                        disabled={!canManage}
-                        onClick={() => {
-                          setEditTarget(customer);
-                          editForm.reset(customerToForm(customer));
-                        }}
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        disabled={deleteCustomer.isPending || !canManage}
-                        onClick={() => setDeleteTarget(customer)}
-                        size="sm"
-                        variant="outline"
-                        type="button"
-                      >
-                        Delete
-                      </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            </div>
+            <CustomersTable
+              canManage={canManage}
+              customers={customers}
+              isDeleting={deleteCustomer.isPending}
+              onDelete={setDeleteTarget}
+              onEdit={(customer) => {
+                setEditTarget(customer);
+                editForm.reset(customerToForm(customer));
+              }}
+              onView={setViewTarget}
+            />
           )}
         </CardContent>
       </Card>
@@ -466,213 +308,5 @@ export function CustomersPage() {
         </DialogContent>
       </Dialog>
     </section>
-  );
-}
-
-function CustomerFormFields({
-  form,
-  formId,
-}: {
-  form: UseFormReturn<CustomerForm>;
-  formId: string;
-}) {
-  const { formState, register, setValue, watch } = form;
-  const errors = formState.errors;
-
-  return (
-    <>
-      <FormSection title="Identity">
-        <Field data-invalid={Boolean(errors.name)}>
-          <FieldLabel htmlFor={`${formId}-name`}>Customer name</FieldLabel>
-          <Input id={`${formId}-name`} {...register('name')} />
-          <FieldError errors={[errors.name]} />
-        </Field>
-
-        <Field data-invalid={Boolean(errors.email)}>
-          <FieldLabel htmlFor={`${formId}-email`}>Email address</FieldLabel>
-          <Input id={`${formId}-email`} type="email" placeholder="ops@acme.com" {...register('email')} />
-          <FieldError errors={[errors.email]} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-phone`}>Phone</FieldLabel>
-          <Input id={`${formId}-phone`} placeholder="+63 917 000 0000" {...register('phone')} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-job-title`}>Job title</FieldLabel>
-          <Input id={`${formId}-job-title`} placeholder="Operations Lead" {...register('job_title')} />
-        </Field>
-      </FormSection>
-
-      <FormSection title="Account">
-        <Field>
-          <FieldLabel htmlFor={`${formId}-company`}>Company</FieldLabel>
-          <Input id={`${formId}-company`} placeholder="Acme Inc." {...register('company')} />
-        </Field>
-
-        <Field data-invalid={Boolean(errors.website)}>
-          <FieldLabel htmlFor={`${formId}-website`}>Website</FieldLabel>
-          <Input id={`${formId}-website`} placeholder="https://acme.com" {...register('website')} />
-          <FieldError errors={[errors.website]} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-external-reference`}>External reference</FieldLabel>
-          <Input id={`${formId}-external-reference`} placeholder="CRM-1001" {...register('external_reference')} />
-        </Field>
-
-        <Field className="md:col-span-2">
-          <FieldLabel htmlFor={`${formId}-address`}>Address</FieldLabel>
-          <Textarea id={`${formId}-address`} placeholder="Customer billing or office address" {...register('address')} />
-        </Field>
-      </FormSection>
-
-      <FormSection title="Preferences">
-        <Field>
-          <FieldLabel htmlFor={`${formId}-preferred-contact-method`}>Preferred contact</FieldLabel>
-          <Select
-            value={watch('preferred_contact_method') || emptySelectValue}
-            onValueChange={(value) => setValue('preferred_contact_method', value === emptySelectValue ? '' : (value ?? ''))}
-          >
-            <SelectTrigger id={`${formId}-preferred-contact-method`} className="w-full">
-              <SelectValue placeholder="Select contact method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={emptySelectValue}>Not set</SelectItem>
-                {contactMethods.map((method) => (
-                  <SelectItem key={method} value={method}>
-                    {method}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-timezone`}>Timezone</FieldLabel>
-          <Input id={`${formId}-timezone`} placeholder="Asia/Manila" {...register('timezone')} />
-          <FieldDescription>Use an IANA timezone such as Asia/Manila.</FieldDescription>
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-preferred-language`}>Preferred language</FieldLabel>
-          <Input id={`${formId}-preferred-language`} placeholder="English" {...register('preferred_language')} />
-        </Field>
-      </FormSection>
-
-      <FormSection title="Support">
-        <Field>
-          <FieldLabel htmlFor={`${formId}-support-tier`}>Support tier</FieldLabel>
-          <Select
-            value={watch('support_tier') || emptySelectValue}
-            onValueChange={(value) => setValue('support_tier', value === emptySelectValue ? '' : (value ?? ''))}
-          >
-            <SelectTrigger id={`${formId}-support-tier`} className="w-full">
-              <SelectValue placeholder="Select support tier" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={emptySelectValue}>Not set</SelectItem>
-                {supportTiers.map((tier) => (
-                  <SelectItem key={tier} value={tier}>
-                    {tier}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor={`${formId}-status`}>Lifecycle status</FieldLabel>
-          <Select
-            value={watch('status') || emptySelectValue}
-            onValueChange={(value) => setValue('status', value === emptySelectValue ? '' : (value ?? ''))}
-          >
-            <SelectTrigger id={`${formId}-status`} className="w-full">
-              <SelectValue placeholder="Select lifecycle status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value={emptySelectValue}>Not set</SelectItem>
-                {lifecycleStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field className="md:col-span-2">
-          <FieldLabel htmlFor={`${formId}-internal-notes`}>Internal notes</FieldLabel>
-          <Textarea id={`${formId}-internal-notes`} placeholder="Private support context for workspace operators" {...register('internal_notes')} />
-          <FieldDescription>Internal only. These notes are not used in ticket selectors.</FieldDescription>
-        </Field>
-      </FormSection>
-    </>
-  );
-}
-
-function FormSection({ children, title }: { children: ReactNode; title: string }) {
-  return (
-    <div className="grid gap-4 rounded-lg border p-4 md:grid-cols-2">
-      <h3 className="text-sm font-medium md:col-span-2">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function CustomerProfileDetails({ customer }: { customer: Customer }) {
-  return (
-    <div className="grid gap-4">
-      <DetailSection title="Identity">
-        <DetailItem label="Name" value={customer.name} />
-        <DetailItem label="Email" value={customer.email} />
-        <DetailItem label="Phone" value={customer.phone} />
-        <DetailItem label="Job title" value={customer.job_title} />
-      </DetailSection>
-
-      <DetailSection title="Account">
-        <DetailItem label="Company" value={customer.company} />
-        <DetailItem label="Website" value={customer.website} />
-        <DetailItem label="External reference" value={customer.external_reference} />
-        <DetailItem label="Address" value={customer.address} wide />
-      </DetailSection>
-
-      <DetailSection title="Preferences">
-        <DetailItem label="Preferred contact" value={customer.preferred_contact_method} />
-        <DetailItem label="Timezone" value={customer.timezone} />
-        <DetailItem label="Preferred language" value={customer.preferred_language} />
-      </DetailSection>
-
-      <DetailSection title="Support">
-        <DetailItem label="Support tier" value={customer.support_tier} />
-        <DetailItem label="Lifecycle status" value={customer.status} />
-        <DetailItem label="Internal notes" value={customer.internal_notes} wide />
-      </DetailSection>
-    </div>
-  );
-}
-
-function DetailSection({ children, title }: { children: ReactNode; title: string }) {
-  return (
-    <div className="grid gap-3 rounded-lg border p-4 md:grid-cols-2">
-      <h3 className="text-sm font-medium md:col-span-2">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function DetailItem({ label, value, wide = false }: { label: string; value: string | null | undefined; wide?: boolean }) {
-  return (
-    <div className={wide ? 'md:col-span-2' : undefined}>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm">{value || '—'}</p>
-    </div>
   );
 }
