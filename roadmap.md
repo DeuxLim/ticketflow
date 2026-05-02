@@ -4,17 +4,25 @@ This file is synchronized from `project-state.yaml`. Treat `project-state.yaml` 
 
 ## Current Focus
 
-`REFACTOR-P1`
+`REFACTOR-P2`
 
 ## MVP Items
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Align the active Laravel backend and React frontend with project-specific conventions, framework standards, and maintainability best practices without changing product behavior.
-- Current state: documentation/metadata alignment is complete, workspace API modules/tests now live under `frontend/src/features/workspace/api/`, repeated ticket-detail query invalidation blocks are centralized, read-only ticket detail cards now live in `TicketDetailsOverviewCards.tsx`, comments rendering/editing now lives in `TicketDetailsCommentsCard.tsx`, header/actions now live in `TicketDetailsHeader.tsx`, watcher follow/unfollow mutations now live in `useTicketDetailsWatcherMutations.ts`, ticket-level attachment mutations now live in `useTicketDetailsAttachmentMutations.ts`, checklist mutations now live in `useTicketDetailsChecklistMutations.ts`, related-ticket mutations now live in `useTicketDetailsRelatedTicketMutations.ts`, comment mutations now live in `useTicketDetailsCommentMutations.ts`, ticket action mutations now live in `useTicketDetailsTicketMutations.ts`, add-comment dialog rendering now lives in `TicketDetailsCommentDialog.tsx`, checklist dialog rendering now lives in `TicketDetailsChecklistDialog.tsx`, watchers dialog rendering now lives in `TicketDetailsWatchersDialog.tsx`, attachments dialog rendering now lives in `TicketDetailsAttachmentsDialog.tsx`, related-ticket dialog rendering now lives in `TicketDetailsRelatedTicketsDialog.tsx`, and query-derived page state now lives in `useTicketDetailsDerivedState.ts`.
-- Next actions: re-rank remaining app-owned oversized files by risk and value, then decide whether `REFACTOR-P1` should close or continue with the next highest-value refactor target.
+- Current state: complete after replacing starter metadata/docs, moving workspace API modules/tests into `frontend/src/features/workspace/api/`, centralizing repeated ticket-detail invalidation, extracting ticket-detail presentation cards, comments, header/actions, mutation hooks, support dialogs, and query-derived page state, then re-ranking remaining app-owned oversized files.
+- Next actions: none for this item. Remaining large surfaces continue under `REFACTOR-P2`.
+
+### `REFACTOR-P2` High-Churn Workspace Surface Decomposition
+
+- Status: `planned`
+- Priority: high
+- Scope: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
+- Current state: planned from the latest size/risk re-rank. Priority order is `CustomersPage.tsx` (678 lines), `TicketsPage.tsx` (608 lines), `GovernanceSettingsSection.tsx` plus `GovernanceSettingsDialogs.tsx` (565/520 lines), `frontend/src/types/api.ts` (529 lines), `TicketController.php` (511 lines), `settings-api.ts` (477 lines), and `WorkflowAutomationSettingsSection.tsx` (457 lines).
+- Next actions: start with `CustomersPage.tsx`, extract customer table, profile/details dialog, or form sections without changing API behavior, then verify with focused frontend tests, lint, and build before committing and pushing.
 
 ### `CLEAN-P1` Repository Cleanup Pass
 

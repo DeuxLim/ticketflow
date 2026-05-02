@@ -1,19 +1,19 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-01T13:38:00+08:00"
+updated_at: "2026-05-02T17:44:00+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
 current_focus:
-  - REFACTOR-P1
+  - REFACTOR-P2
 items:
   - id: REFACTOR-P1
     title: Laravel and React Standards Alignment
     type: refactor
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Align the active Laravel backend and React frontend with project-specific conventions, framework standards, and maintainability best practices without changing product behavior.
@@ -45,15 +45,13 @@ items:
       - "2026-05-01: Extracted attachments dialog rendering into `TicketDetailsAttachmentsDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 277 lines while keeping route wiring unchanged."
       - "2026-05-01: Extracted related-ticket dialog rendering into `TicketDetailsRelatedTicketsDialog.tsx`, reducing `TicketDetailsSupportDialogs.tsx` to 181 lines while keeping route wiring unchanged."
       - "2026-05-01: Extracted query-derived values, form watch values, attachment grouping, selector coverage hints, and SLA signal derivation into `useTicketDetailsDerivedState.ts`, reducing `TicketDetailsPage.tsx` to 615 lines."
-    incomplete_reason: "Documentation, metadata, frontend API boundary alignment, and TicketDetails extraction slices are complete for the current pass; remaining work is to re-rank oversized app-owned files and decide whether to close or continue REFACTOR-P1."
+      - "2026-05-02: Re-ranked remaining app-owned oversized files after the ticket-details extraction pass. Highest-value follow-up targets are `CustomersPage.tsx` (678 lines), `TicketsPage.tsx` (608 lines), `GovernanceSettingsSection.tsx` plus `GovernanceSettingsDialogs.tsx` (565/520 lines), `frontend/src/types/api.ts` (529 lines), `TicketController.php` (511 lines), `settings-api.ts` (477 lines), and `WorkflowAutomationSettingsSection.tsx` (457 lines)."
+      - "2026-05-02: Closed `REFACTOR-P1` because starter metadata/docs, frontend API boundary alignment, safe behavior-preserving extraction slices, and the required target re-rank are complete. Remaining large surfaces are tracked separately under `REFACTOR-P2`."
+    incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: false
-    next_actions:
-      - Rank remaining app-owned oversized files by risk and value, excluding shadcn primitives and broad test files.
-      - Re-rank remaining app-owned oversized files by risk and value after the ticket-details extraction pass.
-      - Decide whether `REFACTOR-P1` should close or continue with the next highest-value refactor target.
-      - Run backend and frontend verification after each behavior-preserving slice.
+    next_actions: []
     tags:
       - refactor
       - standards
@@ -61,8 +59,44 @@ items:
       - react
       - maintainability
     created_at: "2026-04-29T18:24:00+08:00"
-    updated_at: "2026-05-01T13:38:00+08:00"
-    changed_at: "2026-05-01T13:38:00+08:00"
+    updated_at: "2026-05-02T17:44:00+08:00"
+    changed_at: "2026-05-02T17:44:00+08:00"
+    changed_source: codex
+
+  - id: REFACTOR-P2
+    title: High-Churn Workspace Surface Decomposition
+    type: refactor
+    parent_id: null
+    status: planned
+    priority: high
+    mvp: true
+    description: Continue behavior-preserving decomposition on the largest app-owned workspace surfaces after the standards-alignment pass, prioritizing files with high change risk and practical extraction value.
+    definition_of_done:
+      - Remaining oversized app-owned files are addressed in priority order or explicitly deferred with rationale.
+      - Customer, ticket queue, governance/settings, API contract, and ticket controller changes stay behavior-compatible.
+      - Each extraction lands as a small verified commit with focused tests or the smallest relevant verification.
+      - Canonical tracker files stay synchronized after each section.
+    dependencies:
+      - REFACTOR-P1
+    notes:
+      - "2026-05-02: Created from the `REFACTOR-P1` re-rank. Initial priority order: `CustomersPage.tsx` first for high product-surface value and moderate risk; `TicketsPage.tsx` next for ticket queue churn; governance/settings dialogs next because they are already partly decomposed; API type/settings API and backend ticket controller follow because contract/controller extraction carries higher regression risk."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Start with `CustomersPage.tsx` and extract customer table, profile/details dialog, or form sections without changing API behavior.
+      - Verify the customer slice with focused frontend tests, lint, and build.
+      - Commit and push the completed customer slice before moving to the next surface.
+    tags:
+      - refactor
+      - react
+      - laravel
+      - maintainability
+      - workspace
+    created_at: "2026-05-02T17:44:00+08:00"
+    updated_at: "2026-05-02T17:44:00+08:00"
+    changed_at: "2026-05-02T17:44:00+08:00"
     changed_source: codex
 
   - id: CLEAN-P1
