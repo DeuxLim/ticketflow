@@ -16,7 +16,7 @@ import type {
   TicketTagConfig,
 } from '@/types/api';
 
-type MemberOption = {
+export type MemberOption = {
   id: number;
   user: {
     id: number;
