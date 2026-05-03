@@ -24,6 +24,7 @@ import {
   updateAutomationRule,
   updateWorkflow,
 } from '@/features/workspace/api/settings-api';
+import { ticketStatusLabel, ticketStatusValues } from '@/features/workspace/pages/ticketForm';
 import { apiRequest } from '@/services/api/client';
 import type { ApiPaginationMeta, Ticket } from '@/types/api';
 
@@ -39,8 +40,6 @@ type SimulationResult = {
   approver_mode: 'role' | 'users' | null;
   approval_timeout_minutes: number | null;
 };
-
-const statusOptions = ['open', 'in_progress', 'pending', 'resolved', 'closed'];
 
 export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAutomationSettingsSectionProps) {
   const queryClient = useQueryClient();
@@ -266,8 +265,8 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                 />
                 <FieldDescription>Choose the status to test against the active workflow.</FieldDescription>
                 <datalist id="workflow-target-statuses">
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status} />
+                  {ticketStatusValues.map((status) => (
+                    <option key={status} value={status}>{ticketStatusLabel(status)}</option>
                   ))}
                 </datalist>
               </Field>
@@ -304,7 +303,7 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
                   <div>
                     <p className="text-sm">Approval #{approval.id}</p>
                     <p className="text-xs text-muted-foreground">
-                      ticket #{approval.ticket_id} to {approval.requested_transition_to_status ?? 'n/a'}
+                      ticket #{approval.ticket_id} to {approval.requested_transition_to_status ? ticketStatusLabel(approval.requested_transition_to_status) : 'n/a'}
                     </p>
                   </div>
                   <div className="flex gap-2">

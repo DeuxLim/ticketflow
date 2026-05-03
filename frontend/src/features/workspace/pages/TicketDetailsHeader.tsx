@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ticketStatusLabel } from '@/features/workspace/pages/ticketForm';
 import type { Ticket, TicketWatcher } from '@/types/api';
 
 type TicketDetailsHeaderProps = {
@@ -41,7 +42,7 @@ export function TicketDetailsHeader({
     <header className="rounded-xl border bg-card p-5">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">{ticket.ticket_number}</Badge>
-        <Badge variant="secondary">{ticket.status}</Badge>
+        <Badge variant="secondary">{ticketStatusLabel(ticket.status)}</Badge>
         <Badge variant="outline">{ticket.priority}</Badge>
       </div>
 
@@ -63,7 +64,7 @@ export function TicketDetailsHeader({
             type="button"
             variant="outline"
           >
-            Move to {next.replace('_', ' ')}
+            Move to {ticketStatusLabel(next)}
           </Button>
         ))}
         <Button disabled={!canComment} onClick={onOpenComment} size="sm" type="button">

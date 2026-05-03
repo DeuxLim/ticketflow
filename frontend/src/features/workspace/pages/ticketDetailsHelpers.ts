@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Ticket, TicketCustomFieldConfig } from '@/types/api';
-import { ticketFormDefaultValues, type TicketForm } from '@/features/workspace/pages/ticketForm';
+import { ticketFormDefaultValues, ticketStatusLabel, type TicketForm } from '@/features/workspace/pages/ticketForm';
 
 export const commentSchema = z.object({
   body: z.string().min(2, 'Comment must not be empty'),
@@ -103,11 +103,7 @@ export function bytesToReadable(bytes: number): string {
 }
 
 export function statusLabel(value?: string | null): string {
-  return value
-    ? value
-        .replaceAll('_', ' ')
-        .replace(/\b\w/g, (match) => match.toUpperCase())
-    : '—';
+  return value ? ticketStatusLabel(value) : '—';
 }
 
 export function mutationErrorMessage(error: unknown): string {

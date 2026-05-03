@@ -3,11 +3,25 @@ import { z } from 'zod';
 import { ApiError } from '@/services/api/client';
 import type { TicketCustomFieldConfig, TicketFormTemplateConfig } from '@/types/api';
 
+export const ticketStatusValues = ['open', 'in_progress', 'pending', 'resolved', 'closed'] as const;
+
+export function ticketStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    open: 'Open',
+    in_progress: 'In Progress',
+    pending: 'Pending',
+    resolved: 'Resolved',
+    closed: 'Closed',
+  };
+
+  return labels[status] ?? status.replaceAll('_', ' ');
+}
+
 export const ticketFormSchema = z.object({
   customer_id: z.string().min(1, 'Select a customer'),
   title: z.string().min(3, 'Title is required'),
   description: z.string().min(5, 'Description is required'),
-  status: z.enum(['open', 'in_progress', 'pending', 'resolved', 'closed']),
+  status: z.enum(ticketStatusValues),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   assigned_to_user_id: z.string().optional().or(z.literal('')),
   category: z.string().optional().or(z.literal('')),

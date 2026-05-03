@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from '@/components/ui/textarea';
 import {
   customFieldOptions,
+  ticketStatusLabel,
+  ticketStatusValues,
   type TicketForm,
 } from '@/features/workspace/pages/ticketForm';
 import type {
@@ -140,11 +142,9 @@ export function TicketFormFields({
             <SelectTrigger id={`${formId}-status`}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
+                {ticketStatusValues.map((status) => (
+                  <SelectItem key={status} value={status}>{ticketStatusLabel(status)}</SelectItem>
+                ))}
               </SelectGroup>
             </SelectContent>
           </Select>
