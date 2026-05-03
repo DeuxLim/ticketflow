@@ -177,7 +177,7 @@ export function AdminDashboardTabs({
                                 type="button"
                                 variant="outline"
                               >
-                                {workspace.tenant_mode === 'shared' ? 'Move to dedicated' : 'Move to shared'}
+                                {workspace.tenant_mode === 'shared' ? 'Mark dedicated' : 'Mark shared'}
                               </Button>
                             </div>
 

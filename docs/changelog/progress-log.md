@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 19:47 +08:00 - Simplified Platform Mode Language
+
+- Completed `SCOPE-P2-T07`.
+- Reworded platform/admin UI from isolation-heavy language to workspace mode/admin label language.
+- Updated docs to state true infrastructure isolation is out of scope.
+- Marked `SCOPE-P2` complete because all child items are complete.
+
+Verification:
+- Ran `npm test -- AdminDashboardPage.test.tsx GovernanceSettingsSection.test.tsx --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+All tracked `SCOPE-P2` cleanup items are complete. Pick the next roadmap focus before starting new implementation.
+
 ## 2026-05-03 19:45 +08:00 - Hid Webhook Integrations
 
 - Completed `SCOPE-P2-T06`.

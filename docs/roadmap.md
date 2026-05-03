@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`SCOPE-P2` Simplify remaining enterprise features
+No active focus. `SCOPE-P2` is complete.
 
 ## MVP Items
 
@@ -45,11 +45,11 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ### `SCOPE-P2` Simplify remaining enterprise features
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: medium
 - Scope: Implement the `SCOPE-D01` decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
-- Current state: in progress. SLA is now presented as optional ticket timing targets, break-glass has been removed, tenant exports plus retention editing are hidden from the main UI, automation creation uses simple ticket-focused controls, and webhooks are hidden from the main UI. Remaining decision is simplify platform isolation language.
-- Next actions: continue with `SCOPE-P2-T07` to simplify platform isolation language.
+- Current state: complete. SLA is now presented as optional ticket timing targets, break-glass has been removed, tenant exports plus retention editing are hidden from the main UI, automation creation uses simple ticket-focused controls, webhooks are hidden from the main UI, and platform isolation wording now uses workspace mode/admin label language.
+- Next actions: none.
 
 #### Child Items
 
@@ -59,7 +59,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 - `SCOPE-P2-T04` Defer or hide retention policy UI - `complete`
 - `SCOPE-P2-T05` Simplify automation rule builder - `complete`
 - `SCOPE-P2-T06` Defer or hide webhooks - `complete`
-- `SCOPE-P2-T07` Simplify platform isolation language - `planned`
+- `SCOPE-P2-T07` Simplify platform isolation language - `complete`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
@@ -243,4 +243,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue with `SCOPE-P2-T07` to simplify platform isolation language.
+All tracked `SCOPE-P2` cleanup items are complete. Pick the next roadmap focus before starting new implementation.

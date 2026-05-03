@@ -242,7 +242,7 @@ export function AdminDashboardPage() {
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Control plane</h1>
             <p className="max-w-2xl text-sm text-muted-foreground">
-              Monitor tenants, users, isolation mode, and platform-wide operational risk.
+              Monitor tenants, users, workspace mode, and platform-wide operational risk.
             </p>
           </div>
           <p className="text-xs text-muted-foreground">Updated from live admin APIs</p>
@@ -256,7 +256,7 @@ export function AdminDashboardPage() {
         <AdminMetric title="Tickets" value={stats.tickets_count} description="System-wide tickets" />
         <AdminMetric title="Suspended" value={stats.suspended_workspaces_count} description="Suspended tenants" />
         <AdminMetric title="Maintenance" value={stats.maintenance_workspaces_count} description="Workspaces in maintenance mode" />
-        <AdminMetric title="Dedicated" value={stats.dedicated_workspaces_count} description="Dedicated isolation tenants" />
+        <AdminMetric title="Flagged Mode" value={stats.dedicated_workspaces_count} description="Workspaces marked dedicated" />
         <AdminMetric title="Automation Failures" value={stats.failed_automation_executions_count} description="Failed rule executions" />
       </div>
 

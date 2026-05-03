@@ -1,13 +1,12 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T19:45:57+08:00"
+updated_at: "2026-05-03T19:47:59+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus:
-  - SCOPE-P2
+current_focus: []
 items:
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
@@ -354,7 +353,7 @@ items:
     title: Simplify remaining enterprise features
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: medium
     mvp: false
     description: Implement the SCOPE-D01 decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
@@ -376,19 +375,19 @@ items:
       - "2026-05-03: Completed `SCOPE-P2-T04`; retention editing was hidden from the main Governance settings UI and documented as deferred while backend endpoints remain dormant."
       - "2026-05-03: Completed `SCOPE-P2-T05`; automation rule creation now uses simple ticket-focused controls instead of raw JSON inputs."
       - "2026-05-03: Completed `SCOPE-P2-T06`; webhook setup and delivery retry controls were hidden from the Integrations settings UI and documented as deferred while backend endpoints remain dormant."
+      - "2026-05-03: Completed `SCOPE-P2-T07`; platform/admin UI now uses workspace mode/admin label language instead of implying dedicated infrastructure isolation. `SCOPE-P2` is complete."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Continue with `SCOPE-P2-T07` to simplify platform isolation language.
+    next_actions: []
     tags:
       - scope
       - enterprise
       - cleanup
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T19:45:57+08:00"
-    changed_at: "2026-05-03T19:45:57+08:00"
+    updated_at: "2026-05-03T19:47:59+08:00"
+    changed_at: "2026-05-03T19:47:59+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T01
@@ -574,7 +573,7 @@ items:
     title: Simplify platform isolation language
     type: task
     parent_id: SCOPE-P2
-    status: planned
+    status: complete
     priority: low
     mvp: false
     description: Avoid implying real dedicated infrastructure isolation when the app only stores an isolation mode flag.
@@ -584,7 +583,8 @@ items:
       - No new platform isolation functionality is added.
     dependencies:
       - SCOPE-P2
-    notes: []
+    notes:
+      - "2026-05-03: Reworded admin dashboard and workspace security policy UI around workspace mode/admin labels, and documented that true infrastructure isolation is out of scope. No platform isolation behavior was added."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -595,8 +595,8 @@ items:
       - platform-admin
       - isolation
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T19:47:59+08:00"
+    changed_at: "2026-05-03T19:47:59+08:00"
     changed_source: codex
 
   - id: REFACTOR-P1

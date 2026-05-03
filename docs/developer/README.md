@@ -37,7 +37,7 @@ Some enterprise-style features still exist and were reviewed in `docs/scope/ente
 - retention policies, deferred and hidden from the main UI
 - advanced automation
 - webhooks, deferred and hidden from the main UI
-- platform isolation
+- platform isolation; workspace mode is only a local/admin label
 
 The implementation follow-up is tracked under `SCOPE-P2`.
 
@@ -323,7 +323,7 @@ Admin:
 - users
 - workspaces
 - suspend/reactivate workspace
-- update workspace limits, feature flags, isolation
+- update workspace limits, feature flags, and workspace mode labels
 
 Enterprise-style features pending simplification or removal:
 
@@ -809,7 +809,7 @@ Before extending these areas, follow the `SCOPE-D01` decisions and implement the
 - retention, deferred and hidden from the main UI
 - automation
 - webhooks
-- platform isolation
+- platform isolation; workspace mode is only a local/admin label
 
 The decision should be one of:
 
