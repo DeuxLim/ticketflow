@@ -4,7 +4,7 @@
 
 - Backend: Laravel 12 application in `backend/`.
 - Frontend: React 19, Vite, Tailwind CSS, and shadcn/ui application in `frontend/`.
-- Keep this file as the single root guidance file for now. Do not add nested `backend/AGENTS.md` or `frontend/AGENTS.md` unless the instructions become too large to manage here.
+- Keep this file as the single project guidance file under `docs/agents/` for now. Do not add nested `backend/AGENTS.md` or `frontend/AGENTS.md` unless the instructions become too large to manage here.
 
 ## Important Paths
 
