@@ -129,8 +129,8 @@ export function TicketSlaCard({ ticket, slaSignals }: { ticket: Ticket; slaSigna
   return (
     <Card className="shadow-none">
       <CardHeader>
-        <CardTitle>SLA</CardTitle>
-        <CardDescription>Response and resolution timing.</CardDescription>
+        <CardTitle>Timing Targets</CardTitle>
+        <CardDescription>Optional first-reply and resolution goals.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 text-sm">
         <Badge variant={stateSummary?.sla.status === 'breached' ? 'destructive' : 'secondary'} className="w-fit">
@@ -250,7 +250,7 @@ function activityTitle(event: ActivityLog): string {
 
   if (event.action.startsWith('automation.execution_')) return 'Automation run';
   if (event.action.startsWith('approval.')) return 'Approval updated';
-  if (event.action.startsWith('sla.')) return 'SLA breached';
+  if (event.action.startsWith('sla.')) return 'Timing target missed';
 
   return labels[event.action] ?? event.action.replaceAll('.', ' ').replaceAll('_', ' ').replace(/\b\w/g, (match) => match.toUpperCase());
 }

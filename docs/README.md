@@ -17,6 +17,7 @@ In scope:
 - Search, filters, saved views, and bulk ticket updates.
 - Workspace roles: Admin, Agent, Viewer.
 - Demo data that shows the full support flow.
+- Optional ticket timing targets for first replies and resolution. These are internal goals, not customer contracts.
 
 Out of scope:
 
@@ -25,7 +26,7 @@ Out of scope:
 - SCIM provisioning.
 - SSO login through SAML or OIDC.
 
-Remaining enterprise-style features such as SLA policy UI, break-glass, exports, retention, automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Follow-up simplification work is tracked under `SCOPE-P2`.
+Remaining enterprise-style features such as break-glass, exports, retention, automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Follow-up simplification work is tracked under `SCOPE-P2`.
 
 ## Stack
 

@@ -37,9 +37,9 @@ export function SlaPolicyDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create SLA Policy</DialogTitle>
+          <DialogTitle>Add Ticket Timing Target</DialogTitle>
           <DialogDescription>
-            Define the first-response and resolution targets for tickets with this priority.
+            Set optional first-reply and resolution targets for tickets with this priority. These are internal timing goals, not customer contracts.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -51,7 +51,7 @@ export function SlaPolicyDialog({
         >
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="sla-policy-name">Policy name</FieldLabel>
+              <FieldLabel htmlFor="sla-policy-name">Target name</FieldLabel>
               <Input id="sla-policy-name" value={slaName} onChange={(event) => setSlaName(event.target.value)} />
             </Field>
             <Field>
@@ -70,7 +70,7 @@ export function SlaPolicyDialog({
             </Field>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field>
-                <FieldLabel htmlFor="sla-first-response">First response (minutes)</FieldLabel>
+                <FieldLabel htmlFor="sla-first-response">First reply target (minutes)</FieldLabel>
                 <Input
                   id="sla-first-response"
                   type="number"
@@ -79,7 +79,7 @@ export function SlaPolicyDialog({
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="sla-resolution">Resolution (minutes)</FieldLabel>
+                <FieldLabel htmlFor="sla-resolution">Resolution target (minutes)</FieldLabel>
                 <Input
                   id="sla-resolution"
                   type="number"
@@ -99,7 +99,7 @@ export function SlaPolicyDialog({
             form="sla-policy-form"
             type="submit"
           >
-            {createSlaPolicyPending ? 'Creating policy...' : 'Create SLA policy'}
+            {createSlaPolicyPending ? 'Adding target...' : 'Add target'}
           </Button>
         </DialogFooter>
       </DialogContent>

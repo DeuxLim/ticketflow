@@ -1,6 +1,6 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T14:52:11+08:00"
+updated_at: "2026-05-03T16:51:34+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
@@ -354,7 +354,7 @@ items:
     title: Simplify remaining enterprise features
     type: epic
     parent_id: null
-    status: planned
+    status: in_progress
     priority: medium
     mvp: false
     description: Implement the SCOPE-D01 decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
@@ -370,26 +370,27 @@ items:
       - SCOPE-D01
     notes:
       - "2026-05-03: Created from `SCOPE-D01` decision review. Implementation should be done in focused child tasks instead of one large cleanup."
+      - "2026-05-03: Completed `SCOPE-P2-T01`; user-facing SLA wording now presents the feature as optional ticket timing targets while backend storage remains unchanged."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
     next_actions:
-      - Start with `SCOPE-P2-T01` to simplify SLA language and placement, or `SCOPE-P2-T02` to remove break-glass first if reducing scope is preferred.
+      - Continue with `SCOPE-P2-T02` to remove break-glass from the product surface and codebase.
     tags:
       - scope
       - enterprise
       - cleanup
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T16:51:34+08:00"
+    changed_at: "2026-05-03T16:51:34+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T01
     title: Simplify SLA language and placement
     type: task
     parent_id: SCOPE-P2
-    status: planned
+    status: complete
     priority: medium
     mvp: false
     description: Keep SLA as a simple ticketing target concept and avoid enterprise contract language.
@@ -399,7 +400,8 @@ items:
       - Docs describe SLA as optional ticket timing targets, not a contract system.
     dependencies:
       - SCOPE-P2
-    notes: []
+    notes:
+      - "2026-05-03: Renamed the frontend SLA surface to ticket timing targets, updated helper text to explain optional first-reply and resolution goals, and updated docs to avoid contract-style SLA language. Verified with focused governance test, frontend lint, and frontend build."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
@@ -409,8 +411,8 @@ items:
       - scope
       - sla
     created_at: "2026-05-03T14:52:11+08:00"
-    updated_at: "2026-05-03T14:52:11+08:00"
-    changed_at: "2026-05-03T14:52:11+08:00"
+    updated_at: "2026-05-03T16:51:34+08:00"
+    changed_at: "2026-05-03T16:51:34+08:00"
     changed_source: codex
 
   - id: SCOPE-P2-T02

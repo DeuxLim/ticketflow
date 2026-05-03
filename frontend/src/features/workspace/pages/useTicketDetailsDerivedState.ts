@@ -180,7 +180,7 @@ function buildSlaSignals(ticket?: Ticket) {
   if (ticket.first_response_due_at && !ticket.first_responded_at && new Date(ticket.first_response_due_at) < now) {
     signals.push({
       key: 'first-response-breach',
-      label: 'First response SLA breached',
+      label: 'First response target missed',
       time: ticket.first_response_due_at,
       severity: 'warning',
     });
@@ -189,7 +189,7 @@ function buildSlaSignals(ticket?: Ticket) {
   if (ticket.resolution_due_at && !ticket.resolved_at && new Date(ticket.resolution_due_at) < now) {
     signals.push({
       key: 'resolution-breach',
-      label: 'Resolution SLA breached',
+      label: 'Resolution target missed',
       time: ticket.resolution_due_at,
       severity: 'warning',
     });
@@ -198,7 +198,7 @@ function buildSlaSignals(ticket?: Ticket) {
   if (signals.length === 0) {
     signals.push({
       key: 'sla-healthy',
-      label: 'No active SLA breaches',
+      label: 'Timing targets on track',
       time: null,
       severity: 'info',
     });

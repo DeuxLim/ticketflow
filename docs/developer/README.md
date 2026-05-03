@@ -31,7 +31,7 @@ Out of scope:
 
 Some enterprise-style features still exist and were reviewed in `docs/scope/enterprise-feature-review.md`:
 
-- SLA policy UI
+- ticket timing target UI, still stored as SLA internally
 - break-glass access
 - tenant exports
 - retention policies
@@ -299,6 +299,7 @@ Tickets:
 - checklist items
 - related tickets
 - activity history
+- optional first-reply and resolution timing targets
 
 Notifications:
 
@@ -324,9 +325,9 @@ Admin:
 - suspend/reactivate workspace
 - update workspace limits, feature flags, isolation
 
-Enterprise-style features pending review:
+Enterprise-style features pending simplification or removal:
 
-- SLA policies
+- ticket timing targets, still stored as SLA policies internally
 - approvals
 - automation
 - webhooks
@@ -805,7 +806,7 @@ The current app has more than the medium-ticketing core because earlier enterpri
 
 Before extending these areas, follow the `SCOPE-D01` decisions and implement the cleanup under `SCOPE-P2`:
 
-- SLA
+- ticket timing targets, still stored as SLA internally
 - break-glass
 - exports
 - retention

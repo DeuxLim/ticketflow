@@ -45,15 +45,15 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ### `SCOPE-P2` Simplify remaining enterprise features
 
-- Status: `planned`
+- Status: `in_progress`
 - Priority: medium
 - Scope: Implement the `SCOPE-D01` decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
-- Current state: planned after decision review. Decisions are: simplify SLA, remove break-glass, defer tenant exports, defer retention, simplify automation, defer webhooks, and simplify platform isolation language.
-- Next actions: start with `SCOPE-P2-T01` to simplify SLA language and placement, or `SCOPE-P2-T02` to remove break-glass first if reducing scope is preferred.
+- Current state: in progress. SLA is now presented as optional ticket timing targets; remaining decisions are remove break-glass, defer tenant exports, defer retention, simplify automation, defer webhooks, and simplify platform isolation language.
+- Next actions: continue with `SCOPE-P2-T02` to remove break-glass from the product surface and codebase.
 
 #### Child Items
 
-- `SCOPE-P2-T01` Simplify SLA language and placement - `planned`
+- `SCOPE-P2-T01` Simplify SLA language and placement - `complete`
 - `SCOPE-P2-T02` Remove break-glass feature - `planned`
 - `SCOPE-P2-T03` Defer or hide tenant exports - `planned`
 - `SCOPE-P2-T04` Defer or hide retention policy UI - `planned`
@@ -243,4 +243,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue with `SCOPE-P2` to implement the enterprise-scope simplification decisions.
+Continue with `SCOPE-P2-T02` to remove break-glass from the product surface and codebase.
