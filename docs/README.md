@@ -25,8 +25,9 @@ Out of scope:
 - Email notifications.
 - SCIM provisioning.
 - SSO login through SAML or OIDC.
+- Break-glass emergency access.
 
-Remaining enterprise-style features such as break-glass, exports, retention, automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Follow-up simplification work is tracked under `SCOPE-P2`.
+Remaining enterprise-style features such as exports, retention, automation, webhooks, and platform isolation were reviewed in `docs/scope/enterprise-feature-review.md`. Follow-up simplification work is tracked under `SCOPE-P2`.
 
 ## Stack
 

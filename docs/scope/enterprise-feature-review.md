@@ -62,9 +62,8 @@ Decision: remove.
 
 Current state:
 
-- Backend routes exist for requests and approvals.
-- Frontend governance settings can request and approve break-glass access.
-- The flow requires two approvers before approval.
+- Removed from backend routes, frontend settings, admin metrics, API types, and current migrations.
+- Existing local databases are cleaned by `2026_05_03_165500_drop_break_glass_requests_table.php`.
 
 Why remove:
 
@@ -74,7 +73,6 @@ Why remove:
 
 Recommended follow-up:
 
-- Remove break-glass UI, routes, controller, model, migration/table, tests, and docs in a dedicated cleanup pass.
 - Keep normal Admin/Agent/Viewer permissions instead.
 
 ### Tenant Exports

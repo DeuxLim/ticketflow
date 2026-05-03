@@ -249,7 +249,7 @@ export function AdminDashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <AdminMetric title="Users" value={stats.users_count} description="Registered accounts" />
         <AdminMetric title="Workspaces" value={stats.workspaces_count} description="Tenant workspaces" />
         <AdminMetric title="Memberships" value={stats.memberships_count} description="User-workspace links" />
@@ -258,7 +258,6 @@ export function AdminDashboardPage() {
         <AdminMetric title="Maintenance" value={stats.maintenance_workspaces_count} description="Workspaces in maintenance mode" />
         <AdminMetric title="Dedicated" value={stats.dedicated_workspaces_count} description="Dedicated isolation tenants" />
         <AdminMetric title="Automation Failures" value={stats.failed_automation_executions_count} description="Failed rule executions" />
-        <AdminMetric title="Break-Glass Pending" value={stats.pending_break_glass_count} description="Dual-control pending" />
       </div>
 
       <Separator />

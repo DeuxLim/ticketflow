@@ -8,7 +8,6 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Workspaces\ApprovalController;
 use App\Http\Controllers\Api\Workspaces\AuditEventController;
 use App\Http\Controllers\Api\Workspaces\AutomationRuleController;
-use App\Http\Controllers\Api\Workspaces\BreakGlassController;
 use App\Http\Controllers\Api\Workspaces\CustomerController;
 use App\Http\Controllers\Api\Workspaces\InvitationAcceptanceController;
 use App\Http\Controllers\Api\Workspaces\ReportingController;
@@ -259,12 +258,6 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/exports', [TenantExportController::class, 'store'])
                 ->middleware('workspace_permission:security.manage');
             Route::get('/exports/{export}/download', [TenantExportController::class, 'download'])
-                ->middleware('workspace_permission:security.manage');
-            Route::get('/break-glass/requests', [BreakGlassController::class, 'index'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/break-glass/requests', [BreakGlassController::class, 'store'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/break-glass/requests/{breakGlass}/approve', [BreakGlassController::class, 'approve'])
                 ->middleware('workspace_permission:security.manage');
         });
 

@@ -5,7 +5,6 @@ import type {
   AuditEventRecord,
   AutomationExecutionLog,
   AutomationRuleConfig,
-  BreakGlassRecord,
   RetentionPolicyConfig,
   SavedViewRecord,
   SlaPolicyConfig,
@@ -333,24 +332,6 @@ export function createSavedView(workspaceSlug: string, payload: { name: string; 
 export function deleteSavedView(workspaceSlug: string, viewId: number) {
   return apiRequest<{ message: string }>(`/workspaces/${workspaceSlug}/saved-views/${viewId}`, {
     method: 'DELETE',
-  });
-}
-
-export function listBreakGlassRequests(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<BreakGlassRecord[]>>(`/workspaces/${workspaceSlug}/break-glass/requests`);
-}
-
-export function createBreakGlassRequest(workspaceSlug: string, reason: string, durationMinutes: number) {
-  return apiRequest<ApiEnvelope<BreakGlassRecord>>(`/workspaces/${workspaceSlug}/break-glass/requests`, {
-    method: 'POST',
-    body: JSON.stringify({ reason, duration_minutes: durationMinutes }),
-  });
-}
-
-export function approveBreakGlassRequest(workspaceSlug: string, breakGlassId: number) {
-  return apiRequest<ApiEnvelope<BreakGlassRecord>>(`/workspaces/${workspaceSlug}/break-glass/requests/${breakGlassId}/approve`, {
-    method: 'POST',
-    body: JSON.stringify({}),
   });
 }
 

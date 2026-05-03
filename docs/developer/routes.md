@@ -230,14 +230,6 @@ POST  /workspaces/{workspace}/exports
 GET   /workspaces/{workspace}/exports/{export}/download
 ```
 
-Break-glass:
-
-```text
-GET  /workspaces/{workspace}/break-glass/requests
-POST /workspaces/{workspace}/break-glass/requests
-POST /workspaces/{workspace}/break-glass/requests/{breakGlass}/approve
-```
-
 ## SLA, Workflow, Approvals, and Automation
 
 SLA:

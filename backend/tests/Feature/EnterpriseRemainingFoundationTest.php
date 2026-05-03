@@ -137,11 +137,9 @@ class EnterpriseRemainingFoundationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_governance_endpoints_cover_retention_export_and_break_glass(): void
+    public function test_governance_endpoints_cover_retention_export_and_removed_break_glass(): void
     {
         [$workspace, $owner] = $this->createWorkspaceAsOwner();
-        $admin = $this->createAdminMember($workspace['id']);
-        $adminTwo = $this->createAdminMember($workspace['id']);
 
         Sanctum::actingAs($owner);
         $this->patchJson("/api/workspaces/{$workspace['slug']}/retention-policies", [
@@ -164,20 +162,12 @@ class EnterpriseRemainingFoundationTest extends TestCase
         $this->getJson("/api/workspaces/{$workspace['slug']}/exports/{$exportId}/download?token={$token}")
             ->assertOk();
 
-        $request = $this->postJson("/api/workspaces/{$workspace['slug']}/break-glass/requests", [
+        $this->getJson("/api/workspaces/{$workspace['slug']}/break-glass/requests")
+            ->assertNotFound();
+        $this->postJson("/api/workspaces/{$workspace['slug']}/break-glass/requests", [
             'reason' => 'Critical production access required for incident response.',
             'duration_minutes' => 60,
-        ])->assertCreated()->json('data');
-
-        Sanctum::actingAs($admin);
-        $this->postJson("/api/workspaces/{$workspace['slug']}/break-glass/requests/{$request['id']}/approve")
-            ->assertOk()
-            ->assertJsonPath('data.status', 'pending');
-
-        Sanctum::actingAs($adminTwo);
-        $this->postJson("/api/workspaces/{$workspace['slug']}/break-glass/requests/{$request['id']}/approve")
-            ->assertOk()
-            ->assertJsonPath('data.status', 'approved');
+        ])->assertNotFound();
     }
 
     private function createWorkspaceAsOwner(): array

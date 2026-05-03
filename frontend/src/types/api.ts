@@ -48,7 +48,6 @@ export type AdminDashboardStats = {
   maintenance_workspaces_count: number;
   dedicated_workspaces_count: number;
   failed_automation_executions_count: number;
-  pending_break_glass_count: number;
 };
 
 export type AdminUser = {
@@ -447,19 +446,6 @@ export type TenantExportRecord = {
   download_token?: string | null;
   download_expires_at: string | null;
   created_at: string;
-};
-
-export type BreakGlassRecord = {
-  id: number;
-  workspace_id: number;
-  status: string;
-  reason: string;
-  duration_minutes: number;
-  approved_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-  approver_one_user_id?: number | null;
-  approver_two_user_id?: number | null;
 };
 
 export type AuditEventRecord = {

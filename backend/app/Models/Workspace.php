@@ -132,8 +132,4 @@ class Workspace extends Model
         return $this->hasMany(TenantExport::class);
     }
 
-    public function breakGlassRequests(): HasMany
-    {
-        return $this->hasMany(BreakGlassRequest::class);
-    }
 }
