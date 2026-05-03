@@ -7,6 +7,19 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { ticketStatusLabel, ticketStatusValues } from '@/features/workspace/pages/ticketForm';
 
 const eventTypeOptions = ['ticket.created', 'ticket.updated', 'ticket.comment_added', 'ticket.sla.breached'];
+const conditionOptions = [
+  { value: 'none', label: 'Every matching ticket' },
+  { value: 'status', label: 'Status equals' },
+  { value: 'priority', label: 'Priority equals' },
+];
+const actionOptions = [
+  { value: 'set_status', label: 'Set status' },
+  { value: 'set_priority', label: 'Set priority' },
+  { value: 'add_tag', label: 'Add tag' },
+  { value: 'assign_actor', label: 'Assign to actor' },
+  { value: 'request_approval', label: 'Request approval' },
+];
+const priorityOptions = ['low', 'medium', 'high', 'urgent'];
 
 type Props = {
   isCreateWorkflowDialogOpen: boolean;
@@ -33,13 +46,17 @@ type Props = {
   automationRuleName: string;
   automationEventType: string;
   automationPriority: number;
-  automationConditionsJson: string;
-  automationActionsJson: string;
+  automationConditionField: string;
+  automationConditionValue: string;
+  automationActionType: string;
+  automationActionValue: string;
   setAutomationRuleName: (value: string) => void;
   setAutomationEventType: (value: string) => void;
   setAutomationPriority: (value: number) => void;
-  setAutomationConditionsJson: (value: string) => void;
-  setAutomationActionsJson: (value: string) => void;
+  setAutomationConditionField: (value: string) => void;
+  setAutomationConditionValue: (value: string) => void;
+  setAutomationActionType: (value: string) => void;
+  setAutomationActionValue: (value: string) => void;
   createRuleError: string | null;
   canCreateAutomationRule: boolean;
   createRulePending: boolean;
@@ -70,13 +87,17 @@ export function WorkflowAutomationDialogs({
   automationRuleName,
   automationEventType,
   automationPriority,
-  automationConditionsJson,
-  automationActionsJson,
+  automationConditionField,
+  automationConditionValue,
+  automationActionType,
+  automationActionValue,
   setAutomationRuleName,
   setAutomationEventType,
   setAutomationPriority,
-  setAutomationConditionsJson,
-  setAutomationActionsJson,
+  setAutomationConditionField,
+  setAutomationConditionValue,
+  setAutomationActionType,
+  setAutomationActionValue,
   createRuleError,
   canCreateAutomationRule,
   createRulePending,
@@ -182,7 +203,7 @@ export function WorkflowAutomationDialogs({
           <DialogHeader>
             <DialogTitle>Create Automation Rule</DialogTitle>
             <DialogDescription>
-              Start with a named event trigger, priority, and JSON conditions/actions for the rule engine.
+              Start with a named trigger, one optional condition, and one ticket-focused action.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -223,14 +244,86 @@ export function WorkflowAutomationDialogs({
                 </Field>
               </div>
               <Field>
-                <FieldLabel htmlFor="automation-conditions">Conditions JSON</FieldLabel>
-                <Input id="automation-conditions" value={automationConditionsJson} onChange={(event) => setAutomationConditionsJson(event.target.value)} />
-                <FieldDescription>Use an empty array when every matching event should run the rule.</FieldDescription>
+                <FieldLabel htmlFor="automation-condition-field">Run when</FieldLabel>
+                <Select
+                  value={automationConditionField}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    setAutomationConditionField(value);
+                    setAutomationConditionValue(value === 'status' ? 'open' : value === 'priority' ? 'medium' : '');
+                  }}
+                >
+                  <SelectTrigger id="automation-condition-field"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {conditionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <FieldDescription>Keep this broad unless the rule should only match one status or priority.</FieldDescription>
               </Field>
-              <Field>
-                <FieldLabel htmlFor="automation-actions">Actions JSON</FieldLabel>
-                <Input id="automation-actions" value={automationActionsJson} onChange={(event) => setAutomationActionsJson(event.target.value)} />
-              </Field>
+              {automationConditionField !== 'none' && (
+                <Field>
+                  <FieldLabel htmlFor="automation-condition-value">Condition value</FieldLabel>
+                  <Select value={automationConditionValue} onValueChange={(value) => value && setAutomationConditionValue(value)}>
+                    <SelectTrigger id="automation-condition-value"><SelectValue placeholder="Choose value" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {(automationConditionField === 'status' ? ticketStatusValues : priorityOptions).map((option) => (
+                          <SelectItem key={option} value={option}>
+                            {automationConditionField === 'status' ? ticketStatusLabel(option) : option}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="automation-action-type">Then</FieldLabel>
+                  <Select
+                    value={automationActionType}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      setAutomationActionType(value);
+                      setAutomationActionValue(value === 'set_status' ? 'in_progress' : value === 'set_priority' ? 'medium' : '');
+                    }}
+                  >
+                    <SelectTrigger id="automation-action-type"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {actionOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                {automationActionType !== 'assign_actor' && automationActionType !== 'request_approval' && (
+                  <Field>
+                    <FieldLabel htmlFor="automation-action-value">Action value</FieldLabel>
+                    {automationActionType === 'set_status' || automationActionType === 'set_priority' ? (
+                      <Select value={automationActionValue} onValueChange={(value) => value && setAutomationActionValue(value)}>
+                        <SelectTrigger id="automation-action-value"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {(automationActionType === 'set_status' ? ticketStatusValues : priorityOptions).map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {automationActionType === 'set_status' ? ticketStatusLabel(option) : option}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input id="automation-action-value" value={automationActionValue} onChange={(event) => setAutomationActionValue(event.target.value)} />
+                    )}
+                  </Field>
+                )}
+              </div>
               {createRuleError && (
                 <p className="text-xs text-destructive">{createRuleError}</p>
               )}

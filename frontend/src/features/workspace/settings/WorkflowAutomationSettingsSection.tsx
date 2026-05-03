@@ -70,8 +70,10 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
   const [isCreateRuleDialogOpen, setIsCreateRuleDialogOpen] = useState(false);
   const [automationEventType, setAutomationEventType] = useState('ticket.created');
   const [automationPriority, setAutomationPriority] = useState(100);
-  const [automationConditionsJson, setAutomationConditionsJson] = useState('[]');
-  const [automationActionsJson, setAutomationActionsJson] = useState('[{"type":"notify"}]');
+  const [automationConditionField, setAutomationConditionField] = useState('none');
+  const [automationConditionValue, setAutomationConditionValue] = useState('');
+  const [automationActionType, setAutomationActionType] = useState('set_status');
+  const [automationActionValue, setAutomationActionValue] = useState('in_progress');
   const [automationNameDrafts, setAutomationNameDrafts] = useState<Record<number, string>>({});
   const [automationPriorityDrafts, setAutomationPriorityDrafts] = useState<Record<number, number>>({});
   const [automationTestTicketId, setAutomationTestTicketId] = useState<Record<number, string>>({});
@@ -131,16 +133,18 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
         name: automationRuleName.trim(),
         event_type: automationEventType,
         priority: automationPriority,
-        conditions: JSON.parse(automationConditionsJson) as unknown[],
-        actions: JSON.parse(automationActionsJson) as unknown[],
+        conditions: buildAutomationConditions(automationConditionField, automationConditionValue),
+        actions: buildAutomationActions(automationActionType, automationActionValue),
         is_active: true,
       }),
     onSuccess: () => {
       setAutomationRuleName('');
       setAutomationEventType('ticket.created');
       setAutomationPriority(100);
-      setAutomationConditionsJson('[]');
-      setAutomationActionsJson('[{"type":"notify"}]');
+      setAutomationConditionField('none');
+      setAutomationConditionValue('');
+      setAutomationActionType('set_status');
+      setAutomationActionValue('in_progress');
       setIsCreateRuleDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'automation-rules'] });
     },
@@ -180,7 +184,9 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
 
   const canCreateWorkflow = workflowName.trim().length > 0 && transitionFromStatus !== transitionToStatus;
   const canSimulateWorkflow = Number(simulationTicketId) > 0 && simulationTargetStatus.length > 0;
-  const canCreateAutomationRule = automationRuleName.trim().length > 0 && automationActionsJson.trim().length > 0;
+  const canCreateAutomationRule = automationRuleName.trim().length > 0
+    && (automationConditionField === 'none' || automationConditionValue.trim().length > 0)
+    && (automationActionType === 'assign_actor' || automationActionType === 'request_approval' || automationActionValue.trim().length > 0);
 
   return (
     <>
@@ -439,13 +445,17 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
         automationRuleName={automationRuleName}
         automationEventType={automationEventType}
         automationPriority={automationPriority}
-        automationConditionsJson={automationConditionsJson}
-        automationActionsJson={automationActionsJson}
+        automationConditionField={automationConditionField}
+        automationConditionValue={automationConditionValue}
+        automationActionType={automationActionType}
+        automationActionValue={automationActionValue}
         setAutomationRuleName={setAutomationRuleName}
         setAutomationEventType={setAutomationEventType}
         setAutomationPriority={setAutomationPriority}
-        setAutomationConditionsJson={setAutomationConditionsJson}
-        setAutomationActionsJson={setAutomationActionsJson}
+        setAutomationConditionField={setAutomationConditionField}
+        setAutomationConditionValue={setAutomationConditionValue}
+        setAutomationActionType={setAutomationActionType}
+        setAutomationActionValue={setAutomationActionValue}
         createRuleError={createRuleMutation.isError ? (createRuleMutation.error as Error).message : null}
         canCreateAutomationRule={canCreateAutomationRule}
         createRulePending={createRuleMutation.isPending}
@@ -453,4 +463,20 @@ export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAut
       />
     </>
   );
+}
+
+function buildAutomationConditions(field: string, value: string) {
+  if (field === 'none') return [];
+
+  return [{ field, operator: 'eq', value: value.trim() }];
+}
+
+function buildAutomationActions(type: string, value: string) {
+  if (type === 'set_status') return [{ type: 'set_field', field: 'status', value }];
+  if (type === 'set_priority') return [{ type: 'set_field', field: 'priority', value }];
+  if (type === 'add_tag') return [{ type: 'add_tag', value: value.trim() }];
+  if (type === 'assign_actor') return [{ type: 'assign_actor' }];
+  if (type === 'request_approval') return [{ type: 'request_approval' }];
+
+  return [];
 }
