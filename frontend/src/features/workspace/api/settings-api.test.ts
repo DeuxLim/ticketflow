@@ -9,20 +9,15 @@ import {
   createTicketCategory,
   createTicketTag,
   createTicketType,
-  createIdentityProvider,
   createAutomationRule,
   createWorkflow,
-  createProvisioningDirectory,
   createWebhookEndpoint,
-  deleteIdentityProvider,
   deleteSavedView,
   downloadExport,
   getTenantSecurityPolicy,
   listSavedViews,
   listSlaPolicies,
-  listIdentityProviders,
   listWorkflows,
-  listProvisioningDirectories,
   listWebhookDeliveries,
   listWebhookEndpoints,
   updateTicketCustomField,
@@ -32,7 +27,6 @@ import {
   updateTicketType,
   retryWebhookDelivery,
   simulateWorkflowTransition,
-  startOidcSso,
   testAutomationRule,
   updateAutomationRule,
   updateWorkflow,
@@ -92,7 +86,6 @@ describe('settings-api integrations and security contracts', () => {
     expect(apiRequest).toHaveBeenNthCalledWith(1, '/workspaces/acme/security-policy');
 
     await updateTenantSecurityPolicy(workspaceSlug, {
-      require_sso: true,
       require_mfa: true,
       session_ttl_minutes: 480,
       ip_allowlist: ['10.10.10.10'],
@@ -103,7 +96,6 @@ describe('settings-api integrations and security contracts', () => {
     expect(apiRequest).toHaveBeenNthCalledWith(2, '/workspaces/acme/security-policy', {
       method: 'PATCH',
       body: JSON.stringify({
-        require_sso: true,
         require_mfa: true,
         session_ttl_minutes: 480,
         ip_allowlist: ['10.10.10.10'],
@@ -113,53 +105,8 @@ describe('settings-api integrations and security contracts', () => {
       }),
     });
 
-    await listIdentityProviders(workspaceSlug);
-    expect(apiRequest).toHaveBeenNthCalledWith(3, '/workspaces/acme/identity-providers');
-
-    await createIdentityProvider(workspaceSlug, {
-      provider_type: 'oidc',
-      name: 'Okta OIDC',
-      authorization_url: 'https://example.okta.com/oauth2/v1/authorize',
-      token_url: 'https://example.okta.com/oauth2/v1/token',
-      redirect_uri: 'https://app.example.com/auth/callback',
-      client_id: 'client-123',
-      client_secret: 'secret-123',
-    });
-    expect(apiRequest).toHaveBeenNthCalledWith(4, '/workspaces/acme/identity-providers', {
-      method: 'POST',
-      body: JSON.stringify({
-        provider_type: 'oidc',
-        name: 'Okta OIDC',
-        authorization_url: 'https://example.okta.com/oauth2/v1/authorize',
-        token_url: 'https://example.okta.com/oauth2/v1/token',
-        redirect_uri: 'https://app.example.com/auth/callback',
-        client_id: 'client-123',
-        client_secret: 'secret-123',
-      }),
-    });
-
-    await deleteIdentityProvider(workspaceSlug, 7);
-    expect(apiRequest).toHaveBeenNthCalledWith(5, '/workspaces/acme/identity-providers/7', {
-      method: 'DELETE',
-    });
-
-    await startOidcSso(workspaceSlug, 7);
-    expect(apiRequest).toHaveBeenNthCalledWith(6, '/workspaces/acme/auth/sso/oidc/start', {
-      method: 'POST',
-      body: JSON.stringify({ provider_id: 7 }),
-    });
-
-    await listProvisioningDirectories(workspaceSlug);
-    expect(apiRequest).toHaveBeenNthCalledWith(7, '/workspaces/acme/provisioning-directories');
-
-    await createProvisioningDirectory(workspaceSlug, 'Azure AD');
-    expect(apiRequest).toHaveBeenNthCalledWith(8, '/workspaces/acme/provisioning-directories', {
-      method: 'POST',
-      body: JSON.stringify({ name: 'Azure AD' }),
-    });
-
     await approveBreakGlassRequest(workspaceSlug, 19);
-    expect(apiRequest).toHaveBeenNthCalledWith(9, '/workspaces/acme/break-glass/requests/19/approve', {
+    expect(apiRequest).toHaveBeenNthCalledWith(3, '/workspaces/acme/break-glass/requests/19/approve', {
       method: 'POST',
       body: JSON.stringify({}),
     });

@@ -16,7 +16,6 @@ class TenantSecurityPolicyController extends Controller
         $policy = TenantSecurityPolicy::query()->firstOrCreate(
             ['workspace_id' => $workspace->id],
             [
-                'require_sso' => false,
                 'require_mfa' => false,
                 'session_ttl_minutes' => 720,
             ]
@@ -26,7 +25,6 @@ class TenantSecurityPolicyController extends Controller
             'data' => [
                 'id' => $policy->id,
                 'workspace_id' => $workspace->id,
-                'require_sso' => $policy->require_sso,
                 'require_mfa' => $policy->require_mfa,
                 'session_ttl_minutes' => $policy->session_ttl_minutes,
                 'ip_allowlist' => $policy->allowlist(),
@@ -44,7 +42,6 @@ class TenantSecurityPolicyController extends Controller
         $policy = TenantSecurityPolicy::query()->firstOrCreate(
             ['workspace_id' => $workspace->id],
             [
-                'require_sso' => false,
                 'require_mfa' => false,
                 'session_ttl_minutes' => 720,
             ]

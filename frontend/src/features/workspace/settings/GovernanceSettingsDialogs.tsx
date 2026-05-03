@@ -1,9 +1,7 @@
-import { GovernanceIdentityProviderDialog } from './GovernanceIdentityProviderDialog';
-import { BreakGlassRequestDialog, ScimDirectoryDialog, SlaPolicyDialog } from './GovernanceOperationalDialogs';
+import { BreakGlassRequestDialog, SlaPolicyDialog } from './GovernanceOperationalDialogs';
 import { RetentionPolicyDialog, SecurityPolicyDialog } from './GovernancePolicyDialogs';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
-type ProviderType = 'saml' | 'oidc';
 type TenantMode = 'shared' | 'dedicated';
 
 type Props = {
@@ -23,13 +21,11 @@ type Props = {
 
   isSecurityPolicyDialogOpen: boolean;
   onSecurityPolicyDialogOpenChange: (open: boolean) => void;
-  requireSso: boolean;
   requireMfa: boolean;
   sessionTtl: number;
   tenantMode: TenantMode;
   dataPlaneKey: string;
   ipAllowlist: string;
-  setRequireSsoDraft: (value: boolean) => void;
   setRequireMfaDraft: (value: boolean) => void;
   setSessionTtlDraft: (value: number) => void;
   setTenantModeDraft: (value: TenantMode) => void;
@@ -58,36 +54,6 @@ type Props = {
   setBreakGlassReason: (value: string) => void;
   onRequestBreakGlass: () => void;
   requestBreakGlassPending: boolean;
-
-  isProviderDialogOpen: boolean;
-  onProviderDialogOpenChange: (open: boolean) => void;
-  providerType: ProviderType;
-  providerName: string;
-  providerIssuer: string;
-  providerSsoUrl: string;
-  providerAuthUrl: string;
-  providerTokenUrl: string;
-  providerRedirectUrl: string;
-  providerClientId: string;
-  providerClientSecret: string;
-  setProviderType: (value: ProviderType) => void;
-  setProviderName: (value: string) => void;
-  setProviderIssuer: (value: string) => void;
-  setProviderSsoUrl: (value: string) => void;
-  setProviderAuthUrl: (value: string) => void;
-  setProviderTokenUrl: (value: string) => void;
-  setProviderRedirectUrl: (value: string) => void;
-  setProviderClientId: (value: string) => void;
-  setProviderClientSecret: (value: string) => void;
-  onCreateProvider: () => void;
-  createProviderPending: boolean;
-
-  isDirectoryDialogOpen: boolean;
-  onDirectoryDialogOpenChange: (open: boolean) => void;
-  directoryName: string;
-  setDirectoryName: (value: string) => void;
-  onCreateDirectory: () => void;
-  createDirectoryPending: boolean;
 };
 
 export function GovernanceSettingsDialogs({
@@ -106,13 +72,11 @@ export function GovernanceSettingsDialogs({
   saveRetentionError,
   isSecurityPolicyDialogOpen,
   onSecurityPolicyDialogOpenChange,
-  requireSso,
   requireMfa,
   sessionTtl,
   tenantMode,
   dataPlaneKey,
   ipAllowlist,
-  setRequireSsoDraft,
   setRequireMfaDraft,
   setSessionTtlDraft,
   setTenantModeDraft,
@@ -139,34 +103,6 @@ export function GovernanceSettingsDialogs({
   setBreakGlassReason,
   onRequestBreakGlass,
   requestBreakGlassPending,
-  isProviderDialogOpen,
-  onProviderDialogOpenChange,
-  providerType,
-  providerName,
-  providerIssuer,
-  providerSsoUrl,
-  providerAuthUrl,
-  providerTokenUrl,
-  providerRedirectUrl,
-  providerClientId,
-  providerClientSecret,
-  setProviderType,
-  setProviderName,
-  setProviderIssuer,
-  setProviderSsoUrl,
-  setProviderAuthUrl,
-  setProviderTokenUrl,
-  setProviderRedirectUrl,
-  setProviderClientId,
-  setProviderClientSecret,
-  onCreateProvider,
-  createProviderPending,
-  isDirectoryDialogOpen,
-  onDirectoryDialogOpenChange,
-  directoryName,
-  setDirectoryName,
-  onCreateDirectory,
-  createDirectoryPending,
 }: Props) {
   return (
     <>
@@ -193,14 +129,12 @@ export function GovernanceSettingsDialogs({
         onOpenChange={onSecurityPolicyDialogOpenChange}
         onSave={onSaveSecurityPolicy}
         requireMfa={requireMfa}
-        requireSso={requireSso}
         saveError={saveSecurityPolicyError}
         savePending={saveSecurityPolicyPending}
         sessionTtl={sessionTtl}
         setDataPlaneKeyDraft={setDataPlaneKeyDraft}
         setIpAllowlistDraft={setIpAllowlistDraft}
         setRequireMfaDraft={setRequireMfaDraft}
-        setRequireSsoDraft={setRequireSsoDraft}
         setSessionTtlDraft={setSessionTtlDraft}
         setTenantModeDraft={setTenantModeDraft}
         tenantMode={tenantMode}
@@ -228,40 +162,6 @@ export function GovernanceSettingsDialogs({
         onRequestBreakGlass={onRequestBreakGlass}
         requestBreakGlassPending={requestBreakGlassPending}
         setBreakGlassReason={setBreakGlassReason}
-      />
-
-      <GovernanceIdentityProviderDialog
-        createProviderPending={createProviderPending}
-        isOpen={isProviderDialogOpen}
-        onCreateProvider={onCreateProvider}
-        onOpenChange={onProviderDialogOpenChange}
-        providerAuthUrl={providerAuthUrl}
-        providerClientId={providerClientId}
-        providerClientSecret={providerClientSecret}
-        providerIssuer={providerIssuer}
-        providerName={providerName}
-        providerRedirectUrl={providerRedirectUrl}
-        providerSsoUrl={providerSsoUrl}
-        providerTokenUrl={providerTokenUrl}
-        providerType={providerType}
-        setProviderAuthUrl={setProviderAuthUrl}
-        setProviderClientId={setProviderClientId}
-        setProviderClientSecret={setProviderClientSecret}
-        setProviderIssuer={setProviderIssuer}
-        setProviderName={setProviderName}
-        setProviderRedirectUrl={setProviderRedirectUrl}
-        setProviderSsoUrl={setProviderSsoUrl}
-        setProviderTokenUrl={setProviderTokenUrl}
-        setProviderType={setProviderType}
-      />
-
-      <ScimDirectoryDialog
-        createDirectoryPending={createDirectoryPending}
-        directoryName={directoryName}
-        isOpen={isDirectoryDialogOpen}
-        onCreateDirectory={onCreateDirectory}
-        onOpenChange={onDirectoryDialogOpenChange}
-        setDirectoryName={setDirectoryName}
       />
     </>
   );

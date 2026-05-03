@@ -26,7 +26,7 @@ class WorkspaceFoundationBootstrapper
                     'ticket_number_format' => 'TKT-{seq:6}',
                     'assignment_strategy' => 'manual',
                     'ticketing_json' => [
-                        'statuses' => ['open', 'in_progress', 'resolved', 'closed'],
+                        'statuses' => ['open', 'in_progress', 'pending', 'resolved', 'closed'],
                         'priorities' => ['low', 'medium', 'high', 'urgent'],
                     ],
                 ]
@@ -34,7 +34,7 @@ class WorkspaceFoundationBootstrapper
 
             if (! is_array($setting->ticketing_json) || $setting->ticketing_json === []) {
                 $setting->ticketing_json = [
-                    'statuses' => ['open', 'in_progress', 'resolved', 'closed'],
+                    'statuses' => ['open', 'in_progress', 'pending', 'resolved', 'closed'],
                     'priorities' => ['low', 'medium', 'high', 'urgent'],
                 ];
                 $setting->save();
@@ -140,7 +140,7 @@ class WorkspaceFoundationBootstrapper
                         'is_active' => true,
                     ]);
 
-                    foreach ([['open', 'in_progress'], ['in_progress', 'resolved'], ['resolved', 'closed']] as $i => [$from, $to]) {
+                    foreach ([['open', 'in_progress'], ['in_progress', 'pending'], ['pending', 'resolved'], ['resolved', 'closed']] as $i => [$from, $to]) {
                         WorkflowTransition::query()->create([
                             'ticket_workflow_id' => $defaultWorkflow->id,
                             'from_status' => $from,

@@ -103,7 +103,11 @@ export function bytesToReadable(bytes: number): string {
 }
 
 export function statusLabel(value?: string | null): string {
-  return value ? value.replaceAll('_', ' ') : '—';
+  return value
+    ? value
+        .replaceAll('_', ' ')
+        .replace(/\b\w/g, (match) => match.toUpperCase())
+    : '—';
 }
 
 export function mutationErrorMessage(error: unknown): string {

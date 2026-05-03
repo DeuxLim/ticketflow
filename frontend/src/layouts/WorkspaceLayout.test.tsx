@@ -88,6 +88,10 @@ describe('WorkspaceLayout', () => {
         return { message: 'Logged out' } as never;
       }
 
+      if (path === '/workspaces/demo-workspace/notifications') {
+        return { data: [], meta: { unread_count: 0 } } as never;
+      }
+
       throw new Error(`Unexpected path: ${path}`);
     });
   });
@@ -130,6 +134,10 @@ describe('WorkspaceLayout', () => {
         throw new Error('Network down');
       }
 
+      if (path === '/workspaces/demo-workspace/notifications') {
+        return { data: [], meta: { unread_count: 0 } } as never;
+      }
+
       throw new Error(`Unexpected path: ${path}`);
     });
 
@@ -144,6 +152,48 @@ describe('WorkspaceLayout', () => {
     await waitFor(() => {
       expect(clearAuthToken).toHaveBeenCalled();
       expect(screen.getByText('Login opened')).not.toBeNull();
+    });
+  });
+
+  it('shows unread notification count in the workspace header', async () => {
+    mockAccess(['tickets.view']);
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path === '/workspaces') {
+        return {
+          data: [
+            { id: 1, name: 'Demo Workspace', slug: 'demo-workspace', owner_user_id: 1 },
+          ],
+        } as never;
+      }
+
+      if (path === '/workspaces/demo-workspace/notifications') {
+        return {
+          data: [
+            {
+              id: 10,
+              workspace_id: 1,
+              user_id: 2,
+              ticket_id: 7,
+              type: 'ticket.assigned',
+              title: 'You were assigned TKT-000007',
+              body: 'Branch outage',
+              data: {},
+              read_at: null,
+              created_at: '2026-05-03T00:00:00Z',
+              ticket: { id: 7, ticket_number: 'TKT-000007', title: 'Branch outage', status: 'open', priority: 'high' },
+            },
+          ],
+          meta: { unread_count: 1 },
+        } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(<WorkspaceLayout />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Notifications, 1 unread')).not.toBeNull();
     });
   });
 });

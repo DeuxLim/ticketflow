@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 14:07 +08:00 - Added Clean Project README
+
+- Added a root `README.md` for the medium-level internal ticketing scope.
+- Documented what is in scope: internal ticketing, lifecycle statuses, customers, assignment, comments, activity, in-app notifications, search/filtering, simple roles, and demo data.
+- Documented what is out of scope: customer-facing portal, email notifications, SCIM provisioning, and SSO through SAML/OIDC.
+- Added local setup, dev URLs, seeded accounts, role summaries, main user flows, and verification commands.
+- Marked `MEDIUM-P1-T08` complete and moved current focus back to `MEDIUM-P1-T01`.
+
+Verification:
+- Read `README.md` for scope, setup, seeded accounts, roles, flows, and verification consistency.
+- Validated `project-state.yaml` parses successfully.
+
+## Resume From Here
+
+Continue `MEDIUM-P1` with `MEDIUM-P1-T01` ticket lifecycle cleanup, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.
+
 ## 2026-04-13 22:32 +08:00 - Initialized Source of Truth
 
 - Created `project-state.yaml` as the canonical source of truth.
@@ -1696,6 +1712,95 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
+
+## 2026-05-02 22:52 +08:00 - Removed SCIM/SSO Scope and Added Medium Ticketing Roadmap
+
+- Removed SCIM and SSO from the active backend/API surface:
+  - public SSO callback/start routes,
+  - SCIM user/group routes,
+  - identity-provider and provisioning-directory workspace routes,
+  - SSO/SCIM controllers, middleware, request classes, models, bindings, and rate limiter setup.
+- Removed local-login SSO blocking and kept non-SSO security policy settings.
+- Added a cleanup migration for existing local databases and updated fresh-install migrations so SCIM/SSO tables and columns are no longer created.
+- Removed SCIM/SSO frontend settings UI, API helpers, API types, and tests.
+- Added `pending` as a first-class ticket status across backend validation/default workflow and frontend ticket controls.
+- Changed new workspace/demo role bootstrap to the simple role set:
+  - Admin
+  - Agent
+  - Viewer
+- Added `MEDIUM-P1` roadmap for medium ticketing completion:
+  - lifecycle cleanup,
+  - assignee clarity,
+  - in-app notifications,
+  - search/filtering quality,
+  - activity readability,
+  - simple role set,
+  - full-flow demo data,
+  - clean README.
+- Added `SCOPE-D01` to review remaining enterprise features later without removing them in this pass.
+
+Verification:
+- Pending. Run focused backend/frontend tests, then full backend and frontend verification.
+
+## Resume From Here
+
+Continue `MEDIUM-P1` with `MEDIUM-P1-T02` assignee workflow clarity, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.
+
+## 2026-05-03 06:38 +08:00 - Completed Assignee Workflow Clarity
+
+- Added explicit assign/reassign controls to the ticket queue assignee column.
+- Added an explicit assignee control to the ticket detail summary so assignment is no longer hidden behind the full edit sheet.
+- Kept the existing ticket update API contract and backend workspace-member assignee validation.
+- Added backend coverage confirming reassignment writes `ticket.assignee_changed` activity with `from` and `to` metadata.
+- Added frontend coverage confirming the queue and detail assignment controls are visible.
+
+Verification:
+- `backend`: `php artisan test --filter=TicketsAndCommentsTest`
+- `frontend`: `npm test -- TicketsPageInteractions TicketDetailsMutations`
+- `frontend`: `npm run build`
+- `frontend`: `npm run lint`
+
+## Resume From Here
+
+Continue `MEDIUM-P1` with `MEDIUM-P1-T03` in-app notifications, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.
+
+## 2026-05-03 07:17 +08:00 - Completed Five Medium Ticketing Items
+
+- Completed `MEDIUM-P1-T03` in-app notifications:
+  - workspace notification storage/API,
+  - unread/read state,
+  - header notification menu,
+  - ticket assignment, status-change, and comment producers.
+- Completed `MEDIUM-P1-T04` search and filtering quality:
+  - ticket search includes customer name, email, and company,
+  - unassigned ticket filtering,
+  - active filter labels,
+  - clearer empty states for no tickets vs no matches.
+- Completed `MEDIUM-P1-T05` ticket activity readability:
+  - readable labels for ticket, assignment, status, comment, automation, approval, and SLA events.
+- Completed `MEDIUM-P1-T06` simple role set:
+  - added seeded Viewer account,
+  - documented Admin, Agent, and Viewer permissions in seeded credential docs.
+- Completed `MEDIUM-P1-T07` full-flow demo data:
+  - seeded customers,
+  - tickets in open, in progress, pending, resolved, and closed,
+  - assigned and unassigned tickets,
+  - comments and activity history.
+
+Verification:
+- `backend`: `php artisan test --filter=TicketsAndCommentsTest`
+- `backend`: `php artisan test --filter=TicketingBaseFunctionsTest`
+- `backend`: `php artisan test --filter=DatabaseSeederTest`
+- `backend`: `composer test`
+- `backend`: `./vendor/bin/pint --dirty --test`
+- `frontend`: `npm test -- TicketsPageInteractions TicketDetailsMutations WorkspaceLayout ticketPageApi`
+- `frontend`: `npm test`
+- `frontend`: `npm run lint`
+- `frontend`: `npm run build`
+
+## Resume From Here
+
+Continue `MEDIUM-P1` with `MEDIUM-P1-T08` clean project README, unless `SCOPE-D01` is selected first for an enterprise-scope decision pass.
 
 ## 2026-05-02 17:44 +08:00 - Re-ranked Refactor Targets
 

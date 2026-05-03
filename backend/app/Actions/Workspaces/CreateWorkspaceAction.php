@@ -56,36 +56,40 @@ class CreateWorkspaceAction
                 );
             });
 
-            $ownerRole = $workspace->roles()->create([
-                'name' => 'Owner',
-                'slug' => 'owner',
-                'description' => 'Workspace owner with full access',
-                'is_system' => true,
-            ]);
-
             $adminRole = $workspace->roles()->create([
                 'name' => 'Admin',
                 'slug' => 'admin',
-                'description' => 'Workspace admin with broad access',
+                'description' => 'Workspace admin with full access',
                 'is_system' => true,
             ]);
 
-            $memberRole = $workspace->roles()->create([
-                'name' => 'Member',
-                'slug' => 'member',
-                'description' => 'Standard member access',
+            $agentRole = $workspace->roles()->create([
+                'name' => 'Agent',
+                'slug' => 'agent',
+                'description' => 'Support agent who can manage customers and tickets',
                 'is_system' => true,
             ]);
 
-            $ownerRole->permissions()->sync($permissions->pluck('id')->all());
-            $adminRole->permissions()->sync($permissions->where('slug', '!=', 'workspace.manage')->pluck('id')->all());
-            $memberRole->permissions()->sync(
-                $permissions->whereIn('slug', ['customers.view', 'tickets.view', 'tickets.comment'])->pluck('id')->all()
+            $viewerRole = $workspace->roles()->create([
+                'name' => 'Viewer',
+                'slug' => 'viewer',
+                'description' => 'Read-only support workspace access',
+                'is_system' => true,
+            ]);
+
+            $adminRole->permissions()->sync($permissions->pluck('id')->all());
+            $agentRole->permissions()->sync(
+                $permissions
+                    ->whereIn('slug', ['customers.view', 'customers.manage', 'tickets.view', 'tickets.manage', 'tickets.comment', 'reporting.view'])
+                    ->pluck('id')
+                    ->all()
+            );
+            $viewerRole->permissions()->sync(
+                $permissions->whereIn('slug', ['customers.view', 'tickets.view', 'reporting.view'])->pluck('id')->all()
             );
 
             TenantSecurityPolicy::query()->create([
                 'workspace_id' => $workspace->id,
-                'require_sso' => false,
                 'require_mfa' => false,
                 'session_ttl_minutes' => 720,
                 'ip_allowlist' => null,
@@ -118,7 +122,7 @@ class CreateWorkspaceAction
                 'ticket_number_format' => 'TKT-{seq:6}',
                 'assignment_strategy' => 'manual',
                 'ticketing_json' => [
-                    'statuses' => ['open', 'in_progress', 'resolved', 'closed'],
+                    'statuses' => ['open', 'in_progress', 'pending', 'resolved', 'closed'],
                     'priorities' => ['low', 'medium', 'high', 'urgent'],
                 ],
             ]);
@@ -182,7 +186,7 @@ class CreateWorkspaceAction
                 'is_active' => true,
             ]);
 
-            foreach ([['open', 'in_progress'], ['in_progress', 'resolved'], ['resolved', 'closed']] as [$from, $to]) {
+            foreach ([['open', 'in_progress'], ['in_progress', 'pending'], ['pending', 'resolved'], ['resolved', 'closed']] as [$from, $to]) {
                 WorkflowTransition::query()->create([
                     'ticket_workflow_id' => $workflow->id,
                     'from_status' => $from,
@@ -198,7 +202,7 @@ class CreateWorkspaceAction
                 'joined_at' => now(),
             ]);
 
-            $membership->roles()->sync([$ownerRole->id]);
+            $membership->roles()->sync([$adminRole->id]);
 
             ActivityLogger::log($workspace->id, $owner->id, 'workspace.created', $workspace);
 

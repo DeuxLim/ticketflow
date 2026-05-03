@@ -40,7 +40,7 @@ type SimulationResult = {
   approval_timeout_minutes: number | null;
 };
 
-const statusOptions = ['open', 'in_progress', 'resolved', 'closed'];
+const statusOptions = ['open', 'in_progress', 'pending', 'resolved', 'closed'];
 
 export function WorkflowAutomationSettingsSection({ workspaceSlug }: WorkflowAutomationSettingsSectionProps) {
   const queryClient = useQueryClient();

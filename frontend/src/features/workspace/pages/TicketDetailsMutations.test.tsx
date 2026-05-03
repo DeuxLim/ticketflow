@@ -56,7 +56,7 @@ function mockAccess(canView = true, canManage = true, canComment = true) {
   } as ReturnType<typeof useWorkspaceAccess>);
 }
 
-function buildTicket(status: 'open' | 'in_progress' | 'resolved' | 'closed' = 'open') {
+function buildTicket(status: 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed' = 'open') {
   return {
     id: 123,
     workspace_id: 1,
@@ -152,6 +152,64 @@ describe('TicketDetailsPage mutations', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Attachment upload failed.')).not.toBeNull();
+    });
+  });
+
+  it('shows a dedicated assignee control in the ticket summary for managers', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Change ticket assignee')).not.toBeNull();
+    });
+  });
+
+  it('renders readable activity labels instead of raw event names', async () => {
+    vi.mocked(apiRequest).mockImplementation(async (path: string) => {
+      if (path === '/auth/me') {
+        return { data: { id: 1, email: 'owner@example.test', is_platform_admin: false } } as never;
+      }
+      if (path === '/workspaces/acme/tickets/123') {
+        return { data: buildTicket('pending') } as never;
+      }
+      if (path.includes('/customers?per_page=200')) {
+        return { data: [], meta: { current_page: 1, last_page: 1, per_page: 200, total: 0 } } as never;
+      }
+      if (path.includes('/members/assignable') || path.includes('/tickets?per_page=200')) {
+        return { data: [] } as never;
+      }
+      if (path.endsWith('/comments') || path.endsWith('/attachments')) {
+        return { data: [] } as never;
+      }
+      if (path.endsWith('/activity')) {
+        return {
+          data: [
+            {
+              id: 1,
+              action: 'ticket.status_changed',
+              meta: { from: 'open', to: 'pending' },
+              user: { id: 1, first_name: 'Owner', last_name: 'User', email: 'owner@example.test' },
+              created_at: '2026-05-03T00:00:00Z',
+            },
+          ],
+        } as never;
+      }
+
+      return { data: [] } as never;
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/workspaces/:workspaceSlug/tickets/:ticketId" element={<TicketDetailsPage />} />
+      </Routes>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Status changed')).not.toBeNull();
+      expect(screen.getByText('Open to Pending')).not.toBeNull();
     });
   });
 

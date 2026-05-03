@@ -77,6 +77,7 @@ export function TicketsPage() {
   const [bulkStatus, setBulkStatus] = useState<'none' | TicketForm['status']>('none');
   const [bulkPriority, setBulkPriority] = useState<'none' | TicketForm['priority']>('none');
   const [bulkAssignee, setBulkAssignee] = useState<string>('none');
+  const [assignmentPendingTicketId, setAssignmentPendingTicketId] = useState<number | null>(null);
 
   const createForm = useForm<TicketForm>({
     resolver: zodResolver(ticketFormSchema),
@@ -214,6 +215,23 @@ export function TicketsPage() {
     },
     onError: (error) => {
       applyTicketFormFieldErrors(editForm, error);
+    },
+  });
+
+  const updateTicketAssignee = useMutation({
+    mutationFn: ({ ticketId, assigneeId }: { ticketId: number; assigneeId: number | null }) => {
+      setAssignmentPendingTicketId(ticketId);
+
+      return updateWorkspaceTicketById(workspaceSlug ?? '', ticketId, {
+        assigned_to_user_id: assigneeId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'ticket'] });
+    },
+    onSettled: () => {
+      setAssignmentPendingTicketId(null);
     },
   });
 
@@ -363,6 +381,19 @@ export function TicketsPage() {
   const savedViews = savedViewsQuery.data?.data ?? [];
   const canSaveView = savedViewName.trim().length > 0;
   const selectedSavedViewName = findSavedViewName(savedViews, selectedSavedViewId);
+  const activeFilterLabels = [
+    search.trim() ? `Search: ${search.trim()}` : null,
+    statusFilter !== 'all' ? `Status: ${statusFilter.replace('_', ' ')}` : null,
+    priorityFilter !== 'all' ? `Priority: ${priorityFilter}` : null,
+    queueFilter !== 'all' ? `Queue: ${activeQueueConfigs.find((queue) => queue.key === queueFilter)?.name ?? queueFilter}` : null,
+    categoryFilter !== 'all' ? `Category: ${activeCategoryConfigs.find((category) => category.key === categoryFilter)?.name ?? categoryFilter}` : null,
+    customerFilter !== 'all' ? `Customer: ${customers.find((customer) => String(customer.id) === customerFilter)?.name ?? customerFilter}` : null,
+    assigneeFilter !== 'all'
+      ? assigneeFilter === 'unassigned'
+        ? 'Assignee: Unassigned'
+        : `Assignee: ${members.find((member) => String(member.user.id) === assigneeFilter)?.user.first_name ?? assigneeFilter}`
+      : null,
+  ].filter((label): label is string => Boolean(label));
 
   return (
     <section className="flex flex-col gap-6">
@@ -408,6 +439,7 @@ export function TicketsPage() {
             savedViewName={selectedSavedViewName}
             activeFilterCount={activeFilterCount}
             selectedVisibleTicketIdsCount={selectedVisibleTicketIds.length}
+            activeFilterLabels={activeFilterLabels}
             onResetControls={resetAllControls}
           />
 
@@ -416,16 +448,23 @@ export function TicketsPage() {
             tickets={tickets}
             isLoading={ticketsQuery.isLoading}
             errorMessage={ticketsQuery.isError ? (ticketsQuery.error as Error).message : null}
+            hasActiveFilters={activeFilterCount > 0 || Boolean(selectedSavedViewName)}
             pagination={pagination}
             page={page}
             onPageChange={setPage}
             selectedTicketIds={selectedTicketIds}
             selectedVisibleTicketIds={selectedVisibleTicketIds}
             onSelectedTicketIdsChange={setSelectedTicketIds}
+            members={members}
             canManage={canManage}
             deletePending={deleteTicket.isPending}
+            assignmentPendingTicketId={assignmentPendingTicketId}
             onEdit={openEditTicket}
             onDelete={requestDeleteTicket}
+            onAssign={(ticket, assigneeId) => {
+              if (ticket.assigned_to_user_id === assigneeId) return;
+              updateTicketAssignee.mutate({ ticketId: ticket.id, assigneeId });
+            }}
           />
         </CardContent>
       </Card>

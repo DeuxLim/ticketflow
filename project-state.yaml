@@ -1,13 +1,355 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-02T18:44:00+08:00"
+updated_at: "2026-05-03T14:07:52+08:00"
 updated_by: codex
 source_files:
   canonical: project-state.yaml
   roadmap: roadmap.md
   progress_log: changelog/progress-log.md
-current_focus: []
+current_focus:
+  - MEDIUM-P1-T01
 items:
+  - id: SCOPE-P1
+    title: Remove SCIM and SSO from product scope
+    type: epic
+    parent_id: null
+    status: complete
+    priority: high
+    mvp: true
+    description: Fully remove SCIM provisioning and SSO identity-provider flows so the project returns toward a medium-level internal ticketing app.
+    definition_of_done:
+      - SCIM and SSO routes, controllers, middleware, models, request classes, API bindings, and tests are removed.
+      - Existing and fresh database paths no longer keep SCIM/SSO tables or fields.
+      - Frontend settings, API helpers, types, and tests no longer expose identity-provider or provisioning-directory flows.
+      - Local login remains available for workspace users.
+      - Focused backend/frontend verification passes.
+    dependencies: []
+    notes:
+      - "2026-05-02: Removed SCIM and SSO routes/API surfaces, stripped local-login SSO blocking, removed identity-provider/provisioning UI, added cleanup migration for existing local databases, and kept non-SSO security policy controls."
+      - "2026-05-02: Added `pending` as a first-class ticket status and aligned new workspace roles to Admin, Agent, and Viewer."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - scope
+      - scim
+      - sso
+      - medium
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-02T22:52:00+08:00"
+    changed_at: "2026-05-02T22:52:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1
+    title: Medium Ticketing Completion
+    type: epic
+    parent_id: null
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Finish the product as a medium-level internal ticketing app focused on practical support workflows instead of enterprise identity scope.
+    definition_of_done:
+      - Ticket lifecycle, assignment, notifications, search/filtering, activity readability, roles, demo data, and README scope are complete.
+      - Customer-facing ticket creation and email notifications remain explicitly out of scope.
+      - Remaining enterprise features are reviewed separately before more implementation.
+      - Backend, frontend, and docs verification passes for completed child items.
+    dependencies:
+      - SCOPE-P1
+    notes:
+      - "2026-05-02: Roadmap created after scope decision. Customer-facing ticket creation is out of scope; in-app notifications are the first notification channel."
+      - "2026-05-02: `MEDIUM-P1-T01` and `MEDIUM-P1-T06` received first implementation slices during `SCOPE-P1`, but remain open until the full child definitions of done are verified in focused follow-up work."
+      - "2026-05-03: `MEDIUM-P1-T08` is complete after adding a root README for app purpose, reduced scope, setup, seeded accounts, roles, main flows, verification commands, and SCIM/SSO/email/customer portal boundaries."
+    incomplete_reason: "`MEDIUM-P1-T01` still needs final lifecycle UX review."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Complete `MEDIUM-P1-T01` final lifecycle UX review across queue, detail, forms, filters, bulk updates, and workflow status displays.
+    tags:
+      - roadmap
+      - medium
+      - tickets
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T14:07:52+08:00"
+    changed_at: "2026-05-03T14:07:52+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T01
+    title: Ticket lifecycle cleanup
+    type: feature
+    parent_id: MEDIUM-P1
+    status: incomplete
+    priority: high
+    mvp: true
+    description: Standardize the ticket lifecycle around open, in progress, pending, resolved, and closed.
+    definition_of_done:
+      - Backend validation, bulk update, workflow defaults, settings defaults, and tests support `pending`.
+      - Frontend ticket forms, filters, bulk controls, edit surfaces, workflow automation controls, and tests support `pending`.
+      - Ticket lifecycle labels are consistent across queue and detail pages.
+    dependencies:
+      - SCOPE-P1
+    notes:
+      - "2026-05-02: First implementation slice added `pending` to backend validation/default workflow and core frontend status controls."
+    incomplete_reason: "Initial status support is implemented, but a focused UX/lifecycle review is still needed to confirm labels and workflow behavior across every ticket surface."
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Review ticket queue/detail lifecycle labels and workflow transition behavior with seeded examples.
+    tags:
+      - tickets
+      - lifecycle
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-02T22:52:00+08:00"
+    changed_at: "2026-05-02T22:52:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T02
+    title: Assignee workflow clarity
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Make assigning and reassigning tickets clear from ticket list and ticket detail workflows.
+    definition_of_done:
+      - Ticket list and detail pages clearly show current assignee and unassigned state.
+      - Assign and reassign actions are easy to find and use.
+      - Assignment changes keep activity log coverage and workspace-member validation.
+    dependencies:
+      - MEDIUM-P1-T01
+    notes:
+      - "2026-05-03: Added explicit inline assignment controls to the ticket queue and ticket detail summary. Confirmed reassignment still uses workspace-member validation and added backend activity-log coverage for `ticket.assignee_changed` from/to metadata."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tickets
+      - assignment
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T06:38:00+08:00"
+    changed_at: "2026-05-03T06:38:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T03
+    title: In-app notifications
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Add in-app notifications for ticket assignment, comments, status changes, and important ticket updates.
+    definition_of_done:
+      - Notification records support read and unread state.
+      - Workspace users can view recent notifications in the app.
+      - Ticket assignment, comment, and status-change events create notifications.
+      - Email notifications remain deferred.
+    dependencies:
+      - MEDIUM-P1-T02
+    notes:
+      - "2026-05-02: User chose in-app notifications first; email is deferred."
+      - "2026-05-03: Added workspace notification storage/API, unread state, header dropdown UI, assignment/status/comment notification producers, and read/read-all actions. Email remains out of scope."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - notifications
+      - tickets
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T07:17:00+08:00"
+    changed_at: "2026-05-03T07:17:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T04
+    title: Search and filtering quality
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Improve ticket search, active-filter visibility, saved views, reset behavior, and empty states.
+    definition_of_done:
+      - Ticket search behavior is clear and tested.
+      - Active filters and saved-view state are easy to understand.
+      - Empty states explain whether there are no tickets or no matches.
+    dependencies:
+      - MEDIUM-P1-T01
+    notes:
+      - "2026-05-03: Search now includes customer name, email, and company. Queue filters include unassigned tickets, active filter labels, clearer saved-view state, reset behavior, and distinct empty states for no tickets vs no matching tickets."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tickets
+      - search
+      - filters
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T07:17:00+08:00"
+    changed_at: "2026-05-03T07:17:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T05
+    title: Ticket activity readability
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Make ticket history easier to read by translating technical activity events into user-friendly timeline text.
+    definition_of_done:
+      - Activity entries use plain labels for assignment, status, priority, comments, attachments, and lifecycle changes.
+      - Ticket detail activity avoids raw technical event names in the primary UI.
+      - Backend/frontend tests cover representative activity entries.
+    dependencies:
+      - MEDIUM-P1-T02
+    notes:
+      - "2026-05-03: Ticket activity now maps common technical event names to readable labels and details for status changes, assignment changes, comments, automation, approvals, and SLA events."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - tickets
+      - activity
+      - ux
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T07:17:00+08:00"
+    changed_at: "2026-05-03T07:17:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T06
+    title: Simple role set
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Use Admin, Agent, and Viewer as the intended workspace roles while keeping platform admin separate.
+    definition_of_done:
+      - New workspace bootstrap creates Admin, Agent, and Viewer roles.
+      - Demo seed data assigns users to the simple role set.
+      - Invitation/member UI and tests use the simple role names.
+      - Documentation explains role permissions clearly.
+    dependencies:
+      - SCOPE-P1
+    notes:
+      - "2026-05-02: First implementation slice changed new workspace bootstrap and demo seed roles to Admin, Agent, and Viewer."
+      - "2026-05-03: Added a seeded viewer account, kept invitation/member UI aligned with Admin/Agent/Viewer names, and documented role permissions in seeded credential docs."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - roles
+      - permissions
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T07:17:00+08:00"
+    changed_at: "2026-05-03T07:17:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T07
+    title: Demo data for full flow
+    type: feature
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Seed a realistic demo workspace showing customers, tickets in each lifecycle status, assignments, comments, and activity.
+    definition_of_done:
+      - Seeded data shows every ticket lifecycle status.
+      - Demo includes assigned and unassigned tickets.
+      - Demo includes comments and activity history.
+      - Seeded credential docs match the seeded users and roles.
+    dependencies:
+      - MEDIUM-P1-T01
+      - MEDIUM-P1-T06
+    notes:
+      - "2026-05-03: Demo seeder now creates customers, Admin/Agent/Viewer users, tickets across open/in_progress/pending/resolved/closed, assigned and unassigned tickets, comments, and activity history."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - demo
+      - seed-data
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T07:17:00+08:00"
+    changed_at: "2026-05-03T07:17:00+08:00"
+    changed_source: codex
+
+  - id: MEDIUM-P1-T08
+    title: Clean project README
+    type: doc
+    parent_id: MEDIUM-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Add a clean root README explaining purpose, scope, local setup, seeded accounts, roles, and main workflows.
+    definition_of_done:
+      - README states this is a medium internal ticketing app.
+      - README explains setup, seeded accounts, roles, and main user flows.
+      - README explicitly says customer-facing portal, email notifications, SCIM, and SSO are out of scope.
+      - README links to seeded credentials and relevant backend/frontend commands.
+    dependencies:
+      - MEDIUM-P1-T06
+      - MEDIUM-P1-T07
+    notes:
+      - "2026-05-03: Added root README covering app purpose, medium internal scope, local setup, seeded accounts, roles, main flows, verification commands, and SCIM/SSO/email/customer portal out-of-scope boundaries."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - docs
+      - onboarding
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-03T14:07:52+08:00"
+    changed_at: "2026-05-03T14:07:52+08:00"
+    changed_source: codex
+
+  - id: SCOPE-D01
+    title: Review remaining enterprise features
+    type: decision
+    parent_id: null
+    status: planned
+    priority: medium
+    mvp: false
+    description: Decide whether to keep, simplify, defer, or remove remaining enterprise features after SCIM/SSO removal.
+    definition_of_done:
+      - SLA policy UI, break-glass, tenant exports, retention, advanced automation, webhooks, and platform isolation are classified.
+      - Each feature has a keep, simplify, defer, or remove decision.
+      - Tracker is updated before implementation changes are made.
+    dependencies:
+      - SCOPE-P1
+    notes:
+      - "2026-05-02: User chose to remove only SCIM/SSO now and review the rest later."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Run a scope-review audit after `MEDIUM-P1` priorities are confirmed.
+    tags:
+      - scope
+      - decision
+      - enterprise
+    created_at: "2026-05-02T19:20:00+08:00"
+    updated_at: "2026-05-02T19:20:00+08:00"
+    changed_at: "2026-05-02T19:20:00+08:00"
+    changed_source: codex
+
   - id: REFACTOR-P1
     title: Laravel and React Standards Alignment
     type: refactor

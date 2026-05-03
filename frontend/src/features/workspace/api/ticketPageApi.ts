@@ -1,7 +1,7 @@
 import { apiRequest } from '@/services/api/client';
 import type { ApiPaginationMeta, Customer, Ticket } from '@/types/api';
 
-type MemberOption = {
+export type MemberOption = {
   id: number;
   user: {
     id: number;

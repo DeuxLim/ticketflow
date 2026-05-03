@@ -73,10 +73,10 @@ class WorkspaceSettingsPhaseOneTest extends TestCase
         ]);
     }
 
-    public function test_member_without_workspace_manage_cannot_update_general_settings(): void
+    public function test_viewer_without_workspace_manage_cannot_update_general_settings(): void
     {
         [$workspace] = $this->createWorkspaceAsOwner();
-        $member = $this->createMemberForRole($workspace['id'], 'member');
+        $member = $this->createMemberForRole($workspace['id'], 'viewer');
         Sanctum::actingAs($member);
 
         $this->patchJson("/api/workspaces/{$workspace['slug']}/settings/general", [
@@ -286,10 +286,10 @@ class WorkspaceSettingsPhaseOneTest extends TestCase
             ->assertJsonPath('data.is_active', false);
     }
 
-    public function test_member_without_tickets_manage_cannot_manage_ticket_config(): void
+    public function test_viewer_without_tickets_manage_cannot_manage_ticket_config(): void
     {
         [$workspace] = $this->createWorkspaceAsOwner();
-        $member = $this->createMemberForRole($workspace['id'], 'member');
+        $member = $this->createMemberForRole($workspace['id'], 'viewer');
         Sanctum::actingAs($member);
 
         $this->postJson("/api/workspaces/{$workspace['slug']}/ticket-queues", [

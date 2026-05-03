@@ -107,7 +107,7 @@ class TicketingBaseFunctionsTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_ticket_list_supports_status_customer_queue_and_category_filters(): void
+    public function test_ticket_list_supports_status_customer_queue_category_and_assignee_filters(): void
     {
         $owner = User::factory()->create();
         Sanctum::actingAs($owner);
@@ -142,7 +142,7 @@ class TicketingBaseFunctionsTest extends TestCase
             'title' => 'Filter Miss',
             'description' => 'Non-matching ticket',
             'priority' => 'medium',
-            'status' => 'resolved',
+            'status' => 'pending',
             'queue_key' => 'general',
             'category' => 'problem',
         ])->assertCreated();
@@ -151,6 +151,39 @@ class TicketingBaseFunctionsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
             ->assertJsonPath('data.0.id', $matchingTicket['id']);
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?assignee_id=unassigned")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 2);
+    }
+
+    public function test_ticket_list_search_includes_customer_fields(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Northwind Support',
+            'email' => 'northwind@example.com',
+            'company' => 'Northwind Traders',
+        ])->json('data');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Router offline',
+            'description' => 'Needs support',
+            'priority' => 'medium',
+        ])->assertCreated();
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/tickets?search=Northwind")
+            ->assertOk()
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.customer.name', 'Northwind Support');
     }
 
     public function test_customer_list_supports_search_filter(): void

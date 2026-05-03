@@ -17,6 +17,7 @@ use App\Models\TicketCustomFieldValue;
 use App\Models\TicketQueue;
 use App\Models\TicketWorkflow;
 use App\Models\Workspace;
+use App\Services\Notifications\WorkspaceNotificationService;
 use App\Services\Sla\SlaEngine;
 use App\Services\Tickets\AssignmentStrategyService;
 use App\Services\Webhooks\AutomationEngine;
@@ -32,9 +33,9 @@ class TicketController extends Controller
         private readonly SlaEngine $slaEngine,
         private readonly AssignmentStrategyService $assignmentStrategyService,
         private readonly AutomationEngine $automationEngine,
-        private readonly IntegrationEventPublisher $integrationEventPublisher
-    ) {
-    }
+        private readonly IntegrationEventPublisher $integrationEventPublisher,
+        private readonly WorkspaceNotificationService $notificationService
+    ) {}
 
     public function index(Request $request, Workspace $workspace): JsonResponse
     {
@@ -50,7 +51,12 @@ class TicketController extends Controller
             $query->where(function ($builder) use ($search): void {
                 $builder->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('ticket_number', 'like', "%{$search}%");
+                    ->orWhere('ticket_number', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($customerQuery) use ($search): void {
+                        $customerQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('company', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -70,7 +76,9 @@ class TicketController extends Controller
             $query->where('category', $category);
         }
 
-        if ($assigneeId = $request->integer('assignee_id')) {
+        if ($request->string('assignee_id')->toString() === 'unassigned') {
+            $query->whereNull('assigned_to_user_id');
+        } elseif ($assigneeId = $request->integer('assignee_id')) {
             $query->where('assigned_to_user_id', $assigneeId);
         }
 
@@ -136,6 +144,14 @@ class TicketController extends Controller
                     'from' => null,
                     'to' => $ticket->assigned_to_user_id,
                 ]);
+                $this->notificationService->notifyTicketAssignee(
+                    $ticket,
+                    $request->user()->id,
+                    "You were assigned {$ticket->ticket_number}",
+                    $ticket->title,
+                    'ticket.assigned',
+                    ['from' => null, 'to' => $ticket->assigned_to_user_id]
+                );
             }
 
             $this->slaEngine->applyPolicy($ticket);
@@ -224,6 +240,14 @@ class TicketController extends Controller
                 'from' => $originalStatus,
                 'to' => $ticket->status,
             ]);
+            $this->notificationService->notifyTicketStakeholders(
+                $ticket,
+                $request->user()->id,
+                "{$ticket->ticket_number} moved to ".str_replace('_', ' ', $ticket->status),
+                $ticket->title,
+                'ticket.status_changed',
+                ['from' => $originalStatus, 'to' => $ticket->status]
+            );
         }
 
         if ($ticket->assigned_to_user_id !== $originalAssignee) {
@@ -231,6 +255,14 @@ class TicketController extends Controller
                 'from' => $originalAssignee,
                 'to' => $ticket->assigned_to_user_id,
             ]);
+            $this->notificationService->notifyTicketAssignee(
+                $ticket,
+                $request->user()->id,
+                "You were assigned {$ticket->ticket_number}",
+                $ticket->title,
+                'ticket.assigned',
+                ['from' => $originalAssignee, 'to' => $ticket->assigned_to_user_id]
+            );
         }
 
         $this->slaEngine->markResolvedIfNeeded($ticket);
@@ -274,29 +306,29 @@ class TicketController extends Controller
             ->get();
 
         $activity = $logs->map(function (ActivityLog $log): array {
-                $meta = null;
-                if (is_string($log->meta) && $log->meta !== '') {
-                    $decoded = json_decode($log->meta, true);
-                    $meta = is_array($decoded) ? $decoded : null;
-                }
+            $meta = null;
+            if (is_string($log->meta) && $log->meta !== '') {
+                $decoded = json_decode($log->meta, true);
+                $meta = is_array($decoded) ? $decoded : null;
+            }
 
-                return [
-                    'id' => $log->id,
-                    'workspace_id' => $log->workspace_id,
-                    'user_id' => $log->user_id,
-                    'action' => $log->action,
-                    'subject_type' => $log->subject_type,
-                    'subject_id' => $log->subject_id,
-                    'meta' => $meta,
-                    'user' => $log->user ? [
-                        'id' => $log->user->id,
-                        'first_name' => $log->user->first_name,
-                        'last_name' => $log->user->last_name,
-                        'email' => $log->user->email,
-                    ] : null,
-                    'created_at' => $log->created_at,
-                ];
-            });
+            return [
+                'id' => $log->id,
+                'workspace_id' => $log->workspace_id,
+                'user_id' => $log->user_id,
+                'action' => $log->action,
+                'subject_type' => $log->subject_type,
+                'subject_id' => $log->subject_id,
+                'meta' => $meta,
+                'user' => $log->user ? [
+                    'id' => $log->user->id,
+                    'first_name' => $log->user->first_name,
+                    'last_name' => $log->user->last_name,
+                    'email' => $log->user->email,
+                ] : null,
+                'created_at' => $log->created_at,
+            ];
+        });
 
         $automationEvents = AutomationExecution::query()
             ->where('workspace_id', $workspace->id)
@@ -394,6 +426,9 @@ class TicketController extends Controller
                 ->get();
 
             foreach ($tickets as $ticket) {
+                $originalStatus = $ticket->status;
+                $originalAssignee = $ticket->assigned_to_user_id;
+
                 $ticket->fill($updates);
                 $ticket->save();
 
@@ -409,6 +444,36 @@ class TicketController extends Controller
                 }
 
                 ActivityLogger::log($workspace->id, $request->user()->id, 'ticket.bulk_updated', $ticket, $updates);
+
+                if ($ticket->status !== $originalStatus) {
+                    ActivityLogger::log($workspace->id, $request->user()->id, 'ticket.status_changed', $ticket, [
+                        'from' => $originalStatus,
+                        'to' => $ticket->status,
+                    ]);
+                    $this->notificationService->notifyTicketStakeholders(
+                        $ticket,
+                        $request->user()->id,
+                        "{$ticket->ticket_number} moved to ".str_replace('_', ' ', $ticket->status),
+                        $ticket->title,
+                        'ticket.status_changed',
+                        ['from' => $originalStatus, 'to' => $ticket->status, 'bulk' => true]
+                    );
+                }
+
+                if ($ticket->assigned_to_user_id !== $originalAssignee) {
+                    ActivityLogger::log($workspace->id, $request->user()->id, 'ticket.assignee_changed', $ticket, [
+                        'from' => $originalAssignee,
+                        'to' => $ticket->assigned_to_user_id,
+                    ]);
+                    $this->notificationService->notifyTicketAssignee(
+                        $ticket,
+                        $request->user()->id,
+                        "You were assigned {$ticket->ticket_number}",
+                        $ticket->title,
+                        'ticket.assigned',
+                        ['from' => $originalAssignee, 'to' => $ticket->assigned_to_user_id, 'bulk' => true]
+                    );
+                }
 
                 $this->integrationEventPublisher->publish($workspace, 'ticket.updated', [
                     'ticket_id' => $ticket->id,

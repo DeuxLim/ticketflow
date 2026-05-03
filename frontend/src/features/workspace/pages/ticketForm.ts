@@ -7,7 +7,7 @@ export const ticketFormSchema = z.object({
   customer_id: z.string().min(1, 'Select a customer'),
   title: z.string().min(3, 'Title is required'),
   description: z.string().min(5, 'Description is required'),
-  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
+  status: z.enum(['open', 'in_progress', 'pending', 'resolved', 'closed']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   assigned_to_user_id: z.string().optional().or(z.literal('')),
   category: z.string().optional().or(z.literal('')),

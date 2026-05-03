@@ -22,14 +22,14 @@ class WorkspaceMembersTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $viewerRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $agent = User::factory()->create(['email' => 'agent@example.com']);
@@ -44,7 +44,7 @@ class WorkspaceMembersTest extends TestCase
             ->json('data');
 
         $this->assertCount(2, $response);
-        $this->assertSame('owner', $response[0]['roles'][0]['slug']);
+        $this->assertSame('admin', $response[0]['roles'][0]['slug']);
     }
 
     public function test_member_without_permission_cannot_view_members_list(): void
@@ -57,14 +57,14 @@ class WorkspaceMembersTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $viewerRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $agent = User::factory()->create(['email' => 'agent@example.com']);
@@ -86,14 +86,14 @@ class WorkspaceMembersTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = DB::table('workspace_roles')
+        $viewerRoleId = DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $agent = User::factory()->create(['email' => 'agent@example.com']);
@@ -115,9 +115,9 @@ class WorkspaceMembersTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = DB::table('workspace_roles')
+        $viewerRoleId = DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $ticketsManagePermissionId = DB::table('workspace_permissions')
@@ -125,7 +125,7 @@ class WorkspaceMembersTest extends TestCase
             ->value('id');
 
         DB::table('workspace_role_permissions')->insert([
-            'workspace_role_id' => $memberRoleId,
+            'workspace_role_id' => $viewerRoleId,
             'workspace_permission_id' => $ticketsManagePermissionId,
             'created_at' => now(),
             'updated_at' => now(),
@@ -133,7 +133,7 @@ class WorkspaceMembersTest extends TestCase
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $agent = User::factory()->create(['email' => 'agent@example.com']);

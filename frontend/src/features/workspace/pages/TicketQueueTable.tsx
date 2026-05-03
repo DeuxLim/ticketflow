@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import type { MemberOption } from '@/features/workspace/api/ticketPageApi';
 import type { ApiPaginationMeta, Ticket } from '@/types/api';
 
 type TicketQueueTableProps = {
@@ -9,16 +11,20 @@ type TicketQueueTableProps = {
   tickets: Ticket[];
   isLoading: boolean;
   errorMessage: string | null;
+  hasActiveFilters: boolean;
   pagination?: ApiPaginationMeta;
   page: number;
   onPageChange: (page: number) => void;
   selectedTicketIds: number[];
   selectedVisibleTicketIds: number[];
   onSelectedTicketIdsChange: (ticketIds: number[]) => void;
+  members: MemberOption[];
   canManage: boolean;
   deletePending: boolean;
+  assignmentPendingTicketId: number | null;
   onEdit: (ticket: Ticket) => void;
   onDelete: (ticket: Ticket) => void;
+  onAssign: (ticket: Ticket, assigneeId: number | null) => void;
 };
 
 export function TicketQueueTable({
@@ -26,16 +32,20 @@ export function TicketQueueTable({
   tickets,
   isLoading,
   errorMessage,
+  hasActiveFilters,
   pagination,
   page,
   onPageChange,
   selectedTicketIds,
   selectedVisibleTicketIds,
   onSelectedTicketIdsChange,
+  members,
   canManage,
   deletePending,
+  assignmentPendingTicketId,
   onEdit,
   onDelete,
+  onAssign,
 }: TicketQueueTableProps) {
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Loading tickets...</p>;
@@ -46,7 +56,16 @@ export function TicketQueueTable({
   }
 
   if (tickets.length === 0) {
-    return <p className="text-sm text-muted-foreground">No tickets found for current filters.</p>;
+    return (
+      <div className="rounded-md border border-dashed p-6">
+        <p className="text-sm font-medium">{hasActiveFilters ? 'No tickets match these filters.' : 'No tickets yet.'}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {hasActiveFilters
+            ? 'Reset search or filters to return to the full queue.'
+            : 'Create the first ticket to start tracking support work.'}
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -105,7 +124,34 @@ export function TicketQueueTable({
                 </TableCell>
                 <TableCell>{ticket.customer?.name ?? '—'}</TableCell>
                 <TableCell>
-                  {ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'}
+                  {canManage ? (
+                    <Select
+                      disabled={assignmentPendingTicketId === ticket.id}
+                      onValueChange={(value) => onAssign(ticket, value === 'none' ? null : Number(value))}
+                      value={ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : 'none'}
+                    >
+                      <SelectTrigger aria-label={`Assign ${ticket.ticket_number}`} className="h-8 min-w-[180px]">
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">Unassigned</SelectItem>
+                          {ticket.assignee && !members.some((member) => member.user.id === ticket.assignee?.id) && (
+                            <SelectItem value={String(ticket.assignee.id)}>
+                              {ticket.assignee.first_name} {ticket.assignee.last_name}
+                            </SelectItem>
+                          )}
+                          {members.map((member) => (
+                            <SelectItem key={member.user.id} value={String(member.user.id)}>
+                              {member.user.first_name} {member.user.last_name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span>{ticket.assignee ? `${ticket.assignee.first_name} ${ticket.assignee.last_name}` : 'Unassigned'}</span>
+                  )}
                 </TableCell>
                 <TableCell><Badge variant="outline">{ticket.status}</Badge></TableCell>
                 <TableCell><Badge variant="secondary">{ticket.priority}</Badge></TableCell>

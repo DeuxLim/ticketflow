@@ -47,7 +47,6 @@ export type AdminDashboardStats = {
   suspended_workspaces_count: number;
   maintenance_workspaces_count: number;
   dedicated_workspaces_count: number;
-  stale_idp_certificates_count: number;
   failed_automation_executions_count: number;
   pending_break_glass_count: number;
 };
@@ -93,7 +92,7 @@ export type Ticket = {
   ticket_number: string;
   title: string;
   description: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  status: 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   first_response_due_at?: string | null;
   resolution_due_at?: string | null;
@@ -126,6 +125,26 @@ export type Ticket = {
   } | null;
   created_at?: string;
   updated_at?: string;
+};
+
+export type WorkspaceNotification = {
+  id: number;
+  workspace_id: number;
+  user_id: number;
+  ticket_id: number | null;
+  type: string;
+  title: string;
+  body: string | null;
+  data: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+  ticket: {
+    id: number;
+    ticket_number: string;
+    title: string;
+    status: Ticket['status'];
+    priority: Ticket['priority'];
+  } | null;
 };
 
 export type TicketWatcher = {
@@ -455,42 +474,12 @@ export type AuditEventRecord = {
 export type TenantSecurityPolicyConfig = {
   id: number;
   workspace_id: number;
-  require_sso: boolean;
   require_mfa: boolean;
   session_ttl_minutes: number;
   ip_allowlist: string[];
   tenant_mode: 'shared' | 'dedicated';
   dedicated_data_plane_key: string | null;
   feature_flags: Record<string, unknown>;
-};
-
-export type TenantIdentityProviderConfig = {
-  id: number;
-  workspace_id: number;
-  provider_type: 'saml' | 'oidc';
-  name: string;
-  issuer: string | null;
-  sso_url: string | null;
-  authorization_url: string | null;
-  token_url: string | null;
-  userinfo_url: string | null;
-  redirect_uri: string | null;
-  metadata_url: string | null;
-  x509_certificate: string | null;
-  client_id: string | null;
-  is_active: boolean;
-  certificate_expires_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-export type ProvisioningDirectoryRecord = {
-  id: number;
-  workspace_id: number;
-  name: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
 };
 
 export type WebhookEndpointRecord = {

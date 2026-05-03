@@ -97,8 +97,9 @@ export function TicketDetailsHeader({
 
 function nextStatuses(current: Ticket['status']): Ticket['status'][] {
   const map: Record<Ticket['status'], Ticket['status'][]> = {
-    open: ['in_progress', 'closed'],
-    in_progress: ['resolved', 'closed'],
+    open: ['in_progress', 'pending', 'closed'],
+    in_progress: ['pending', 'resolved', 'closed'],
+    pending: ['in_progress', 'resolved', 'closed'],
     resolved: ['closed', 'in_progress'],
     closed: ['in_progress'],
   };

@@ -62,16 +62,6 @@ class Workspace extends Model
         return $this->hasOne(TenantSecurityPolicy::class);
     }
 
-    public function identityProviders(): HasMany
-    {
-        return $this->hasMany(TenantIdentityProvider::class);
-    }
-
-    public function provisioningDirectories(): HasMany
-    {
-        return $this->hasMany(ProvisioningDirectory::class);
-    }
-
     public function slaPolicies(): HasMany
     {
         return $this->hasMany(SlaPolicy::class);

@@ -26,7 +26,7 @@ class WorkspaceRolesTest extends TestCase
             ->json('data');
 
         $this->assertCount(3, $response);
-        $this->assertSame('owner', $response[0]['slug']);
+        $this->assertSame('admin', $response[0]['slug']);
     }
 
     public function test_member_without_roles_manage_cannot_list_roles(): void
@@ -39,14 +39,14 @@ class WorkspaceRolesTest extends TestCase
             'slug' => 'acme-support',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $viewerRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $invitation = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $member = User::factory()->create(['email' => 'agent@example.com']);

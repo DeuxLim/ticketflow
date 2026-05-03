@@ -28,14 +28,14 @@ class TicketsAndCommentsTest extends TestCase
             'email' => 'jane@example.com',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'agent@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->json('data');
 
         $agent = User::factory()->create(['email' => 'agent@example.com']);
@@ -94,14 +94,14 @@ class TicketsAndCommentsTest extends TestCase
             'email' => 'jane@example.com',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $viewerRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'viewer')
             ->value('id');
 
         $invite = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'member@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $member = User::factory()->create(['email' => 'member@example.com']);
@@ -114,6 +114,120 @@ class TicketsAndCommentsTest extends TestCase
             'description' => 'No permission',
             'priority' => 'low',
         ])->assertForbidden();
+    }
+
+    public function test_reassigning_ticket_records_assignment_activity(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        $firstAgent = User::factory()->create();
+        $secondAgent = User::factory()->create();
+
+        foreach ([$firstAgent, $secondAgent] as $agent) {
+            \DB::table('workspace_memberships')->insert([
+                'workspace_id' => $workspace['id'],
+                'user_id' => $agent->id,
+                'joined_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $ticket = $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Assignment check',
+            'description' => 'Confirm reassignment logging.',
+            'priority' => 'medium',
+            'assigned_to_user_id' => $firstAgent->id,
+        ])->assertCreated()->json('data');
+
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/tickets/{$ticket['id']}", [
+            'assigned_to_user_id' => $secondAgent->id,
+        ])->assertOk()
+            ->assertJsonPath('data.assigned_to_user_id', $secondAgent->id);
+
+        $this->assertDatabaseHas('tickets', [
+            'id' => $ticket['id'],
+            'assigned_to_user_id' => $secondAgent->id,
+        ]);
+
+        $meta = \DB::table('activity_logs')
+            ->where('workspace_id', $workspace['id'])
+            ->where('action', 'ticket.assignee_changed')
+            ->latest('id')
+            ->value('meta');
+
+        $this->assertSame([
+            'from' => $firstAgent->id,
+            'to' => $secondAgent->id,
+        ], json_decode((string) $meta, true));
+
+        $this->assertDatabaseHas('workspace_notifications', [
+            'workspace_id' => $workspace['id'],
+            'user_id' => $secondAgent->id,
+            'ticket_id' => $ticket['id'],
+            'type' => 'ticket.assigned',
+            'read_at' => null,
+        ]);
+    }
+
+    public function test_user_can_list_and_read_workspace_notifications(): void
+    {
+        $owner = User::factory()->create();
+        Sanctum::actingAs($owner);
+
+        $workspace = $this->postJson('/api/workspaces', [
+            'name' => 'Acme',
+            'slug' => 'acme',
+        ])->json('data');
+
+        $customer = $this->postJson("/api/workspaces/{$workspace['slug']}/customers", [
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
+        ])->json('data');
+
+        $agent = User::factory()->create();
+        \DB::table('workspace_memberships')->insert([
+            'workspace_id' => $workspace['id'],
+            'user_id' => $agent->id,
+            'joined_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $ticket = $this->postJson("/api/workspaces/{$workspace['slug']}/tickets", [
+            'customer_id' => $customer['id'],
+            'title' => 'Notification check',
+            'description' => 'Confirm unread state.',
+            'priority' => 'medium',
+            'assigned_to_user_id' => $agent->id,
+        ])->assertCreated()->json('data');
+
+        Sanctum::actingAs($agent);
+        $notification = $this->getJson("/api/workspaces/{$workspace['slug']}/notifications")
+            ->assertOk()
+            ->assertJsonPath('meta.unread_count', 1)
+            ->assertJsonPath('data.0.ticket_id', $ticket['id'])
+            ->json('data.0');
+
+        $this->postJson("/api/workspaces/{$workspace['slug']}/notifications/{$notification['id']}/read")
+            ->assertOk()
+            ->assertJsonPath('data.read_at', fn ($value) => $value !== null);
+
+        $this->getJson("/api/workspaces/{$workspace['slug']}/notifications")
+            ->assertOk()
+            ->assertJsonPath('meta.unread_count', 0);
     }
 
     public function test_ticket_creation_rejects_customer_from_other_workspace(): void
@@ -168,19 +282,23 @@ class TicketsAndCommentsTest extends TestCase
             'priority' => 'medium',
         ])->json('data');
 
-        $memberRoleId = \DB::table('workspace_roles')
+        $agentRoleId = \DB::table('workspace_roles')
             ->where('workspace_id', $workspace['id'])
-            ->where('slug', 'member')
+            ->where('slug', 'agent')
+            ->value('id');
+        $viewerRoleId = \DB::table('workspace_roles')
+            ->where('workspace_id', $workspace['id'])
+            ->where('slug', 'viewer')
             ->value('id');
 
         $inviteA = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'author@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$agentRoleId],
         ])->json('data');
 
         $inviteB = $this->postJson("/api/workspaces/{$workspace['slug']}/invitations", [
             'email' => 'other@example.com',
-            'role_ids' => [$memberRoleId],
+            'role_ids' => [$viewerRoleId],
         ])->json('data');
 
         $author = User::factory()->create(['email' => 'author@example.com']);

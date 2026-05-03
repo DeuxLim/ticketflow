@@ -9,6 +9,7 @@ use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use App\Models\TicketComment;
 use App\Models\Workspace;
+use App\Services\Notifications\WorkspaceNotificationService;
 use App\Services\Sla\SlaEngine;
 use App\Services\Webhooks\AutomationEngine;
 use App\Services\Webhooks\IntegrationEventPublisher;
@@ -22,9 +23,9 @@ class TicketCommentController extends Controller
     public function __construct(
         private readonly SlaEngine $slaEngine,
         private readonly AutomationEngine $automationEngine,
-        private readonly IntegrationEventPublisher $integrationEventPublisher
-    ) {
-    }
+        private readonly IntegrationEventPublisher $integrationEventPublisher,
+        private readonly WorkspaceNotificationService $notificationService
+    ) {}
 
     public function index(Workspace $workspace, Ticket $ticket): JsonResponse
     {
@@ -87,6 +88,15 @@ class TicketCommentController extends Controller
             'ticket_id' => $ticket->id,
             'is_internal' => $comment->is_internal,
         ]);
+
+        $this->notificationService->notifyTicketStakeholders(
+            $ticket,
+            $request->user()->id,
+            "New comment on {$ticket->ticket_number}",
+            $ticket->title,
+            'ticket.comment_added',
+            ['comment_id' => $comment->id, 'is_internal' => $comment->is_internal]
+        );
 
         if (! $isInternal) {
             $this->slaEngine->markFirstResponseIfNeeded($ticket);
@@ -209,6 +219,7 @@ class TicketCommentController extends Controller
 
         if ($comment->is_internal) {
             abort_unless($canManage, 403, 'Only ticket managers can modify internal comments.');
+
             return;
         }
 

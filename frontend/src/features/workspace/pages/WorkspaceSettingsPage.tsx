@@ -66,7 +66,7 @@ export function WorkspaceSettingsPage() {
     <section className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Badge variant="secondary">Owner configuration</Badge>
+          <Badge variant="secondary">Admin configuration</Badge>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Workspace Settings</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Configure workspace identity, ticket dictionaries, forms, security, automation, and integrations.

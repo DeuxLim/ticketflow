@@ -10,6 +10,7 @@ import { clearAuthToken } from '@/lib/auth-session';
 import { setLastWorkspaceSlug } from '@/lib/workspace-session';
 import { apiRequest } from '@/services/api/client';
 import type { ApiEnvelope, Workspace } from '@/types/api';
+import { WorkspaceNotificationsMenu } from '@/features/workspace/components/WorkspaceNotificationsMenu';
 import {
   Sidebar,
   SidebarContent,
@@ -153,6 +154,7 @@ export function WorkspaceLayout() {
               </SelectContent>
             </Select>
           </div>
+          <WorkspaceNotificationsMenu workspaceSlug={workspaceSlug} />
           <Button variant="outline" size="sm" onClick={handleLogout} disabled={isLoggingOut}>
             {isLoggingOut ? 'Logging out…' : 'Log out'}
           </Button>

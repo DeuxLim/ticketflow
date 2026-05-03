@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table): void {
             $table->boolean('is_mfa_enrolled')->default(false)->after('is_platform_admin');
-            $table->timestamp('last_sso_at')->nullable()->after('is_mfa_enrolled');
         });
 
         Schema::table('workspaces', function (Blueprint $table): void {
@@ -24,56 +23,12 @@ return new class extends Migration
         Schema::create('tenant_security_policies', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->boolean('require_sso')->default(false);
             $table->boolean('require_mfa')->default(false);
             $table->integer('session_ttl_minutes')->default(720);
             $table->string('ip_allowlist')->nullable();
             $table->timestamps();
 
             $table->unique('workspace_id');
-        });
-
-        Schema::create('tenant_identity_providers', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->string('provider_type'); // saml | oidc
-            $table->string('name');
-            $table->string('issuer')->nullable();
-            $table->string('sso_url')->nullable();
-            $table->string('metadata_url')->nullable();
-            $table->text('x509_certificate')->nullable();
-            $table->string('client_id')->nullable();
-            $table->string('client_secret_encrypted')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('certificate_expires_at')->nullable();
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'provider_type']);
-            $table->index(['workspace_id', 'is_active']);
-        });
-
-        Schema::create('provisioning_directories', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->string('name');
-            $table->string('token_hash')->unique();
-            $table->string('status')->default('active');
-            $table->timestamp('last_synced_at')->nullable();
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'status']);
-        });
-
-        Schema::create('provisioned_directory_users', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('provisioning_directory_id')->constrained('provisioning_directories')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('external_id');
-            $table->boolean('active')->default(true);
-            $table->timestamps();
-
-            $table->unique(['provisioning_directory_id', 'external_id']);
-            $table->unique(['provisioning_directory_id', 'user_id']);
         });
 
         Schema::create('business_calendars', function (Blueprint $table): void {
@@ -279,7 +234,7 @@ return new class extends Migration
         });
 
         Schema::table('users', function (Blueprint $table): void {
-            $table->dropColumn(['is_mfa_enrolled', 'last_sso_at']);
+            $table->dropColumn(['is_mfa_enrolled']);
         });
     }
 };

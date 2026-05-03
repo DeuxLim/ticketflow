@@ -6,22 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   approveBreakGlassRequest,
-  createIdentityProvider,
-  createProvisioningDirectory,
   createBreakGlassRequest,
   createExport,
   createSlaPolicy,
   downloadExport,
-  deleteIdentityProvider,
   getTenantSecurityPolicy,
   getRetentionPolicy,
-  listIdentityProviders,
   listAuditEvents,
   listBreakGlassRequests,
   listExports,
-  listProvisioningDirectories,
   listSlaPolicies,
-  startOidcSso,
   updateTenantSecurityPolicy,
   updateRetentionPolicy,
 } from '@/features/workspace/api/settings-api';
@@ -38,8 +32,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const breakGlassQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'break-glass'], queryFn: () => listBreakGlassRequests(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
   const securityPolicyQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'security-policy'], queryFn: () => getTenantSecurityPolicy(workspaceSlug) });
-  const identityProvidersQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'identity-providers'], queryFn: () => listIdentityProviders(workspaceSlug) });
-  const provisioningDirectoriesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'provisioning-directories'], queryFn: () => listProvisioningDirectories(workspaceSlug) });
 
   const [ticketsDaysDraft, setTicketsDaysDraft] = useState<number | null>(null);
   const [commentsDaysDraft, setCommentsDaysDraft] = useState<number | null>(null);
@@ -53,7 +45,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
   const [slaFirstResponseMinutes, setSlaFirstResponseMinutes] = useState(30);
   const [slaResolutionMinutes, setSlaResolutionMinutes] = useState(240);
-  const [requireSsoDraft, setRequireSsoDraft] = useState<boolean | null>(null);
   const [requireMfaDraft, setRequireMfaDraft] = useState<boolean | null>(null);
   const [sessionTtlDraft, setSessionTtlDraft] = useState<number | null>(null);
   const [tenantModeDraft, setTenantModeDraft] = useState<'shared' | 'dedicated' | null>(null);
@@ -61,30 +52,12 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [ipAllowlistDraft, setIpAllowlistDraft] = useState<string | null>(null);
   const [isSecurityPolicyDialogOpen, setIsSecurityPolicyDialogOpen] = useState(false);
 
-  const [providerType, setProviderType] = useState<'saml' | 'oidc'>('oidc');
-  const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
-  const [providerName, setProviderName] = useState('');
-  const [providerIssuer, setProviderIssuer] = useState('');
-  const [providerSsoUrl, setProviderSsoUrl] = useState('');
-  const [providerAuthUrl, setProviderAuthUrl] = useState('');
-  const [providerTokenUrl, setProviderTokenUrl] = useState('');
-  const [providerRedirectUrl, setProviderRedirectUrl] = useState('');
-  const [providerClientId, setProviderClientId] = useState('');
-  const [providerClientSecret, setProviderClientSecret] = useState('');
-  const [lastOidcUrl, setLastOidcUrl] = useState<string | null>(null);
-  const [isDirectoryDialogOpen, setIsDirectoryDialogOpen] = useState(false);
-  const [directoryName, setDirectoryName] = useState('');
-  const [lastScimToken, setLastScimToken] = useState<string | null>(null);
-
   const policy = retentionQuery.data?.data;
   const securityPolicy = securityPolicyQuery.data?.data;
-  const providers = identityProvidersQuery.data?.data ?? [];
-  const directories = provisioningDirectoriesQuery.data?.data ?? [];
   const ticketsDays = ticketsDaysDraft ?? policy?.tickets_days ?? 365;
   const commentsDays = commentsDaysDraft ?? policy?.comments_days ?? 365;
   const attachmentsDays = attachmentsDaysDraft ?? policy?.attachments_days ?? 365;
   const auditDays = auditDaysDraft ?? policy?.audit_days ?? 730;
-  const requireSso = requireSsoDraft ?? securityPolicy?.require_sso ?? false;
   const requireMfa = requireMfaDraft ?? securityPolicy?.require_mfa ?? false;
   const sessionTtl = sessionTtlDraft ?? securityPolicy?.session_ttl_minutes ?? 720;
   const tenantMode = tenantModeDraft ?? securityPolicy?.tenant_mode ?? 'shared';
@@ -149,7 +122,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const saveSecurityPolicy = useMutation({
     mutationFn: () =>
       updateTenantSecurityPolicy(workspaceSlug, {
-        require_sso: requireSso,
         require_mfa: requireMfa,
         session_ttl_minutes: sessionTtl,
         tenant_mode: tenantMode,
@@ -160,7 +132,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
           .filter(Boolean),
       }),
     onSuccess: () => {
-      setRequireSsoDraft(null);
       setRequireMfaDraft(null);
       setSessionTtlDraft(null);
       setTenantModeDraft(null);
@@ -171,54 +142,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
     },
   });
 
-  const createProvider = useMutation({
-    mutationFn: () =>
-      createIdentityProvider(workspaceSlug, {
-        provider_type: providerType,
-        name: providerName.trim(),
-        issuer: providerIssuer.trim() || null,
-        sso_url: providerSsoUrl.trim() || null,
-        authorization_url: providerAuthUrl.trim() || null,
-        token_url: providerTokenUrl.trim() || null,
-        redirect_uri: providerRedirectUrl.trim() || null,
-        client_id: providerClientId.trim() || null,
-        client_secret: providerClientSecret.trim() || null,
-        is_active: true,
-      }),
-    onSuccess: () => {
-      setProviderName('');
-      setProviderIssuer('');
-      setProviderSsoUrl('');
-      setProviderAuthUrl('');
-      setProviderTokenUrl('');
-      setProviderRedirectUrl('');
-      setProviderClientId('');
-      setProviderClientSecret('');
-      setIsProviderDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'identity-providers'] });
-    },
-  });
-
-  const removeProvider = useMutation({
-    mutationFn: (providerId: number) => deleteIdentityProvider(workspaceSlug, providerId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'identity-providers'] }),
-  });
-
-  const startOidc = useMutation({
-    mutationFn: (providerId: number) => startOidcSso(workspaceSlug, providerId),
-    onSuccess: (response) => setLastOidcUrl(response.data.authorization_url),
-  });
-
-  const createDirectory = useMutation({
-    mutationFn: () => createProvisioningDirectory(workspaceSlug, directoryName.trim()),
-    onSuccess: (response) => {
-      setDirectoryName('');
-      setIsDirectoryDialogOpen(false);
-      setLastScimToken(response.meta?.token ?? null);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'provisioning-directories'] });
-    },
-  });
-
   const exports = exportsQuery.data?.data ?? [];
   const slaPolicies = slaPoliciesQuery.data?.data ?? [];
   const breakGlass = breakGlassQuery.data?.data ?? [];
@@ -226,262 +149,168 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
 
   return (
     <>
-    <div className="grid gap-5 xl:grid-cols-2">
-      <Card className="shadow-none">
-        <CardHeader>
-          <Badge variant="secondary" className="w-fit">Governance</Badge>
-          <CardTitle>Retention and export</CardTitle>
-          <CardDescription>Define retention windows and generate tenant-scoped compliance exports.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3 rounded-md border p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Retention policy</p>
-                <p className="text-xs text-muted-foreground">Review how long workspace data is retained before changing policy windows.</p>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card className="shadow-none">
+          <CardHeader>
+            <Badge variant="secondary" className="w-fit">Governance</Badge>
+            <CardTitle>Retention and export</CardTitle>
+            <CardDescription>Define retention windows and generate tenant-scoped compliance exports.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3 rounded-md border p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Retention policy</p>
+                  <p className="text-xs text-muted-foreground">Review how long workspace data is retained before changing policy windows.</p>
+                </div>
+                <Button size="sm" variant="outline" type="button" onClick={() => setIsRetentionDialogOpen(true)}>
+                  Edit retention
+                </Button>
               </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsRetentionDialogOpen(true)}>
-                Edit retention
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Tickets</p>
-                <p className="font-medium">{ticketsDays} days</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Comments</p>
-                <p className="font-medium">{commentsDays} days</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Attachments</p>
-                <p className="font-medium">{attachmentsDays} days</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Audit</p>
-                <p className="font-medium">{auditDays} days</p>
+              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+                <PolicyMetric label="Tickets" value={`${ticketsDays} days`} />
+                <PolicyMetric label="Comments" value={`${commentsDays} days`} />
+                <PolicyMetric label="Attachments" value={`${attachmentsDays} days`} />
+                <PolicyMetric label="Audit" value={`${auditDays} days`} />
               </div>
             </div>
-          </div>
 
-          <div className="rounded-md border p-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium">Tenant exports</p>
-              <Button size="sm" variant="outline" onClick={() => requestExport.mutate()}>Create export</Button>
-            </div>
-            <div className="mt-3 flex flex-col gap-2 text-xs">
-              {exports.length === 0 ? (
-                <p className="text-muted-foreground">No exports requested yet.</p>
-              ) : (
-                exports.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                    <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={!item.download_token}
-                      onClick={() => {
-                        if (!item.download_token) return;
-                        void downloadExport(workspaceSlug, item.id, item.download_token);
-                      }}
-                    >
-                      Download
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-md border p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">SLA policies</p>
-                <p className="text-xs text-muted-foreground">Review response targets before creating another policy.</p>
+            <div className="rounded-md border p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium">Tenant exports</p>
+                <Button size="sm" variant="outline" onClick={() => requestExport.mutate()}>Create export</Button>
               </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsSlaDialogOpen(true)}>
-                Create SLA policy
-              </Button>
-            </div>
-            <div className="flex flex-col gap-2 text-xs">
-              {slaPolicies.length === 0 ? (
-                <p className="text-muted-foreground">No SLA policies configured.</p>
-              ) : (
-                slaPolicies.slice(0, 6).map((policy) => (
-                  <p key={policy.id}>
-                    {policy.name} • {policy.priority} • first response {policy.first_response_minutes}m • resolution {policy.resolution_minutes}m
-                  </p>
-                ))
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-none">
-        <CardHeader>
-          <CardTitle>Break-glass and audit</CardTitle>
-          <CardDescription>Request emergency elevated access and inspect privileged actions.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-5">
-          <div className="flex flex-col gap-3 rounded-md border p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Break-glass requests</p>
-                <p className="text-xs text-muted-foreground">Request emergency access only for time-sensitive incidents.</p>
-              </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsBreakGlassDialogOpen(true)}>
-                Request access
-              </Button>
-            </div>
-            <div className="flex flex-col gap-2 text-xs">
-              {breakGlass.length === 0 ? (
-                <p className="text-muted-foreground">No emergency access requests.</p>
-              ) : (
-                breakGlass.slice(0, 5).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                    <p>{item.status} • #{item.id} • {new Date(item.created_at).toLocaleString()}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={item.status !== 'pending' || approveBreakGlass.isPending}
-                      onClick={() => approveBreakGlass.mutate(item.id)}
-                    >
-                      {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
-                    </Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-md border p-3">
-            <p className="text-sm font-medium">Recent privileged audit events</p>
-            <div className="mt-2 flex flex-col gap-2 text-xs">
-              {audits.length === 0 ? (
-                <p className="text-muted-foreground">No privileged audit events yet.</p>
-              ) : (
-                audits.slice(0, 8).map((event) => (
-                  <p key={event.id}>
-                    {event.action} • {event.resource_type}#{event.resource_id ?? 'n/a'}
-                  </p>
-                ))
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-none xl:col-span-2">
-        <CardHeader>
-          <Badge variant="secondary" className="w-fit">Security</Badge>
-          <CardTitle>Access policy and identity</CardTitle>
-          <CardDescription>Manage workspace access guardrails, SSO providers, and SCIM provisioning directories.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-5 lg:grid-cols-2">
-          <div className="flex flex-col gap-4 rounded-md border p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Tenant security policy</p>
-                <p className="text-xs text-muted-foreground">Review active access guardrails before changing enforcement rules.</p>
-              </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsSecurityPolicyDialogOpen(true)}>
-                Edit policy
-              </Button>
-            </div>
-            <div className="grid gap-2 text-xs sm:grid-cols-2">
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">SSO required</p>
-                <p className="font-medium">{requireSso ? 'Yes' : 'No'}</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">MFA required</p>
-                <p className="font-medium">{requireMfa ? 'Yes' : 'No'}</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Session TTL</p>
-                <p className="font-medium">{sessionTtl} minutes</p>
-              </div>
-              <div className="rounded border p-2">
-                <p className="text-muted-foreground">Tenant mode</p>
-                <p className="font-medium">{tenantMode}</p>
-              </div>
-              <div className="rounded border p-2 sm:col-span-2">
-                <p className="text-muted-foreground">IP allowlist</p>
-                <p className="font-medium">{ipAllowlist.trim() ? `${ipAllowlist.split('\n').filter(Boolean).length} entries` : 'No restrictions'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4 rounded-md border p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Identity providers</p>
-                <p className="text-xs text-muted-foreground">Review configured SSO endpoints before adding another provider.</p>
-              </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsProviderDialogOpen(true)}>
-                Add provider
-              </Button>
-            </div>
-            <div className="flex flex-col gap-2 text-xs">
-              {providers.length === 0 ? (
-                <p className="text-muted-foreground">No identity providers configured.</p>
-              ) : (
-                providers.map((provider) => (
-                  <div key={provider.id} className="rounded border p-2">
-                    <p className="font-medium">{provider.name} ({provider.provider_type})</p>
-                    <p className="text-muted-foreground">{provider.issuer ?? provider.authorization_url ?? provider.sso_url ?? 'no endpoint configured'}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {provider.provider_type === 'oidc' && (
-                        <Button size="sm" variant="outline" onClick={() => startOidc.mutate(provider.id)}>
-                          Start OIDC
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" onClick={() => removeProvider.mutate(provider.id)} disabled={removeProvider.isPending}>
-                        Delete
+              <div className="mt-3 flex flex-col gap-2 text-xs">
+                {exports.length === 0 ? (
+                  <p className="text-muted-foreground">No exports requested yet.</p>
+                ) : (
+                  exports.slice(0, 5).map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                      <p>{item.status} - #{item.id} - {new Date(item.created_at).toLocaleString()}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!item.download_token}
+                        onClick={() => {
+                          if (!item.download_token) return;
+                          void downloadExport(workspaceSlug, item.id, item.download_token);
+                        }}
+                      >
+                        Download
                       </Button>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {lastOidcUrl && (
-              <a className="text-xs underline" href={lastOidcUrl} rel="noreferrer" target="_blank">
-                Open latest OIDC authorization URL
-              </a>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-4 rounded-md border p-3 lg:col-span-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">SCIM provisioning directories</p>
-                <p className="text-xs text-muted-foreground">Create directories only when you are ready to store the one-time SCIM token.</p>
+                  ))
+                )}
               </div>
-              <Button size="sm" variant="outline" type="button" onClick={() => setIsDirectoryDialogOpen(true)}>
-                Create directory
-              </Button>
             </div>
-            {lastScimToken && (
-              <p className="rounded border p-2 text-xs text-muted-foreground">
-                Latest SCIM token (shown once): {lastScimToken}
-              </p>
-            )}
-            <div className="flex flex-col gap-2 text-xs">
-              {directories.length === 0 ? (
-                <p className="text-muted-foreground">No SCIM directories configured.</p>
-              ) : (
-                directories.map((directory) => (
-                  <p key={directory.id}>
-                    {directory.name} • {directory.status} • {new Date(directory.created_at).toLocaleString()}
-                  </p>
-                ))
-              )}
+
+            <div className="flex flex-col gap-3 rounded-md border p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">SLA policies</p>
+                  <p className="text-xs text-muted-foreground">Review response targets before creating another policy.</p>
+                </div>
+                <Button size="sm" variant="outline" type="button" onClick={() => setIsSlaDialogOpen(true)}>
+                  Create SLA policy
+                </Button>
+              </div>
+              <div className="flex flex-col gap-2 text-xs">
+                {slaPolicies.length === 0 ? (
+                  <p className="text-muted-foreground">No SLA policies configured.</p>
+                ) : (
+                  slaPolicies.slice(0, 6).map((policy) => (
+                    <p key={policy.id}>
+                      {policy.name} - {policy.priority} - first response {policy.first_response_minutes}m - resolution {policy.resolution_minutes}m
+                    </p>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none">
+          <CardHeader>
+            <CardTitle>Break-glass and audit</CardTitle>
+            <CardDescription>Request emergency elevated access and inspect privileged actions.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3 rounded-md border p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Break-glass requests</p>
+                  <p className="text-xs text-muted-foreground">Request emergency access only for time-sensitive incidents.</p>
+                </div>
+                <Button size="sm" variant="outline" type="button" onClick={() => setIsBreakGlassDialogOpen(true)}>
+                  Request access
+                </Button>
+              </div>
+              <div className="flex flex-col gap-2 text-xs">
+                {breakGlass.length === 0 ? (
+                  <p className="text-muted-foreground">No emergency access requests.</p>
+                ) : (
+                  breakGlass.slice(0, 5).map((item) => (
+                    <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
+                      <p>{item.status} - #{item.id} - {new Date(item.created_at).toLocaleString()}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={item.status !== 'pending' || approveBreakGlass.isPending}
+                        onClick={() => approveBreakGlass.mutate(item.id)}
+                      >
+                        {approveBreakGlass.isPending ? 'Approving...' : 'Approve'}
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-md border p-3">
+              <p className="text-sm font-medium">Recent privileged audit events</p>
+              <div className="mt-2 flex flex-col gap-2 text-xs">
+                {audits.length === 0 ? (
+                  <p className="text-muted-foreground">No privileged audit events yet.</p>
+                ) : (
+                  audits.slice(0, 8).map((event) => (
+                    <p key={event.id}>
+                      {event.action} - {event.resource_type}#{event.resource_id ?? 'n/a'}
+                    </p>
+                  ))
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-none xl:col-span-2">
+          <CardHeader>
+            <Badge variant="secondary" className="w-fit">Security</Badge>
+            <CardTitle>Access policy</CardTitle>
+            <CardDescription>Manage workspace access guardrails and trusted network restrictions.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 rounded-md border p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-medium">Tenant security policy</p>
+                  <p className="text-xs text-muted-foreground">Review active access guardrails before changing enforcement rules.</p>
+                </div>
+                <Button size="sm" variant="outline" type="button" onClick={() => setIsSecurityPolicyDialogOpen(true)}>
+                  Edit policy
+                </Button>
+              </div>
+              <div className="grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                <PolicyMetric label="MFA required" value={requireMfa ? 'Yes' : 'No'} />
+                <PolicyMetric label="Session TTL" value={`${sessionTtl} minutes`} />
+                <PolicyMetric label="Tenant mode" value={tenantMode} />
+                <PolicyMetric label="IP allowlist" value={ipAllowlist.trim() ? `${ipAllowlist.split('\n').filter(Boolean).length} entries` : 'No restrictions'} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <GovernanceSettingsDialogs
         isRetentionDialogOpen={isRetentionDialogOpen}
         onRetentionDialogOpenChange={setIsRetentionDialogOpen}
@@ -498,13 +327,11 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         saveRetentionError={saveRetention.isError ? (saveRetention.error as Error).message : null}
         isSecurityPolicyDialogOpen={isSecurityPolicyDialogOpen}
         onSecurityPolicyDialogOpenChange={setIsSecurityPolicyDialogOpen}
-        requireSso={requireSso}
         requireMfa={requireMfa}
         sessionTtl={sessionTtl}
         tenantMode={tenantMode}
         dataPlaneKey={dataPlaneKey}
         ipAllowlist={ipAllowlist}
-        setRequireSsoDraft={setRequireSsoDraft}
         setRequireMfaDraft={setRequireMfaDraft}
         setSessionTtlDraft={setSessionTtlDraft}
         setTenantModeDraft={setTenantModeDraft}
@@ -531,35 +358,16 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         setBreakGlassReason={setBreakGlassReason}
         onRequestBreakGlass={() => requestBreakGlass.mutate()}
         requestBreakGlassPending={requestBreakGlass.isPending}
-        isProviderDialogOpen={isProviderDialogOpen}
-        onProviderDialogOpenChange={setIsProviderDialogOpen}
-        providerType={providerType}
-        providerName={providerName}
-        providerIssuer={providerIssuer}
-        providerSsoUrl={providerSsoUrl}
-        providerAuthUrl={providerAuthUrl}
-        providerTokenUrl={providerTokenUrl}
-        providerRedirectUrl={providerRedirectUrl}
-        providerClientId={providerClientId}
-        providerClientSecret={providerClientSecret}
-        setProviderType={setProviderType}
-        setProviderName={setProviderName}
-        setProviderIssuer={setProviderIssuer}
-        setProviderSsoUrl={setProviderSsoUrl}
-        setProviderAuthUrl={setProviderAuthUrl}
-        setProviderTokenUrl={setProviderTokenUrl}
-        setProviderRedirectUrl={setProviderRedirectUrl}
-        setProviderClientId={setProviderClientId}
-        setProviderClientSecret={setProviderClientSecret}
-        onCreateProvider={() => createProvider.mutate()}
-        createProviderPending={createProvider.isPending}
-        isDirectoryDialogOpen={isDirectoryDialogOpen}
-        onDirectoryDialogOpenChange={setIsDirectoryDialogOpen}
-        directoryName={directoryName}
-        setDirectoryName={setDirectoryName}
-        onCreateDirectory={() => createDirectory.mutate()}
-        createDirectoryPending={createDirectory.isPending}
       />
     </>
+  );
+}
+
+function PolicyMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border p-2">
+      <p className="text-muted-foreground">{label}</p>
+      <p className="font-medium">{value}</p>
+    </div>
   );
 }

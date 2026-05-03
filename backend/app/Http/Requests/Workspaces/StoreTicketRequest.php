@@ -21,7 +21,7 @@ class StoreTicketRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:10000'],
             'priority' => ['required', 'in:low,medium,high,urgent'],
-            'status' => ['nullable', 'in:open,in_progress,resolved,closed'],
+            'status' => ['nullable', 'in:open,in_progress,pending,resolved,closed'],
             'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'queue_key' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
