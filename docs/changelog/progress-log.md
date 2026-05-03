@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-05-03 19:39 +08:00 - Hid Retention Policy UI
+
+- Completed `SCOPE-P2-T04`.
+- Removed retention policy metrics, edit action, query, mutation, and dialog wiring from Governance settings.
+- Left backend retention endpoints dormant for a later cleanup decision.
+- Updated docs to state retention is deferred and hidden from the main UI.
+
+Verification:
+- Ran `npm test -- GovernanceSettingsSection.test.tsx settings-api.test.ts --run` from `frontend/`.
+- Ran `npm run lint` from `frontend/`.
+- Ran `npm run build` from `frontend/`.
+
+## Resume From Here
+
+Continue with `SCOPE-P2-T05` to simplify automation rule creation away from raw JSON editing.
+
 ## 2026-05-03 19:36 +08:00 - Hid Tenant Exports
 
 - Completed `SCOPE-P2-T03`.

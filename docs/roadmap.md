@@ -48,15 +48,15 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 - Status: `in_progress`
 - Priority: medium
 - Scope: Implement the `SCOPE-D01` decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
-- Current state: in progress. SLA is now presented as optional ticket timing targets, break-glass has been removed, and tenant exports are hidden from the main UI. Remaining decisions are defer retention, simplify automation, defer webhooks, and simplify platform isolation language.
-- Next actions: continue with `SCOPE-P2-T04` to defer or hide retention policy UI.
+- Current state: in progress. SLA is now presented as optional ticket timing targets, break-glass has been removed, and tenant exports plus retention editing are hidden from the main UI. Remaining decisions are simplify automation, defer webhooks, and simplify platform isolation language.
+- Next actions: continue with `SCOPE-P2-T05` to simplify automation rule creation away from raw JSON editing.
 
 #### Child Items
 
 - `SCOPE-P2-T01` Simplify SLA language and placement - `complete`
 - `SCOPE-P2-T02` Remove break-glass feature - `complete`
 - `SCOPE-P2-T03` Defer or hide tenant exports - `complete`
-- `SCOPE-P2-T04` Defer or hide retention policy UI - `planned`
+- `SCOPE-P2-T04` Defer or hide retention policy UI - `complete`
 - `SCOPE-P2-T05` Simplify automation rule builder - `planned`
 - `SCOPE-P2-T06` Defer or hide webhooks - `planned`
 - `SCOPE-P2-T07` Simplify platform isolation language - `planned`
@@ -243,4 +243,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue with `SCOPE-P2-T04` to defer or hide retention policy UI.
+Continue with `SCOPE-P2-T05` to simplify automation rule creation away from raw JSON editing.

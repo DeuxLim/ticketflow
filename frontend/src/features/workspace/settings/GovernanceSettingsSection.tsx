@@ -7,11 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   createSlaPolicy,
   getTenantSecurityPolicy,
-  getRetentionPolicy,
   listAuditEvents,
   listSlaPolicies,
   updateTenantSecurityPolicy,
-  updateRetentionPolicy,
 } from '@/features/workspace/api/settings-api';
 
 type GovernanceSettingsSectionProps = {
@@ -20,16 +18,10 @@ type GovernanceSettingsSectionProps = {
 
 export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsSectionProps) {
   const queryClient = useQueryClient();
-  const retentionQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'retention-policy'], queryFn: () => getRetentionPolicy(workspaceSlug) });
   const slaPoliciesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'sla-policies'], queryFn: () => listSlaPolicies(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
   const securityPolicyQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'security-policy'], queryFn: () => getTenantSecurityPolicy(workspaceSlug) });
 
-  const [ticketsDaysDraft, setTicketsDaysDraft] = useState<number | null>(null);
-  const [commentsDaysDraft, setCommentsDaysDraft] = useState<number | null>(null);
-  const [attachmentsDaysDraft, setAttachmentsDaysDraft] = useState<number | null>(null);
-  const [auditDaysDraft, setAuditDaysDraft] = useState<number | null>(null);
-  const [isRetentionDialogOpen, setIsRetentionDialogOpen] = useState(false);
   const [isSlaDialogOpen, setIsSlaDialogOpen] = useState(false);
   const [slaName, setSlaName] = useState('Default timing target');
   const [slaPriority, setSlaPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
@@ -42,35 +34,12 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const [ipAllowlistDraft, setIpAllowlistDraft] = useState<string | null>(null);
   const [isSecurityPolicyDialogOpen, setIsSecurityPolicyDialogOpen] = useState(false);
 
-  const policy = retentionQuery.data?.data;
   const securityPolicy = securityPolicyQuery.data?.data;
-  const ticketsDays = ticketsDaysDraft ?? policy?.tickets_days ?? 365;
-  const commentsDays = commentsDaysDraft ?? policy?.comments_days ?? 365;
-  const attachmentsDays = attachmentsDaysDraft ?? policy?.attachments_days ?? 365;
-  const auditDays = auditDaysDraft ?? policy?.audit_days ?? 730;
   const requireMfa = requireMfaDraft ?? securityPolicy?.require_mfa ?? false;
   const sessionTtl = sessionTtlDraft ?? securityPolicy?.session_ttl_minutes ?? 720;
   const tenantMode = tenantModeDraft ?? securityPolicy?.tenant_mode ?? 'shared';
   const dataPlaneKey = dataPlaneKeyDraft ?? securityPolicy?.dedicated_data_plane_key ?? '';
   const ipAllowlist = ipAllowlistDraft ?? (securityPolicy?.ip_allowlist ?? []).join('\n');
-
-  const saveRetention = useMutation({
-    mutationFn: () =>
-      updateRetentionPolicy(workspaceSlug, {
-        tickets_days: ticketsDays,
-        comments_days: commentsDays,
-        attachments_days: attachmentsDays,
-        audit_days: auditDays,
-      }),
-    onSuccess: () => {
-      setTicketsDaysDraft(null);
-      setCommentsDaysDraft(null);
-      setAttachmentsDaysDraft(null);
-      setAuditDaysDraft(null);
-      setIsRetentionDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'retention-policy'] });
-    },
-  });
 
   const createSlaPolicyMutation = useMutation({
     mutationFn: () =>
@@ -123,28 +92,10 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         <Card className="shadow-none">
           <CardHeader>
             <Badge variant="secondary" className="w-fit">Governance</Badge>
-            <CardTitle>Retention and timing</CardTitle>
-            <CardDescription>Review data retention windows and ticket timing targets.</CardDescription>
+            <CardTitle>Ticket timing</CardTitle>
+            <CardDescription>Review optional ticket timing targets.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3 rounded-md border p-3">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm font-medium">Retention policy</p>
-                  <p className="text-xs text-muted-foreground">Review how long workspace data is retained before changing policy windows.</p>
-                </div>
-                <Button size="sm" variant="outline" type="button" onClick={() => setIsRetentionDialogOpen(true)}>
-                  Edit retention
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
-                <PolicyMetric label="Tickets" value={`${ticketsDays} days`} />
-                <PolicyMetric label="Comments" value={`${commentsDays} days`} />
-                <PolicyMetric label="Attachments" value={`${attachmentsDays} days`} />
-                <PolicyMetric label="Audit" value={`${auditDays} days`} />
-              </div>
-            </div>
-
             <div className="flex flex-col gap-3 rounded-md border p-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -224,19 +175,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
       </div>
 
       <GovernanceSettingsDialogs
-        isRetentionDialogOpen={isRetentionDialogOpen}
-        onRetentionDialogOpenChange={setIsRetentionDialogOpen}
-        ticketsDays={ticketsDays}
-        commentsDays={commentsDays}
-        attachmentsDays={attachmentsDays}
-        auditDays={auditDays}
-        setTicketsDaysDraft={setTicketsDaysDraft}
-        setCommentsDaysDraft={setCommentsDaysDraft}
-        setAttachmentsDaysDraft={setAttachmentsDaysDraft}
-        setAuditDaysDraft={setAuditDaysDraft}
-        onSaveRetention={() => saveRetention.mutate()}
-        saveRetentionPending={saveRetention.isPending}
-        saveRetentionError={saveRetention.isError ? (saveRetention.error as Error).message : null}
         isSecurityPolicyDialogOpen={isSecurityPolicyDialogOpen}
         onSecurityPolicyDialogOpenChange={setIsSecurityPolicyDialogOpen}
         requireMfa={requireMfa}

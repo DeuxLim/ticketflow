@@ -34,7 +34,7 @@ Some enterprise-style features still exist and were reviewed in `docs/scope/ente
 
 - ticket timing target UI, still stored as SLA internally
 - tenant exports, deferred and hidden from the main UI
-- retention policies
+- retention policies, deferred and hidden from the main UI
 - advanced automation
 - webhooks
 - platform isolation
@@ -332,7 +332,7 @@ Enterprise-style features pending simplification or removal:
 - automation
 - webhooks
 - audit events
-- retention
+- retention, deferred and hidden from the main UI
 - exports, deferred and hidden from the main UI
 
 ## 9. Frontend Architecture
@@ -537,7 +537,7 @@ Workflow and enterprise-style models:
 - `WebhookEndpoint`
 - `WebhookDelivery`
 - `AuditEvent`
-- `RetentionPolicy`
+- `RetentionPolicy`, backend-only while retention UI is deferred
 - `TenantExport`, backend-only while exports are deferred
 - `TenantSecurityPolicy`
 
@@ -806,7 +806,7 @@ Before extending these areas, follow the `SCOPE-D01` decisions and implement the
 
 - ticket timing targets, still stored as SLA internally
 - exports, deferred and hidden from the main UI
-- retention
+- retention, deferred and hidden from the main UI
 - automation
 - webhooks
 - platform isolation

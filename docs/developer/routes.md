@@ -232,6 +232,8 @@ GET   /workspaces/{workspace}/exports/{export}/download
 
 These export endpoints are backend-only for now. The main workspace UI hides tenant exports because compliance export workflows are deferred from the medium-ticketing scope.
 
+Retention endpoints are also backend-only for now. The main workspace UI hides retention policy editing because purge and compliance retention workflows are deferred from the medium-ticketing scope.
+
 ## SLA, Workflow, Approvals, and Automation
 
 SLA:

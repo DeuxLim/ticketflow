@@ -7,21 +7,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GovernanceSettingsSection } from './GovernanceSettingsSection';
 import {
   createSlaPolicy,
-  getRetentionPolicy,
   getTenantSecurityPolicy,
   listAuditEvents,
   listSlaPolicies,
-  updateRetentionPolicy,
   updateTenantSecurityPolicy,
 } from '@/features/workspace/api/settings-api';
 
 vi.mock('@/features/workspace/api/settings-api', () => ({
   createSlaPolicy: vi.fn(),
-  getRetentionPolicy: vi.fn(),
   getTenantSecurityPolicy: vi.fn(),
   listAuditEvents: vi.fn(),
   listSlaPolicies: vi.fn(),
-  updateRetentionPolicy: vi.fn(),
   updateTenantSecurityPolicy: vi.fn(),
 }));
 
@@ -52,9 +48,6 @@ describe('GovernanceSettingsSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.mocked(getRetentionPolicy).mockResolvedValue({
-      data: { tickets_days: 365, comments_days: 365, attachments_days: 365, audit_days: 730 },
-    } as never);
     vi.mocked(listSlaPolicies).mockResolvedValue({ data: [] } as never);
     vi.mocked(listAuditEvents).mockResolvedValue({ data: [] } as never);
     vi.mocked(getTenantSecurityPolicy).mockResolvedValue({
@@ -69,34 +62,15 @@ describe('GovernanceSettingsSection', () => {
         feature_flags: {},
       },
     } as never);
-    vi.mocked(updateRetentionPolicy).mockResolvedValue({ data: {} } as never);
     vi.mocked(createSlaPolicy).mockResolvedValue({ data: {} } as never);
   });
 
-  it('updates retention policy from a focused dialog', async () => {
+  it('hides deferred retention controls from governance settings', async () => {
     renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
 
     expect(screen.queryByLabelText('Tickets (days)')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Edit retention' }));
-    const dialog = within(await screen.findByRole('dialog'));
-    fireEvent.change(dialog.getByLabelText('Tickets (days)'), { target: { value: '400' } });
-    fireEvent.change(dialog.getByLabelText('Comments (days)'), { target: { value: '365' } });
-    fireEvent.change(dialog.getByLabelText('Attachments (days)'), { target: { value: '180' } });
-    fireEvent.change(dialog.getByLabelText('Audit (days)'), { target: { value: '900' } });
-    fireEvent.click(dialog.getByRole('button', { name: 'Save retention policy' }));
-
-    await waitFor(() => {
-      expect(updateRetentionPolicy).toHaveBeenCalledWith('acme', {
-        tickets_days: 400,
-        comments_days: 365,
-        attachments_days: 180,
-        audit_days: 900,
-      });
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
+    expect(screen.queryByRole('button', { name: 'Edit retention' })).toBeNull();
+    expect(screen.queryByText('Retention policy')).toBeNull();
   });
 
   it('shows security policy save error message on failure', async () => {

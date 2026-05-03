@@ -103,7 +103,7 @@ Decision: defer.
 Current state:
 
 - Backend stores retention windows for tickets, comments, attachments, and audit records.
-- Frontend governance settings can edit the policy.
+- Frontend governance settings no longer show retention policy editing.
 - There is no complete purge lifecycle in the medium scope.
 
 Why defer:
@@ -116,6 +116,7 @@ Recommended follow-up:
 - Keep the data model only if it is harmless.
 - Hide or de-emphasize the UI unless retention becomes a product requirement.
 - Do not build purge jobs yet.
+- 2026-05-03 update: retention controls were hidden from the main Governance settings UI; backend policy endpoints remain dormant for a later cleanup decision.
 
 ### Advanced Automation
 
