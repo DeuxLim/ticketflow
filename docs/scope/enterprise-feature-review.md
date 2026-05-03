@@ -83,7 +83,7 @@ Current state:
 
 - Backend can create a tenant export record and a temporary download token.
 - Export result currently returns counts and metadata, not a full portable data archive.
-- Frontend governance settings can create and view exports.
+- Frontend governance settings no longer show tenant export controls.
 
 Why defer:
 
@@ -94,6 +94,7 @@ Recommended follow-up:
 
 - Hide or remove export UI from the main product until there is a real export requirement.
 - Do not extend export formats or download behavior now.
+- 2026-05-03 update: export controls were hidden from the main Governance settings UI; backend endpoints remain dormant for a later cleanup decision.
 
 ### Retention
 

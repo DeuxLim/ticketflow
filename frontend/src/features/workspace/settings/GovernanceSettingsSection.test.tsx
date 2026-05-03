@@ -6,26 +6,20 @@ import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GovernanceSettingsSection } from './GovernanceSettingsSection';
 import {
-  createExport,
   createSlaPolicy,
-  downloadExport,
   getRetentionPolicy,
   getTenantSecurityPolicy,
   listAuditEvents,
-  listExports,
   listSlaPolicies,
   updateRetentionPolicy,
   updateTenantSecurityPolicy,
 } from '@/features/workspace/api/settings-api';
 
 vi.mock('@/features/workspace/api/settings-api', () => ({
-  createExport: vi.fn(),
   createSlaPolicy: vi.fn(),
-  downloadExport: vi.fn(),
   getRetentionPolicy: vi.fn(),
   getTenantSecurityPolicy: vi.fn(),
   listAuditEvents: vi.fn(),
-  listExports: vi.fn(),
   listSlaPolicies: vi.fn(),
   updateRetentionPolicy: vi.fn(),
   updateTenantSecurityPolicy: vi.fn(),
@@ -50,18 +44,6 @@ function renderWithQueryClient(ui: ReactElement) {
   );
 }
 
-function getEnabledButtonByName(name: string): HTMLButtonElement {
-  const button = screen
-    .getAllByRole('button', { name })
-    .find((item) => !item.hasAttribute('disabled'));
-
-  if (!button) {
-    throw new Error(`No enabled button found with name: ${name}`);
-  }
-
-  return button as HTMLButtonElement;
-}
-
 describe('GovernanceSettingsSection', () => {
   afterEach(() => {
     cleanup();
@@ -73,7 +55,6 @@ describe('GovernanceSettingsSection', () => {
     vi.mocked(getRetentionPolicy).mockResolvedValue({
       data: { tickets_days: 365, comments_days: 365, attachments_days: 365, audit_days: 730 },
     } as never);
-    vi.mocked(listExports).mockResolvedValue({ data: [] } as never);
     vi.mocked(listSlaPolicies).mockResolvedValue({ data: [] } as never);
     vi.mocked(listAuditEvents).mockResolvedValue({ data: [] } as never);
     vi.mocked(getTenantSecurityPolicy).mockResolvedValue({
@@ -89,9 +70,7 @@ describe('GovernanceSettingsSection', () => {
       },
     } as never);
     vi.mocked(updateRetentionPolicy).mockResolvedValue({ data: {} } as never);
-    vi.mocked(createExport).mockResolvedValue({ data: {} } as never);
     vi.mocked(createSlaPolicy).mockResolvedValue({ data: {} } as never);
-    vi.mocked(downloadExport).mockResolvedValue(undefined);
   });
 
   it('updates retention policy from a focused dialog', async () => {
@@ -132,22 +111,6 @@ describe('GovernanceSettingsSection', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Security policy save failed.')).not.toBeNull();
-    });
-  });
-
-  it('calls export download actions', async () => {
-    vi.mocked(listExports).mockResolvedValue({
-      data: [{ id: 5, status: 'completed', download_token: 'tok-123', created_at: '2026-04-17T00:00:00Z' }],
-    } as never);
-
-    renderWithQueryClient(<GovernanceSettingsSection workspaceSlug="acme" />);
-
-    await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: 'Download' }).length).toBeGreaterThan(0);
-    });
-    fireEvent.click(getEnabledButtonByName('Download'));
-    await waitFor(() => {
-      expect(downloadExport).toHaveBeenCalledWith('acme', 5, 'tok-123');
     });
   });
 

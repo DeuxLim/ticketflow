@@ -5,13 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  createExport,
   createSlaPolicy,
-  downloadExport,
   getTenantSecurityPolicy,
   getRetentionPolicy,
   listAuditEvents,
-  listExports,
   listSlaPolicies,
   updateTenantSecurityPolicy,
   updateRetentionPolicy,
@@ -25,7 +22,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
   const queryClient = useQueryClient();
   const retentionQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'retention-policy'], queryFn: () => getRetentionPolicy(workspaceSlug) });
   const slaPoliciesQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'sla-policies'], queryFn: () => listSlaPolicies(workspaceSlug) });
-  const exportsQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'exports'], queryFn: () => listExports(workspaceSlug) });
   const auditQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'audit-events'], queryFn: () => listAuditEvents(workspaceSlug) });
   const securityPolicyQuery = useQuery({ queryKey: ['workspace', workspaceSlug, 'security-policy'], queryFn: () => getTenantSecurityPolicy(workspaceSlug) });
 
@@ -76,11 +72,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
     },
   });
 
-  const requestExport = useMutation({
-    mutationFn: () => createExport(workspaceSlug, ['tickets', 'comments', 'attachments', 'audit']),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspace', workspaceSlug, 'exports'] }),
-  });
-
   const createSlaPolicyMutation = useMutation({
     mutationFn: () =>
       createSlaPolicy(workspaceSlug, {
@@ -123,7 +114,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
     },
   });
 
-  const exports = exportsQuery.data?.data ?? [];
   const slaPolicies = slaPoliciesQuery.data?.data ?? [];
   const audits = auditQuery.data?.data ?? [];
 
@@ -133,8 +123,8 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
         <Card className="shadow-none">
           <CardHeader>
             <Badge variant="secondary" className="w-fit">Governance</Badge>
-            <CardTitle>Retention and export</CardTitle>
-            <CardDescription>Define retention windows and generate tenant-scoped compliance exports.</CardDescription>
+            <CardTitle>Retention and timing</CardTitle>
+            <CardDescription>Review data retention windows and ticket timing targets.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="flex flex-col gap-3 rounded-md border p-3">
@@ -152,35 +142,6 @@ export function GovernanceSettingsSection({ workspaceSlug }: GovernanceSettingsS
                 <PolicyMetric label="Comments" value={`${commentsDays} days`} />
                 <PolicyMetric label="Attachments" value={`${attachmentsDays} days`} />
                 <PolicyMetric label="Audit" value={`${auditDays} days`} />
-              </div>
-            </div>
-
-            <div className="rounded-md border p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium">Tenant exports</p>
-                <Button size="sm" variant="outline" onClick={() => requestExport.mutate()}>Create export</Button>
-              </div>
-              <div className="mt-3 flex flex-col gap-2 text-xs">
-                {exports.length === 0 ? (
-                  <p className="text-muted-foreground">No exports requested yet.</p>
-                ) : (
-                  exports.slice(0, 5).map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-2 rounded border p-2">
-                      <p>{item.status} - #{item.id} - {new Date(item.created_at).toLocaleString()}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!item.download_token}
-                        onClick={() => {
-                          if (!item.download_token) return;
-                          void downloadExport(workspaceSlug, item.id, item.download_token);
-                        }}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  ))
-                )}
               </div>
             </div>
 
