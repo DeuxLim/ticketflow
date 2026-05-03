@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`SCOPE-D01` Review remaining enterprise features
+`SCOPE-P2` Simplify remaining enterprise features
 
 ## MVP Items
 
@@ -37,11 +37,29 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ### `SCOPE-D01` Review remaining enterprise features
 
-- Status: `planned`
+- Status: `complete`
 - Priority: medium
 - Scope: Decide whether to keep, simplify, defer, or remove remaining enterprise features after SCIM/SSO removal.
-- Current state: user chose to remove only SCIM/SSO now and review the rest later.
-- Next actions: review SLA policy UI, break-glass, tenant exports, retention, advanced automation, webhooks, and platform isolation after `MEDIUM-P1` priorities are confirmed.
+- Current state: complete after classifying the remaining enterprise features in `docs/scope/enterprise-feature-review.md`.
+- Next actions: implement the decisions under `SCOPE-P2`.
+
+### `SCOPE-P2` Simplify remaining enterprise features
+
+- Status: `planned`
+- Priority: medium
+- Scope: Implement the `SCOPE-D01` decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
+- Current state: planned after decision review. Decisions are: simplify SLA, remove break-glass, defer tenant exports, defer retention, simplify automation, defer webhooks, and simplify platform isolation language.
+- Next actions: start with `SCOPE-P2-T01` to simplify SLA language and placement, or `SCOPE-P2-T02` to remove break-glass first if reducing scope is preferred.
+
+#### Child Items
+
+- `SCOPE-P2-T01` Simplify SLA language and placement - `planned`
+- `SCOPE-P2-T02` Remove break-glass feature - `planned`
+- `SCOPE-P2-T03` Defer or hide tenant exports - `planned`
+- `SCOPE-P2-T04` Defer or hide retention policy UI - `planned`
+- `SCOPE-P2-T05` Simplify automation rule builder - `planned`
+- `SCOPE-P2-T06` Defer or hide webhooks - `planned`
+- `SCOPE-P2-T07` Simplify platform isolation language - `planned`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
@@ -225,4 +243,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue with `SCOPE-D01` to review remaining enterprise features and decide what to keep, simplify, defer, or remove.
+Continue with `SCOPE-P2` to implement the enterprise-scope simplification decisions.

@@ -29,7 +29,7 @@ Out of scope:
 - SCIM provisioning
 - SSO through SAML or OIDC
 
-Some enterprise-style features still exist and are pending review:
+Some enterprise-style features still exist and were reviewed in `docs/scope/enterprise-feature-review.md`:
 
 - SLA policy UI
 - break-glass access
@@ -39,7 +39,7 @@ Some enterprise-style features still exist and are pending review:
 - webhooks
 - platform isolation
 
-The tracker item for that review is `SCOPE-D01`.
+The implementation follow-up is tracked under `SCOPE-P2`.
 
 ## 2. Tech Stack
 
@@ -803,7 +803,7 @@ frontend/src/features/workspace/api/notificationsApi.ts
 
 The current app has more than the medium-ticketing core because earlier enterprise-style features still exist.
 
-Before extending these areas, finish `SCOPE-D01`:
+Before extending these areas, follow the `SCOPE-D01` decisions and implement the cleanup under `SCOPE-P2`:
 
 - SLA
 - break-glass
