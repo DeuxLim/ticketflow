@@ -48,8 +48,8 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 - Status: `in_progress`
 - Priority: medium
 - Scope: Implement the `SCOPE-D01` decisions so the app presents a simpler medium-level ticketing surface while avoiding new enterprise scope.
-- Current state: in progress. SLA is now presented as optional ticket timing targets, break-glass has been removed, tenant exports plus retention editing are hidden from the main UI, and automation creation uses simple ticket-focused controls. Remaining decisions are defer webhooks and simplify platform isolation language.
-- Next actions: continue with `SCOPE-P2-T06` to defer or hide webhooks.
+- Current state: in progress. SLA is now presented as optional ticket timing targets, break-glass has been removed, tenant exports plus retention editing are hidden from the main UI, automation creation uses simple ticket-focused controls, and webhooks are hidden from the main UI. Remaining decision is simplify platform isolation language.
+- Next actions: continue with `SCOPE-P2-T07` to simplify platform isolation language.
 
 #### Child Items
 
@@ -58,7 +58,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 - `SCOPE-P2-T03` Defer or hide tenant exports - `complete`
 - `SCOPE-P2-T04` Defer or hide retention policy UI - `complete`
 - `SCOPE-P2-T05` Simplify automation rule builder - `complete`
-- `SCOPE-P2-T06` Defer or hide webhooks - `planned`
+- `SCOPE-P2-T06` Defer or hide webhooks - `complete`
 - `SCOPE-P2-T07` Simplify platform isolation language - `planned`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
@@ -243,4 +243,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue with `SCOPE-P2-T06` to defer or hide webhooks.
+Continue with `SCOPE-P2-T07` to simplify platform isolation language.
