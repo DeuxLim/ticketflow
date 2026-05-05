@@ -1,12 +1,13 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-03T19:47:59+08:00"
+updated_at: "2026-05-05T19:35:43+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus: []
+current_focus:
+  - RELEASE-P1
 items:
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
@@ -597,6 +598,167 @@ items:
     created_at: "2026-05-03T14:52:11+08:00"
     updated_at: "2026-05-03T19:47:59+08:00"
     changed_at: "2026-05-03T19:47:59+08:00"
+    changed_source: codex
+
+  - id: RELEASE-P1
+    title: Release readiness and dormant backend cleanup
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Prepare the simplified medium ticketing app for a cleaner release by auditing and resolving dormant backend surfaces left after enterprise-scope UI removal.
+    definition_of_done:
+      - Dormant tenant export, retention policy, and webhook backend surfaces are audited against the medium-ticketing scope.
+      - Each dormant surface has a keep-hidden, remove, or defer decision recorded before code changes.
+      - Approved cleanup changes are implemented without reintroducing enterprise UI scope.
+      - README, scope docs, roadmap, and progress log match the final release scope.
+      - Backend and frontend verification passes after cleanup.
+    dependencies:
+      - SCOPE-P2
+    notes:
+      - "2026-05-05: Created as the next active focus after all tracked `SCOPE-P2` cleanup items were completed. Start with an audit before removing dormant backend code."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Audit tenant export, retention policy, and webhook backend routes/controllers/models/tests.
+      - Record keep-hidden, remove, or defer decisions for each dormant surface.
+      - Implement the approved cleanup in focused child tasks.
+      - Run backend/frontend verification and sync docs.
+    tags:
+      - release
+      - cleanup
+      - scope
+      - backend
+    created_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:35:43+08:00"
+    changed_source: codex
+
+  - id: RELEASE-P1-T01
+    title: Audit dormant enterprise backend surfaces
+    type: task
+    parent_id: RELEASE-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Inventory the backend routes, controllers, models, migrations, tests, frontend API helpers, and docs for tenant exports, retention policies, and webhooks.
+    definition_of_done:
+      - Tenant export backend and frontend API remnants are listed with file paths.
+      - Retention policy backend and frontend API remnants are listed with file paths.
+      - Webhook backend and frontend API remnants are listed with file paths.
+      - The audit separates harmless hidden code from code that should be removed before release.
+    dependencies:
+      - RELEASE-P1
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Search route definitions, controllers, models, migrations, factories, tests, API clients, and docs for export, retention, and webhook surfaces.
+    tags:
+      - release
+      - audit
+      - backend
+    created_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:35:43+08:00"
+    changed_source: codex
+
+  - id: RELEASE-P1-T02
+    title: Decide cleanup scope for dormant surfaces
+    type: decision
+    parent_id: RELEASE-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Decide whether tenant exports, retention policies, and webhooks should be removed, kept hidden, or deferred as backend-only code before release cleanup starts.
+    definition_of_done:
+      - Each audited surface has one decision: remove, keep hidden, or defer.
+      - Decisions explain the release-scope reason in beginner-friendly language.
+      - Follow-up implementation tasks are adjusted to match the decisions.
+    dependencies:
+      - RELEASE-P1-T01
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Review the audit results and record one release-scope decision per dormant surface.
+    tags:
+      - release
+      - decision
+      - scope
+    created_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:35:43+08:00"
+    changed_source: codex
+
+  - id: RELEASE-P1-T03
+    title: Implement approved dormant-surface cleanup
+    type: task
+    parent_id: RELEASE-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Apply the approved cleanup decisions for dormant tenant export, retention policy, and webhook surfaces without expanding product scope.
+    definition_of_done:
+      - Removed surfaces no longer have active routes, controllers, UI/API helpers, or tests.
+      - Kept-hidden surfaces remain inaccessible from the main product UI and are documented clearly.
+      - Database migrations remain safe for existing local databases.
+      - Related backend and frontend tests are updated.
+    dependencies:
+      - RELEASE-P1-T02
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Implement only the cleanup approved in `RELEASE-P1-T02`.
+    tags:
+      - release
+      - cleanup
+      - backend
+      - frontend
+    created_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:35:43+08:00"
+    changed_source: codex
+
+  - id: RELEASE-P1-T04
+    title: Verify release readiness and sync docs
+    type: task
+    parent_id: RELEASE-P1
+    status: planned
+    priority: high
+    mvp: true
+    description: Run the final verification pass for release readiness and update documentation to match the simplified product scope.
+    definition_of_done:
+      - Backend formatting and tests pass.
+      - Frontend lint, build, and tests pass.
+      - README and scope docs reflect the final supported and deferred features.
+      - Roadmap and progress log are synchronized with completed release-readiness work.
+    dependencies:
+      - RELEASE-P1-T03
+    notes: []
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: true
+    next_actions:
+      - Run the full closeout verification stack after cleanup implementation.
+    tags:
+      - release
+      - verification
+      - docs
+    created_at: "2026-05-05T19:35:43+08:00"
+    updated_at: "2026-05-05T19:35:43+08:00"
+    changed_at: "2026-05-05T19:35:43+08:00"
     changed_source: codex
 
   - id: REFACTOR-P1

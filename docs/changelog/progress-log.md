@@ -2353,3 +2353,17 @@ Verification:
 ## Resume From Here
 
 Continue `REFACTOR-P1` by extracting another small mutation group or support dialog wiring group from `TicketDetailsPage.tsx`.
+
+## 2026-05-05 19:35 +08:00 - Created Release Readiness Focus
+
+- Added `RELEASE-P1` as the active roadmap focus.
+- Scoped the next work around release readiness and dormant backend cleanup after `SCOPE-P2` simplified the visible product surface.
+- Added child tasks for auditing dormant enterprise backend surfaces, deciding cleanup scope, implementing approved cleanup, and verifying/syncing docs.
+- Set `current_focus` to `RELEASE-P1`.
+
+Verification:
+- Tracker and roadmap were updated only; no product code was changed.
+
+## Resume From Here
+
+Start `RELEASE-P1-T01`: audit dormant tenant export, retention policy, and webhook backend routes, controllers, models, migrations, tests, frontend API helpers, and docs before making cleanup changes.

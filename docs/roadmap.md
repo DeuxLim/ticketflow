@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-No active focus. `SCOPE-P2` is complete.
+`RELEASE-P1` is active. Start with `RELEASE-P1-T01`, an audit of dormant tenant export, retention policy, and webhook backend surfaces before any cleanup code changes.
 
 ## MVP Items
 
@@ -60,6 +60,21 @@ No active focus. `SCOPE-P2` is complete.
 - `SCOPE-P2-T05` Simplify automation rule builder - `complete`
 - `SCOPE-P2-T06` Defer or hide webhooks - `complete`
 - `SCOPE-P2-T07` Simplify platform isolation language - `complete`
+
+### `RELEASE-P1` Release readiness and dormant backend cleanup
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Prepare the simplified medium ticketing app for a cleaner release by auditing and resolving dormant backend surfaces left after enterprise-scope UI removal.
+- Current state: active focus. Created after `SCOPE-P2` completed because tenant exports, retention policies, and webhooks are hidden from the main UI but still need a backend release-readiness decision.
+- Next actions: start `RELEASE-P1-T01` by auditing tenant export, retention policy, and webhook backend routes, controllers, models, migrations, tests, frontend API helpers, and docs.
+
+#### Child Items
+
+- `RELEASE-P1-T01` Audit dormant enterprise backend surfaces - `planned`
+- `RELEASE-P1-T02` Decide cleanup scope for dormant surfaces - `planned`
+- `RELEASE-P1-T03` Implement approved dormant-surface cleanup - `planned`
+- `RELEASE-P1-T04` Verify release readiness and sync docs - `planned`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
@@ -243,4 +258,4 @@ No active focus. `SCOPE-P2` is complete.
 
 ## Resume From Here
 
-All tracked `SCOPE-P2` cleanup items are complete. Pick the next roadmap focus before starting new implementation.
+Start `RELEASE-P1-T01`: audit dormant tenant export, retention policy, and webhook backend surfaces before making release cleanup changes.
