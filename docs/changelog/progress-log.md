@@ -2387,3 +2387,24 @@ Commit/push:
 ## Resume From Here
 
 Continue `RELEASE-P1-T02`: record cleanup-scope decisions for tenant export, retention policy, and webhook backend surfaces before implementation.
+
+## 2026-05-05 19:43 +08:00 - Completed Dormant Surface Cleanup Decisions
+
+- Added `docs/release/dormant-backend-surface-decisions.md`.
+- Recorded the release decision to remove dormant tenant export, retention policy, and webhook API/backend surfaces.
+- Preserved in-scope boundaries: automation, audit events, in-app notifications, ticket timing targets, tenant security policy controls, and the deferred Integrations UI message.
+- Marked `RELEASE-P1-T02` complete and moved `RELEASE-P1-T03` to in progress.
+
+Verification:
+- Documentation/tracker update only; no product code was changed.
+
+Progress:
+- `RELEASE-P1`: 2/4 tasks complete, 50%.
+- Remaining tasks: 2.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+Continue `RELEASE-P1-T03`: remove approved dormant tenant export, retention policy, and webhook API/backend surfaces.
