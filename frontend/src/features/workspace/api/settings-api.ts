@@ -1,17 +1,13 @@
-import { apiDownload, apiRequest } from '@/services/api/client';
+import { apiRequest } from '@/services/api/client';
 import type {
   ApprovalRecord,
   ApiEnvelope,
   AuditEventRecord,
   AutomationExecutionLog,
   AutomationRuleConfig,
-  RetentionPolicyConfig,
   SavedViewRecord,
   SlaPolicyConfig,
-  TenantExportRecord,
   TenantSecurityPolicyConfig,
-  WebhookDeliveryRecord,
-  WebhookEndpointRecord,
   TicketWorkflowConfig,
   TicketCategoryConfig,
   TicketCustomFieldConfig,
@@ -291,33 +287,6 @@ export function rejectApproval(workspaceSlug: string, approvalId: number, reason
   });
 }
 
-export function getRetentionPolicy(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<RetentionPolicyConfig>>(`/workspaces/${workspaceSlug}/retention-policies`);
-}
-
-export function updateRetentionPolicy(workspaceSlug: string, payload: Partial<RetentionPolicyConfig>) {
-  return apiRequest<ApiEnvelope<RetentionPolicyConfig>>(`/workspaces/${workspaceSlug}/retention-policies`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  });
-}
-
-export function listExports(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<TenantExportRecord[]>>(`/workspaces/${workspaceSlug}/exports`);
-}
-
-export function createExport(workspaceSlug: string, include: string[]) {
-  return apiRequest<ApiEnvelope<TenantExportRecord>>(`/workspaces/${workspaceSlug}/exports`, {
-    method: 'POST',
-    body: JSON.stringify({ include }),
-  });
-}
-
-export function downloadExport(workspaceSlug: string, exportId: number, token: string) {
-  const encodedToken = encodeURIComponent(token);
-  return apiDownload(`/workspaces/${workspaceSlug}/exports/${exportId}/download?token=${encodedToken}`, `tenant-export-${exportId}.json`);
-}
-
 export function listSavedViews(workspaceSlug: string) {
   return apiRequest<ApiEnvelope<SavedViewRecord[]>>(`/workspaces/${workspaceSlug}/saved-views`);
 }
@@ -365,44 +334,5 @@ export function createSlaPolicy(workspaceSlug: string, payload: {
   return apiRequest<ApiEnvelope<SlaPolicyConfig>>(`/workspaces/${workspaceSlug}/sla-policies`, {
     method: 'POST',
     body: JSON.stringify(payload),
-  });
-}
-
-type CreateWebhookEndpointPayload = {
-  name: string;
-  url: string;
-  secret: string;
-  events: string[];
-  is_active?: boolean;
-};
-
-type WebhookDeliveriesResponse = {
-  data: WebhookDeliveryRecord[];
-  meta: {
-    current_page: number;
-    last_page: number;
-    total: number;
-  };
-};
-
-export function listWebhookEndpoints(workspaceSlug: string) {
-  return apiRequest<ApiEnvelope<WebhookEndpointRecord[]>>(`/workspaces/${workspaceSlug}/webhooks`);
-}
-
-export function createWebhookEndpoint(workspaceSlug: string, payload: CreateWebhookEndpointPayload) {
-  return apiRequest<ApiEnvelope<WebhookEndpointRecord>>(`/workspaces/${workspaceSlug}/webhooks`, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-export function listWebhookDeliveries(workspaceSlug: string) {
-  return apiRequest<WebhookDeliveriesResponse>(`/workspaces/${workspaceSlug}/webhook-deliveries`);
-}
-
-export function retryWebhookDelivery(workspaceSlug: string, deliveryId: number) {
-  return apiRequest<ApiEnvelope<WebhookDeliveryRecord>>(`/workspaces/${workspaceSlug}/webhook-deliveries/${deliveryId}/retry`, {
-    method: 'POST',
-    body: JSON.stringify({}),
   });
 }

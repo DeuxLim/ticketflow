@@ -2408,3 +2408,27 @@ Commit/push:
 ## Resume From Here
 
 Continue `RELEASE-P1-T03`: remove approved dormant tenant export, retention policy, and webhook API/backend surfaces.
+
+## 2026-05-05 19:51 +08:00 - Removed Dormant Release Surfaces
+
+- Removed tenant export, retention policy, webhook endpoint/delivery, and integration-event API/backend support.
+- Removed frontend API helpers/types/tests for the removed surfaces.
+- Added a cleanup migration for existing local databases and removed the tables from fresh-install migrations.
+- Updated developer docs and the visible Integrations deferred message to say the APIs are removed from release scope.
+- Marked `RELEASE-P1-T03` complete and moved `RELEASE-P1-T04` to in progress.
+
+Verification:
+- `backend`: `php artisan test --filter=EnterpriseFoundationTest`, 6 tests / 28 assertions passed.
+- `backend`: `php artisan test --filter=EnterpriseRemainingFoundationTest`, 4 tests / 30 assertions passed.
+- `frontend`: `npm test -- settings-api.test.ts IntegrationsSettingsSection.test.ts GovernanceSettingsSection.test.ts`, 3 files / 8 tests passed.
+
+Progress:
+- `RELEASE-P1`: 3/4 tasks complete, 75%.
+- Remaining tasks: 1.
+
+Commit/push:
+- Pending for this task.
+
+## Resume From Here
+
+Continue `RELEASE-P1-T04`: run final backend/frontend verification, then close `RELEASE-P1`.

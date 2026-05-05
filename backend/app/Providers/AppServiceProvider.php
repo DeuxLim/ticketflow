@@ -6,7 +6,6 @@ use App\Models\Customer;
 use App\Models\SavedView;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
-use App\Models\WebhookDelivery;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -70,19 +69,6 @@ class AppServiceProvider extends ServiceProvider
 
             if ($workspace) {
                 $query->where('workspace_id', $workspace->id);
-            }
-
-            return $query->firstOrFail();
-        });
-
-        Route::bind('delivery', function (string $value, $route): WebhookDelivery {
-            /** @var Workspace|null $workspace */
-            $workspace = $route->parameter('workspace');
-
-            $query = WebhookDelivery::query()->whereKey($value)->with('endpoint');
-
-            if ($workspace) {
-                $query->whereHas('endpoint', fn ($endpointQuery) => $endpointQuery->where('workspace_id', $workspace->id));
             }
 
             return $query->firstOrFail();

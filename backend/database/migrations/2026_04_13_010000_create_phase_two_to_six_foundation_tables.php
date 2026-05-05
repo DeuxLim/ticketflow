@@ -61,19 +61,6 @@ return new class extends Migration
             $table->unique(['automation_rule_id', 'idempotency_key']);
         });
 
-        Schema::create('retention_policies', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->unsignedInteger('tickets_days')->default(365);
-            $table->unsignedInteger('comments_days')->default(365);
-            $table->unsignedInteger('attachments_days')->default(365);
-            $table->unsignedInteger('audit_days')->default(730);
-            $table->boolean('purge_enabled')->default(false);
-            $table->timestamps();
-
-            $table->unique('workspace_id');
-        });
-
         Schema::create('legal_holds', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
@@ -87,28 +74,11 @@ return new class extends Migration
             $table->index(['workspace_id', 'is_active']);
         });
 
-        Schema::create('tenant_exports', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->foreignId('requested_by_user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('status')->default('completed'); // queued | processing | completed | failed
-            $table->text('filters_json')->nullable();
-            $table->string('download_token')->nullable();
-            $table->timestamp('download_expires_at')->nullable();
-            $table->text('result_json')->nullable();
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'status']);
-            $table->index('download_token');
-        });
-
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('tenant_exports');
         Schema::dropIfExists('legal_holds');
-        Schema::dropIfExists('retention_policies');
         Schema::dropIfExists('automation_executions');
 
         Schema::table('automation_rules', function (Blueprint $table): void {

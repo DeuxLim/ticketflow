@@ -67,16 +67,6 @@ class Workspace extends Model
         return $this->hasMany(SlaPolicy::class);
     }
 
-    public function webhookEndpoints(): HasMany
-    {
-        return $this->hasMany(WebhookEndpoint::class);
-    }
-
-    public function integrationEvents(): HasMany
-    {
-        return $this->hasMany(IntegrationEvent::class);
-    }
-
     public function setting(): HasOne
     {
         return $this->hasOne(WorkspaceSetting::class);
@@ -117,19 +107,9 @@ class Workspace extends Model
         return $this->hasMany(AutomationExecution::class);
     }
 
-    public function retentionPolicy(): HasOne
-    {
-        return $this->hasOne(RetentionPolicy::class);
-    }
-
     public function legalHolds(): HasMany
     {
         return $this->hasMany(LegalHold::class);
-    }
-
-    public function tenantExports(): HasMany
-    {
-        return $this->hasMany(TenantExport::class);
     }
 
 }

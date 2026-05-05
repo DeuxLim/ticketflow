@@ -156,53 +156,10 @@ return new class extends Migration
             $table->unique('event_hash');
         });
 
-        Schema::create('webhook_endpoints', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->string('name');
-            $table->string('url');
-            $table->string('secret_hash');
-            $table->string('events');
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'is_active']);
-        });
-
-        Schema::create('integration_events', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('workspace_id')->constrained('workspaces')->cascadeOnDelete();
-            $table->string('event_type');
-            $table->string('payload_json');
-            $table->timestamp('occurred_at');
-            $table->timestamps();
-
-            $table->index(['workspace_id', 'event_type']);
-            $table->index('occurred_at');
-        });
-
-        Schema::create('webhook_deliveries', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('webhook_endpoint_id')->constrained('webhook_endpoints')->cascadeOnDelete();
-            $table->foreignId('integration_event_id')->constrained('integration_events')->cascadeOnDelete();
-            $table->unsignedInteger('attempt_count')->default(0);
-            $table->string('status')->default('pending');
-            $table->integer('response_status')->nullable();
-            $table->text('response_body')->nullable();
-            $table->timestamp('next_attempt_at')->nullable();
-            $table->timestamp('delivered_at')->nullable();
-            $table->timestamps();
-
-            $table->unique(['webhook_endpoint_id', 'integration_event_id']);
-            $table->index(['status', 'next_attempt_at']);
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('webhook_deliveries');
-        Schema::dropIfExists('integration_events');
-        Schema::dropIfExists('webhook_endpoints');
         Schema::dropIfExists('audit_events');
         Schema::dropIfExists('automation_rules');
         Schema::dropIfExists('approval_steps');

@@ -12,7 +12,6 @@ use App\Models\Workspace;
 use App\Services\Notifications\WorkspaceNotificationService;
 use App\Services\Sla\SlaEngine;
 use App\Services\Webhooks\AutomationEngine;
-use App\Services\Webhooks\IntegrationEventPublisher;
 use App\Support\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +22,6 @@ class TicketCommentController extends Controller
     public function __construct(
         private readonly SlaEngine $slaEngine,
         private readonly AutomationEngine $automationEngine,
-        private readonly IntegrationEventPublisher $integrationEventPublisher,
         private readonly WorkspaceNotificationService $notificationService
     ) {}
 
@@ -106,12 +104,6 @@ class TicketCommentController extends Controller
         $this->automationEngine->apply($workspace, 'ticket.comment_added', $ticket, $context);
         $this->automationEngine->apply($workspace, 'ticket.commented', $ticket, $context);
 
-        $this->integrationEventPublisher->publish($workspace, 'ticket.comment_added', [
-            'ticket_id' => $ticket->id,
-            'comment_id' => $comment->id,
-            'is_internal' => $comment->is_internal,
-        ]);
-
         $comment->load(['user:id,first_name,last_name,email', 'customer:id,name,email']);
 
         return response()->json([
@@ -161,11 +153,6 @@ class TicketCommentController extends Controller
             'to' => $comment->body,
         ]);
 
-        $this->integrationEventPublisher->publish($workspace, 'ticket.comment_updated', [
-            'ticket_id' => $ticket->id,
-            'comment_id' => $comment->id,
-        ]);
-
         return response()->json([
             'data' => [
                 'id' => $comment->id,
@@ -198,11 +185,6 @@ class TicketCommentController extends Controller
         $comment->delete();
 
         ActivityLogger::log($workspace->id, $request->user()?->id, 'ticket.comment_deleted', $ticket, [
-            'ticket_id' => $ticket->id,
-            'comment_id' => $commentId,
-        ]);
-
-        $this->integrationEventPublisher->publish($workspace, 'ticket.comment_deleted', [
             'ticket_id' => $ticket->id,
             'comment_id' => $commentId,
         ]);

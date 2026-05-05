@@ -11,10 +11,8 @@ use App\Http\Controllers\Api\Workspaces\AutomationRuleController;
 use App\Http\Controllers\Api\Workspaces\CustomerController;
 use App\Http\Controllers\Api\Workspaces\InvitationAcceptanceController;
 use App\Http\Controllers\Api\Workspaces\ReportingController;
-use App\Http\Controllers\Api\Workspaces\RetentionPolicyController;
 use App\Http\Controllers\Api\Workspaces\SavedViewController;
 use App\Http\Controllers\Api\Workspaces\SlaPolicyController;
-use App\Http\Controllers\Api\Workspaces\TenantExportController;
 use App\Http\Controllers\Api\Workspaces\TenantSecurityPolicyController;
 use App\Http\Controllers\Api\Workspaces\TicketAttachmentController;
 use App\Http\Controllers\Api\Workspaces\TicketCategoryController;
@@ -28,7 +26,6 @@ use App\Http\Controllers\Api\Workspaces\TicketRelatedTicketController;
 use App\Http\Controllers\Api\Workspaces\TicketTagController;
 use App\Http\Controllers\Api\Workspaces\TicketTypeController;
 use App\Http\Controllers\Api\Workspaces\TicketWatcherController;
-use App\Http\Controllers\Api\Workspaces\WebhookEndpointController;
 use App\Http\Controllers\Api\Workspaces\WorkflowController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceAccessController;
 use App\Http\Controllers\Api\Workspaces\WorkspaceController;
@@ -238,26 +235,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::delete('/saved-views/{view}', [SavedViewController::class, 'destroy'])
                 ->middleware('workspace_permission:tickets.view');
 
-            Route::get('/webhooks', [WebhookEndpointController::class, 'index'])
-                ->middleware('workspace_permission:integrations.manage');
-            Route::post('/webhooks', [WebhookEndpointController::class, 'store'])
-                ->middleware('workspace_permission:integrations.manage');
-            Route::get('/webhook-deliveries', [WebhookEndpointController::class, 'deliveries'])
-                ->middleware('workspace_permission:integrations.manage');
-            Route::post('/webhook-deliveries/{delivery}/retry', [WebhookEndpointController::class, 'retry'])
-                ->middleware('workspace_permission:integrations.manage');
-
             Route::get('/audit-events', [AuditEventController::class, 'index'])
-                ->middleware('workspace_permission:security.manage');
-            Route::get('/retention-policies', [RetentionPolicyController::class, 'show'])
-                ->middleware('workspace_permission:security.manage');
-            Route::patch('/retention-policies', [RetentionPolicyController::class, 'update'])
-                ->middleware('workspace_permission:security.manage');
-            Route::get('/exports', [TenantExportController::class, 'index'])
-                ->middleware('workspace_permission:security.manage');
-            Route::post('/exports', [TenantExportController::class, 'store'])
-                ->middleware('workspace_permission:security.manage');
-            Route::get('/exports/{export}/download', [TenantExportController::class, 'download'])
                 ->middleware('workspace_permission:security.manage');
         });
 

@@ -27,7 +27,7 @@ Out of scope:
 - SSO login through SAML or OIDC.
 - Break-glass emergency access.
 
-Platform isolation is not part of the current app. Workspace mode fields are local/admin labels only; they do not provision separate infrastructure. Tenant exports, retention policy controls, and webhooks are deferred and hidden from the main UI.
+Platform isolation is not part of the current app. Workspace mode fields are local/admin labels only; they do not provision separate infrastructure. Tenant exports, retention policy controls, and webhooks were removed from the release API surface. Add a new roadmap item before bringing any of them back.
 
 ## Stack
 

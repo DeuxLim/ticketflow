@@ -223,16 +223,9 @@ GET  /workspaces/{workspace}/roles
 GET   /workspaces/{workspace}/security-policy
 PATCH /workspaces/{workspace}/security-policy
 GET   /workspaces/{workspace}/audit-events
-GET   /workspaces/{workspace}/retention-policies
-PATCH /workspaces/{workspace}/retention-policies
-GET   /workspaces/{workspace}/exports
-POST  /workspaces/{workspace}/exports
-GET   /workspaces/{workspace}/exports/{export}/download
 ```
 
-These export endpoints are backend-only for now. The main workspace UI hides tenant exports because compliance export workflows are deferred from the medium-ticketing scope.
-
-Retention endpoints are also backend-only for now. The main workspace UI hides retention policy editing because purge and compliance retention workflows are deferred from the medium-ticketing scope.
+Tenant exports and retention policy editing are removed from the release scope. Those URLs intentionally return 404.
 
 ## SLA, Workflow, Approvals, and Automation
 
@@ -291,14 +284,7 @@ DELETE /workspaces/{workspace}/saved-views/{view}
 
 ## Webhooks
 
-```text
-GET  /workspaces/{workspace}/webhooks
-POST /workspaces/{workspace}/webhooks
-GET  /workspaces/{workspace}/webhook-deliveries
-POST /workspaces/{workspace}/webhook-deliveries/{delivery}/retry
-```
-
-These endpoints are backend-only for now. The main workspace UI hides webhook setup and delivery retry because integrations are deferred from the medium-ticketing scope.
+Webhook endpoint setup and delivery retry APIs are removed from the release scope. Those URLs intentionally return 404.
 
 ## Platform Admin API
 

@@ -137,31 +137,16 @@ class EnterpriseRemainingFoundationTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_governance_endpoints_cover_retention_export_and_removed_break_glass(): void
+    public function test_deferred_governance_routes_are_removed_from_release_scope(): void
     {
         [$workspace, $owner] = $this->createWorkspaceAsOwner();
 
         Sanctum::actingAs($owner);
-        $this->patchJson("/api/workspaces/{$workspace['slug']}/retention-policies", [
-            'tickets_days' => 400,
-            'comments_days' => 300,
-            'attachments_days' => 200,
-            'audit_days' => 900,
-        ])->assertOk()
-            ->assertJsonPath('data.tickets_days', 400);
-
-        $exportResponse = $this->postJson("/api/workspaces/{$workspace['slug']}/exports", [
-            'include' => ['tickets', 'audit'],
-        ])->assertCreated();
-
-        $downloadUrl = $exportResponse->json('meta.download_url');
-        $token = (string) parse_url($downloadUrl, PHP_URL_QUERY);
-        $token = str_replace('token=', '', $token);
-        $exportId = $exportResponse->json('data.id');
-
-        $this->getJson("/api/workspaces/{$workspace['slug']}/exports/{$exportId}/download?token={$token}")
-            ->assertOk();
-
+        $this->getJson("/api/workspaces/{$workspace['slug']}/retention-policies")->assertNotFound();
+        $this->patchJson("/api/workspaces/{$workspace['slug']}/retention-policies", [])->assertNotFound();
+        $this->getJson("/api/workspaces/{$workspace['slug']}/exports")->assertNotFound();
+        $this->postJson("/api/workspaces/{$workspace['slug']}/exports", [])->assertNotFound();
+        $this->getJson("/api/workspaces/{$workspace['slug']}/exports/1/download")->assertNotFound();
         $this->getJson("/api/workspaces/{$workspace['slug']}/break-glass/requests")
             ->assertNotFound();
         $this->postJson("/api/workspaces/{$workspace['slug']}/break-glass/requests", [
