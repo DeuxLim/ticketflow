@@ -4,7 +4,7 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-`RELEASE-P1` is active. Continue with `RELEASE-P1-T04`, final verification and docs sync.
+No active focus. `RELEASE-P1` is complete.
 
 ## MVP Items
 
@@ -63,18 +63,18 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ### `RELEASE-P1` Release readiness and dormant backend cleanup
 
-- Status: `in_progress`
+- Status: `complete`
 - Priority: high
 - Scope: Prepare the simplified medium ticketing app for a cleaner release by auditing and resolving dormant backend surfaces left after enterprise-scope UI removal.
-- Current state: `RELEASE-P1-T01`, `RELEASE-P1-T02`, and `RELEASE-P1-T03` are complete. Dormant tenant export, retention policy, webhook endpoint/delivery, and integration-event support was removed from active backend/frontend code, with focused verification passing.
-- Next actions: complete `RELEASE-P1-T04` by running final backend/frontend verification and syncing docs/tracker status.
+- Current state: complete. Dormant tenant export, retention policy, webhook endpoint/delivery, and integration-event support was removed from active backend/frontend code. Full backend/frontend verification passed.
+- Next actions: none. Pick the next roadmap focus before starting new implementation.
 
 #### Child Items
 
 - `RELEASE-P1-T01` Audit dormant enterprise backend surfaces - `complete`
 - `RELEASE-P1-T02` Decide cleanup scope for dormant surfaces - `complete`
 - `RELEASE-P1-T03` Implement approved dormant-surface cleanup - `complete`
-- `RELEASE-P1-T04` Verify release readiness and sync docs - `in_progress`
+- `RELEASE-P1-T04` Verify release readiness and sync docs - `complete`
 
 ### `REFACTOR-P1` Laravel and React Standards Alignment
 
@@ -258,4 +258,4 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Resume From Here
 
-Continue `RELEASE-P1-T04`: run final backend/frontend verification, then close `RELEASE-P1`.
+All `RELEASE-P1` tasks are complete. Pick the next roadmap focus before starting new implementation.

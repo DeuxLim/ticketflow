@@ -1,13 +1,12 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-05T19:51:26+08:00"
+updated_at: "2026-05-05T19:53:18+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus:
-  - RELEASE-P1
+current_focus: []
 items:
   - id: SCOPE-P1
     title: Remove SCIM and SSO from product scope
@@ -604,7 +603,7 @@ items:
     title: Release readiness and dormant backend cleanup
     type: epic
     parent_id: null
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Prepare the simplified medium ticketing app for a cleaner release by auditing and resolving dormant backend surfaces left after enterprise-scope UI removal.
@@ -621,23 +620,20 @@ items:
       - "2026-05-05: Completed `RELEASE-P1-T01` by documenting the exact tenant export, retention policy, and webhook backend/frontend remnants in `docs/release/dormant-backend-surface-audit.md`."
       - "2026-05-05: Completed `RELEASE-P1-T02`; decision is to remove dormant tenant export, retention policy, and webhook API/backend surfaces for the medium release, documented in `docs/release/dormant-backend-surface-decisions.md`."
       - "2026-05-05: Completed `RELEASE-P1-T03` by removing dormant tenant export, retention policy, webhook endpoint/delivery, and integration-event API/backend/frontend support; focused backend/frontend verification passed."
+      - "2026-05-05: Completed `RELEASE-P1-T04`; full backend/frontend verification passed and `RELEASE-P1` is closed."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Audit tenant export, retention policy, and webhook backend routes/controllers/models/tests.
-      - Record keep-hidden, remove, or defer decisions for each dormant surface.
-      - Implement the approved cleanup in focused child tasks.
-      - Run backend/frontend verification and sync docs.
+    next_actions: []
     tags:
       - release
       - cleanup
       - scope
       - backend
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:51:26+08:00"
-    changed_at: "2026-05-05T19:51:26+08:00"
+    updated_at: "2026-05-05T19:53:18+08:00"
+    changed_at: "2026-05-05T19:53:18+08:00"
     changed_source: codex
 
   - id: RELEASE-P1-T01
@@ -739,7 +735,7 @@ items:
     title: Verify release readiness and sync docs
     type: task
     parent_id: RELEASE-P1
-    status: in_progress
+    status: complete
     priority: high
     mvp: true
     description: Run the final verification pass for release readiness and update documentation to match the simplified product scope.
@@ -752,19 +748,19 @@ items:
       - RELEASE-P1-T03
     notes:
       - "2026-05-05: Started after `RELEASE-P1-T03` focused backend/frontend verification passed."
+      - "2026-05-05: Closeout passed: backend Pint dirty check, `composer test`, frontend lint, frontend build, frontend test suite, YAML validation, and `git diff --check`."
     incomplete_reason: null
     blocked_reason: null
     deferred_reason: null
     discovered_during_implementation: true
-    next_actions:
-      - Run the full closeout verification stack after cleanup implementation.
+    next_actions: []
     tags:
       - release
       - verification
       - docs
     created_at: "2026-05-05T19:35:43+08:00"
-    updated_at: "2026-05-05T19:51:26+08:00"
-    changed_at: "2026-05-05T19:51:26+08:00"
+    updated_at: "2026-05-05T19:53:18+08:00"
+    changed_at: "2026-05-05T19:53:18+08:00"
     changed_source: codex
 
   - id: REFACTOR-P1
