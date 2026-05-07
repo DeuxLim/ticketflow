@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { PageHeader, PriorityBadge, StatCard, StatusBadge } from '@/components/app';
 import { ForbiddenState } from '@/components/forbidden-state';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,7 +12,9 @@ import {
   listDashboardCustomers,
   listDashboardRecentTickets,
 } from '@/features/workspace/api/workspaceDashboardApi';
+import { ticketStatusLabel } from '@/features/workspace/pages/ticketForm';
 import { ApiError } from '@/services/api/client';
+import { AlertCircle, CheckCircle2, Clock3, Inbox, Ticket, Users } from 'lucide-react';
 
 export function WorkspaceDashboardPage() {
   const { workspaceSlug } = useParams();
@@ -69,6 +72,7 @@ export function WorkspaceDashboardPage() {
   const customersTotal = customersQuery.data?.meta?.total ?? 0;
   const ticketsTotal = reportingQuery.data?.data.totals.tickets ?? recentTicketsQuery.data?.meta?.total ?? 0;
   const openCount = reportingQuery.data?.data.totals.open ?? null;
+  const resolvedCount = reportingQuery.data?.data.totals.resolved ?? null;
   const backlog = reportingQuery.data?.data.backlog_by_priority;
   const highPriorityCount = backlog
     ? (backlog.high ?? 0) + (backlog.urgent ?? 0)
@@ -77,18 +81,18 @@ export function WorkspaceDashboardPage() {
 
   return (
     <section className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Badge variant="secondary">Workspace</Badge>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Operations Overview</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Current work, queue health, and tenant scope.</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Workspace"
+        title="Operations Overview"
+        description="Current work, queue health, and tenant scope."
+      />
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <MetricCard title="Customers" value={customersTotal} description="Total customer records" />
-        <MetricCard title="Tickets" value={ticketsTotal} description="All ticket records" />
-        <MetricCard title="Open Work" value={openCount === null ? '—' : openCount} description="Open + in progress tickets" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <StatCard label="Customers" value={customersTotal} description="Total customer records" icon={<Users className="size-4" />} />
+        <StatCard label="Tickets" value={ticketsTotal} description="All ticket records" icon={<Ticket className="size-4" />} />
+        <StatCard label="Open Work" value={openCount === null ? '—' : openCount} description="Open and in-progress tickets" icon={<Inbox className="size-4" />} tone="info" />
+        <StatCard label="Resolved" value={resolvedCount === null ? '—' : resolvedCount} description="Tickets completed in the current reporting view" icon={<CheckCircle2 className="size-4" />} tone="success" />
+        <StatCard label="High Priority" value={highPriorityCount === null ? '—' : highPriorityCount} description="High and urgent backlog items" icon={<AlertCircle className="size-4" />} tone="warning" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -113,8 +117,8 @@ export function WorkspaceDashboardPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{ticket.status.replace('_', ' ')}</Badge>
-                      <Badge variant="secondary">{ticket.priority}</Badge>
+                      <StatusBadge status={ticket.status} label={ticketStatusLabel(ticket.status)} />
+                      <PriorityBadge priority={ticket.priority} />
                     </div>
                   </Link>
                 ))}
@@ -135,7 +139,11 @@ export function WorkspaceDashboardPage() {
             <Separator />
             <Signal label="High priority" value={highPriorityCount === null ? '—' : String(highPriorityCount)} />
             <Separator />
+            <Signal label="Resolved" value={resolvedCount === null ? '—' : String(resolvedCount)} />
+            <Separator />
             <Signal label="Tenant scope" value={workspaceSlug ?? '—'} />
+            <Separator />
+            <Signal label="Data source" value="Live workspace APIs" icon={<Clock3 className="size-4" />} />
           </CardContent>
         </Card>
       </div>
@@ -143,24 +151,10 @@ export function WorkspaceDashboardPage() {
   );
 }
 
-function MetricCard({ title, value, description }: { title: string; value: number | string; description: string }) {
-  return (
-    <Card className="shadow-none">
-      <CardHeader>
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-4xl tracking-tight">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Signal({ label, value }: { label: string; value: string }) {
+function Signal({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
   return (
     <div>
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="flex items-center gap-2 text-sm text-muted-foreground">{icon}{label}</p>
       <p className="mt-1 truncate text-lg font-medium">{value}</p>
     </div>
   );

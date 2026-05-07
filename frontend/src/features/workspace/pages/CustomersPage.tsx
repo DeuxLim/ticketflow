@@ -3,8 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
+import { EmptyState, PageHeader } from '@/components/app';
 import { ForbiddenState } from '@/components/forbidden-state';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -115,16 +115,12 @@ export function CustomersPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Badge variant="secondary">Workspace Customers</Badge>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Customer Directory</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Search, review, and update customer records without mixing the directory view with editing work.</p>
-        </div>
-        <Button disabled={!canManage} onClick={() => setIsCreateOpen(true)} type="button">
-          Add Customer
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Workspace Customers"
+        title="Customer Directory"
+        description="Search, review, and update customer records without mixing the directory view with editing work."
+        actions={<Button disabled={!canManage} onClick={() => setIsCreateOpen(true)} type="button">Add Customer</Button>}
+      />
 
       <Card className="shadow-none">
         <CardHeader className="border-b">
@@ -148,7 +144,10 @@ export function CustomersPage() {
           ) : customersQuery.isError ? (
             <p className="text-sm text-destructive">{(customersQuery.error as Error).message}</p>
           ) : customers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No customers match the current search. Try a broader term or add a new customer.</p>
+            <EmptyState
+              title="No customers found."
+              description="No customers match the current search. Try a broader term or add a new customer."
+            />
           ) : (
             <CustomersTable
               canManage={canManage}

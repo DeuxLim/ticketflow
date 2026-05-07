@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -178,7 +178,11 @@ describe('ticket route permission states', () => {
       expect(screen.getByText('Router down')).not.toBeNull();
     });
 
-    expect(screen.getByRole('button', { name: /Move to in progress/i }).getAttribute('disabled')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /More actions for TKT-000123/i }));
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: /Move to in progress/i })).not.toBeNull();
+    });
+    expect(screen.getByRole('menuitem', { name: /Move to in progress/i }).getAttribute('data-disabled')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Edit Ticket' }).getAttribute('disabled')).not.toBeNull();
   });
 });

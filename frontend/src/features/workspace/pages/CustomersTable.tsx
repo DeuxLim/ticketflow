@@ -1,5 +1,4 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { PriorityBadge, RowActionMenu, StatusBadge } from '@/components/app';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { Customer } from '@/types/api';
 
@@ -19,7 +18,8 @@ export function CustomersTable({
   onView: (customer: Customer) => void;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <>
+    <div className="hidden overflow-x-auto md:block">
       <Table className="min-w-[900px]">
         <TableHeader>
           <TableRow>
@@ -46,8 +46,8 @@ export function CustomersTable({
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline">{customer.support_tier ?? 'No tier'}</Badge>
-                  <Badge variant={customer.status ? 'secondary' : 'outline'}>{customer.status ?? 'No status'}</Badge>
+                  <PriorityBadge priority={customer.support_tier ?? 'No tier'} />
+                  <StatusBadge status={customer.status ?? 'closed'} label={customer.status ?? 'No status'} />
                 </div>
               </TableCell>
               <TableCell>
@@ -58,16 +58,15 @@ export function CustomersTable({
                 {customer.updated_at ? new Date(customer.updated_at).toLocaleDateString() : '—'}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button onClick={() => onView(customer)} size="sm" variant="outline" type="button">
-                    View
-                  </Button>
-                  <Button disabled={!canManage} onClick={() => onEdit(customer)} size="sm" variant="outline" type="button">
-                    Edit
-                  </Button>
-                  <Button disabled={isDeleting || !canManage} onClick={() => onDelete(customer)} size="sm" variant="outline" type="button">
-                    Delete
-                  </Button>
+                <div className="flex justify-end">
+                  <CustomerActions
+                    customer={customer}
+                    canManage={canManage}
+                    isDeleting={isDeleting}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    onView={onView}
+                  />
                 </div>
               </TableCell>
             </TableRow>
@@ -75,5 +74,68 @@ export function CustomersTable({
         </TableBody>
       </Table>
     </div>
+
+    <div className="grid gap-3 md:hidden">
+      {customers.map((customer) => (
+        <article key={customer.id} className="rounded-lg border bg-card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium">{customer.name}</p>
+              <p className="truncate text-sm text-muted-foreground">{customer.email ?? 'No email'}</p>
+            </div>
+            <CustomerActions
+              customer={customer}
+              canManage={canManage}
+              isDeleting={isDeleting}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onView={onView}
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1">
+            <PriorityBadge priority={customer.support_tier ?? 'No tier'} />
+            <StatusBadge status={customer.status ?? 'closed'} label={customer.status ?? 'No status'} />
+          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">Company</dt>
+              <dd className="mt-1 truncate font-medium">{customer.company ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Contact</dt>
+              <dd className="mt-1 truncate font-medium">{customer.preferred_contact_method ?? customer.phone ?? '—'}</dd>
+            </div>
+          </dl>
+        </article>
+      ))}
+    </div>
+    </>
+  );
+}
+
+function CustomerActions({
+  customer,
+  canManage,
+  isDeleting,
+  onDelete,
+  onEdit,
+  onView,
+}: {
+  customer: Customer;
+  canManage: boolean;
+  isDeleting: boolean;
+  onDelete: (customer: Customer) => void;
+  onEdit: (customer: Customer) => void;
+  onView: (customer: Customer) => void;
+}) {
+  return (
+    <RowActionMenu
+      label={`Actions for ${customer.name}`}
+      actions={[
+        { label: 'View', onSelect: () => onView(customer) },
+        { label: 'Edit', onSelect: () => onEdit(customer), disabled: !canManage },
+        { label: 'Delete', onSelect: () => onDelete(customer), disabled: isDeleting || !canManage, destructive: true },
+      ]}
+    />
   );
 }

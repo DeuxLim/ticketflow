@@ -301,6 +301,7 @@ export function TicketQueueControlsSheet({
             </FieldGroup>
           </div>
 
+          {selectedVisibleTicketIdsCount > 0 ? (
           <div className="rounded-md border p-4">
             <FieldGroup>
               <Field>
@@ -372,6 +373,7 @@ export function TicketQueueControlsSheet({
               </Button>
             </FieldGroup>
           </div>
+          ) : null}
         </div>
 
         <SheetFooter className="border-t">

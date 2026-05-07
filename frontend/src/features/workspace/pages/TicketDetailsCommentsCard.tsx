@@ -1,4 +1,4 @@
-import { Badge } from '@/components/ui/badge';
+import { RowActionMenu, StatusBadge } from '@/components/app';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,19 +99,18 @@ function CommentItem({
   onDownloadAttachment,
 }: CommentItemProps) {
   return (
-    <div className="rounded-md border border-border p-3">
+    <div className={comment.is_internal ? 'rounded-md border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/40 dark:bg-amber-950/20' : 'rounded-md border border-border p-3'}>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
         <CommentMeta comment={comment} />
 
         {canComment && (
-          <div className="flex gap-2">
-            <Button onClick={() => onStartEdit(comment)} size="sm" type="button" variant="outline">
-              Edit
-            </Button>
-            <Button disabled={isDeleting} onClick={() => onDeleteComment(comment.id)} size="sm" type="button" variant="outline">
-              Delete
-            </Button>
-          </div>
+          <RowActionMenu
+            label={`Actions for comment ${comment.id}`}
+            actions={[
+              { label: 'Edit', onSelect: () => onStartEdit(comment) },
+              { label: 'Delete', onSelect: () => onDeleteComment(comment.id), disabled: isDeleting, destructive: true },
+            ]}
+          />
         )}
       </div>
 
@@ -165,9 +164,7 @@ function CommentItem({
 function CommentMeta({ comment }: { comment: TicketComment }) {
   return (
     <div className="flex items-center gap-2">
-      <Badge variant={comment.is_internal ? 'secondary' : 'outline'}>
-        {comment.is_internal ? 'Internal' : 'Public'}
-      </Badge>
+      <StatusBadge status={comment.is_internal ? 'pending' : 'open'} label={comment.is_internal ? 'Internal' : 'Public'} />
       <span>{commentAuthor(comment)}</span>
       <span>•</span>
       <span>{formatTicketDetailsDate(comment.created_at)}</span>

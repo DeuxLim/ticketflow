@@ -4,6 +4,7 @@ import { AdminDashboardTabs } from '@/features/admin/pages/AdminDashboardTabs';
 import {
   AdminWorkspaceEditorDialog,
 } from '@/features/admin/pages/AdminWorkspaceEditorDialog';
+import { ConfirmDialog, PageHeader, StatCard } from '@/components/app';
 import {
   buildWorkspaceEditorMutationErrorMessage,
   createDraftRows,
@@ -11,8 +12,7 @@ import {
   type DraftRow,
   type WorkspaceEditorKind,
 } from '@/features/admin/pages/adminWorkspaceEditorHelpers';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiRequest } from '@/services/api/client';
@@ -23,6 +23,9 @@ import type {
   ApiEnvelope,
   ApiPaginationMeta,
 } from '@/types/api';
+import { AlertTriangle, Building2, Flag, ShieldAlert, Ticket, Users } from 'lucide-react';
+
+type WorkspaceAdminAction = 'suspend' | 'reactivate' | 'maintenance' | 'isolation';
 
 type PaginatedEnvelope<T> = {
   data: T[];
@@ -40,6 +43,10 @@ export function AdminDashboardPage() {
   const [workspaceEditor, setWorkspaceEditor] = useState<{
     workspace: AdminWorkspace;
     kind: WorkspaceEditorKind;
+  } | null>(null);
+  const [workspaceActionTarget, setWorkspaceActionTarget] = useState<{
+    workspace: AdminWorkspace;
+    action: WorkspaceAdminAction;
   } | null>(null);
 
   const usersPath = useMemo(
@@ -231,33 +238,43 @@ export function AdminDashboardPage() {
     toggleIsolation.isPending ||
     updateWorkspaceLimits.isPending ||
     updateWorkspaceFeatureFlags.isPending;
+  const workspaceStatusActionPending =
+    suspendWorkspace.isPending ||
+    reactivateWorkspace.isPending ||
+    toggleMaintenance.isPending ||
+    toggleIsolation.isPending;
+  const workspaceStatusActionError =
+    suspendWorkspace.error ??
+    reactivateWorkspace.error ??
+    toggleMaintenance.error ??
+    toggleIsolation.error;
+
+  const requestWorkspaceAction = (workspace: AdminWorkspace, action: WorkspaceAdminAction) => {
+    suspendWorkspace.reset();
+    reactivateWorkspace.reset();
+    toggleMaintenance.reset();
+    toggleIsolation.reset();
+    setWorkspaceActionTarget({ workspace, action });
+  };
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <Badge variant="secondary" className="w-fit">
-          Platform
-        </Badge>
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Control plane</h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Monitor tenants, users, workspace mode, and platform-wide operational risk.
-            </p>
-          </div>
-          <p className="text-xs text-muted-foreground">Updated from live admin APIs</p>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Platform"
+        title="Control plane"
+        description="Monitor tenants, users, workspace mode, and platform-wide operational risk."
+        actions={<p className="text-xs text-muted-foreground">Updated from live admin APIs</p>}
+      />
 
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <AdminMetric title="Users" value={stats.users_count} description="Registered accounts" />
-        <AdminMetric title="Workspaces" value={stats.workspaces_count} description="Tenant workspaces" />
-        <AdminMetric title="Memberships" value={stats.memberships_count} description="User-workspace links" />
-        <AdminMetric title="Tickets" value={stats.tickets_count} description="System-wide tickets" />
-        <AdminMetric title="Suspended" value={stats.suspended_workspaces_count} description="Suspended tenants" />
-        <AdminMetric title="Maintenance" value={stats.maintenance_workspaces_count} description="Workspaces in maintenance mode" />
-        <AdminMetric title="Flagged Mode" value={stats.dedicated_workspaces_count} description="Workspaces marked dedicated" />
-        <AdminMetric title="Automation Failures" value={stats.failed_automation_executions_count} description="Failed rule executions" />
+        <StatCard label="Users" value={stats.users_count} description="Registered accounts" icon={<Users className="size-4" />} />
+        <StatCard label="Workspaces" value={stats.workspaces_count} description="Tenant workspaces" icon={<Building2 className="size-4" />} />
+        <StatCard label="Memberships" value={stats.memberships_count} description="User-workspace links" icon={<Users className="size-4" />} tone="neutral" />
+        <StatCard label="Tickets" value={stats.tickets_count} description="System-wide tickets" icon={<Ticket className="size-4" />} tone="info" />
+        <StatCard label="Suspended" value={stats.suspended_workspaces_count} description="Suspended tenants" icon={<ShieldAlert className="size-4" />} tone={stats.suspended_workspaces_count ? 'danger' : 'neutral'} />
+        <StatCard label="Maintenance" value={stats.maintenance_workspaces_count} description="Workspaces in maintenance mode" icon={<AlertTriangle className="size-4" />} tone={stats.maintenance_workspaces_count ? 'warning' : 'neutral'} />
+        <StatCard label="Flagged Mode" value={stats.dedicated_workspaces_count} description="Workspaces marked dedicated" icon={<Flag className="size-4" />} tone="neutral" />
+        <StatCard label="Automation Failures" value={stats.failed_automation_executions_count} description="Failed rule executions" icon={<AlertTriangle className="size-4" />} tone={stats.failed_automation_executions_count ? 'danger' : 'neutral'} />
       </div>
 
       <Separator />
@@ -276,10 +293,10 @@ export function AdminDashboardPage() {
         workspacesLoading={workspacesQuery.isLoading}
         workspacesError={workspacesQuery.isError}
         workspaceActionPending={workspaceActionPending}
-        onSuspendWorkspace={(workspace) => suspendWorkspace.mutate(workspace)}
-        onReactivateWorkspace={(workspace) => reactivateWorkspace.mutate(workspace)}
-        onToggleMaintenance={(workspace) => toggleMaintenance.mutate(workspace)}
-        onToggleIsolation={(workspace) => toggleIsolation.mutate(workspace)}
+        onSuspendWorkspace={(workspace) => requestWorkspaceAction(workspace, 'suspend')}
+        onReactivateWorkspace={(workspace) => requestWorkspaceAction(workspace, 'reactivate')}
+        onToggleMaintenance={(workspace) => requestWorkspaceAction(workspace, 'maintenance')}
+        onToggleIsolation={(workspace) => requestWorkspaceAction(workspace, 'isolation')}
         onOpenWorkspaceEditor={openWorkspaceEditor}
       />
 
@@ -354,20 +371,76 @@ export function AdminDashboardPage() {
           updateWorkspaceFeatureFlags.mutate({ workspace: workspaceEditor.workspace, featureFlags: parsed.data });
         }}
       />
+
+      <ConfirmDialog
+        open={workspaceActionTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !workspaceStatusActionPending) {
+            setWorkspaceActionTarget(null);
+          }
+        }}
+        title={getWorkspaceActionCopy(workspaceActionTarget).title}
+        description={getWorkspaceActionCopy(workspaceActionTarget).description}
+        confirmLabel={getWorkspaceActionCopy(workspaceActionTarget).confirmLabel}
+        variant={workspaceActionTarget?.action === 'suspend' ? 'destructive' : 'default'}
+        isPending={workspaceStatusActionPending}
+        errorMessage={workspaceStatusActionError instanceof Error ? workspaceStatusActionError.message : null}
+        onConfirm={() => {
+          if (!workspaceActionTarget) return;
+          const options = { onSuccess: () => setWorkspaceActionTarget(null) };
+          if (workspaceActionTarget.action === 'suspend') {
+            suspendWorkspace.mutate(workspaceActionTarget.workspace, options);
+          } else if (workspaceActionTarget.action === 'reactivate') {
+            reactivateWorkspace.mutate(workspaceActionTarget.workspace, options);
+          } else if (workspaceActionTarget.action === 'maintenance') {
+            toggleMaintenance.mutate(workspaceActionTarget.workspace, options);
+          } else {
+            toggleIsolation.mutate(workspaceActionTarget.workspace, options);
+          }
+        }}
+      />
     </section>
   );
 }
 
-function AdminMetric({ title, value, description }: { title: string; value: number; description: string }) {
-  return (
-    <Card className="shadow-none">
-      <CardHeader className="gap-1">
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="text-3xl">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
-  );
+function getWorkspaceActionCopy(target: { workspace: AdminWorkspace; action: WorkspaceAdminAction } | null) {
+  if (!target) {
+    return {
+      title: 'Update workspace?',
+      description: 'Confirm this workspace change.',
+      confirmLabel: 'Confirm',
+    };
+  }
+
+  const { workspace, action } = target;
+
+  if (action === 'suspend') {
+    return {
+      title: 'Suspend workspace?',
+      description: `Suspend ${workspace.name}? Workspace users may lose normal access until it is reactivated.`,
+      confirmLabel: 'Suspend workspace',
+    };
+  }
+
+  if (action === 'reactivate') {
+    return {
+      title: 'Reactivate workspace?',
+      description: `Reactivate ${workspace.name} and restore normal workspace access.`,
+      confirmLabel: 'Reactivate workspace',
+    };
+  }
+
+  if (action === 'maintenance') {
+    return {
+      title: workspace.maintenance_mode ? 'Disable maintenance mode?' : 'Enable maintenance mode?',
+      description: `${workspace.name} will be ${workspace.maintenance_mode ? 'removed from' : 'placed into'} maintenance mode.`,
+      confirmLabel: workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance',
+    };
+  }
+
+  return {
+    title: workspace.tenant_mode === 'shared' ? 'Mark workspace dedicated?' : 'Mark workspace shared?',
+    description: `${workspace.name} will be marked as ${workspace.tenant_mode === 'shared' ? 'dedicated' : 'shared'} workspace mode.`,
+    confirmLabel: workspace.tenant_mode === 'shared' ? 'Mark dedicated' : 'Mark shared',
+  };
 }

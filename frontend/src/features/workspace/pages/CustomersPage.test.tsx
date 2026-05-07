@@ -90,15 +90,19 @@ describe('CustomersPage', () => {
     renderWithProviders(<CustomersPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Jane Doe')).not.toBeNull();
+      expect(screen.getAllByText('Jane Doe').length).toBeGreaterThan(0);
     });
 
     expect(screen.getByText('Operations Lead')).not.toBeNull();
     expect(screen.getByText('CRM-1001')).not.toBeNull();
-    expect(screen.getByText('enterprise')).not.toBeNull();
-    expect(screen.getByText('active')).not.toBeNull();
+    expect(screen.getAllByText('enterprise').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('active').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'View' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Actions for Jane Doe' })[0]);
+    await waitFor(() => {
+      expect(screen.getByRole('menuitem', { name: 'View' })).not.toBeNull();
+    });
+    fireEvent.click(screen.getByRole('menuitem', { name: 'View' }));
 
     await waitFor(() => {
       expect(screen.getByText('Internal notes')).not.toBeNull();

@@ -1,5 +1,5 @@
+import { RowActionMenu, StatusBadge } from '@/components/app';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -84,7 +84,8 @@ export function AdminDashboardTabs({
             ) : workspaces.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">No workspaces found.</p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="hidden overflow-x-auto lg:block">
                 <Table className="min-w-[1040px]">
                   <TableHeader>
                     <TableRow>
@@ -130,83 +131,22 @@ export function AdminDashboardTabs({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={workspace.lifecycle_status === 'active' ? 'secondary' : 'destructive'}>
-                            {workspace.lifecycle_status}
-                          </Badge>
+                          <StatusBadge status={workspace.lifecycle_status} label={workspace.lifecycle_status} />
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {new Date(workspace.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex flex-col items-end gap-2">
-                            <div className="flex flex-wrap justify-end gap-2">
-                              {workspace.lifecycle_status === 'active' ? (
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => onSuspendWorkspace(workspace)}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  Suspend
-                                </Button>
-                              ) : (
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => onReactivateWorkspace(workspace)}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  Reactivate
-                                </Button>
-                              )}
-                              <Button
-                                disabled={workspaceActionPending}
-                                onClick={() => onToggleMaintenance(workspace)}
-                                size="sm"
-                                type="button"
-                                variant="outline"
-                              >
-                                {workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance'}
-                              </Button>
-                              <Button
-                                disabled={workspaceActionPending}
-                                onClick={() => onToggleIsolation(workspace)}
-                                size="sm"
-                                type="button"
-                                variant="outline"
-                              >
-                                {workspace.tenant_mode === 'shared' ? 'Mark dedicated' : 'Mark shared'}
-                              </Button>
-                            </div>
-
-                            <div className="flex flex-col items-end gap-2 rounded-md border border-border/70 bg-muted/20 p-2">
-                              <p className="text-xs text-muted-foreground">
-                                {Object.keys(workspace.usage_limits ?? {}).length} limits /{' '}
-                                {Object.keys(workspace.feature_flags ?? {}).length} flags
-                              </p>
-                              <div className="flex flex-wrap justify-end gap-2">
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => onOpenWorkspaceEditor(workspace, 'limits')}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  Manage limits
-                                </Button>
-                                <Button
-                                  disabled={workspaceActionPending}
-                                  onClick={() => onOpenWorkspaceEditor(workspace, 'featureFlags')}
-                                  size="sm"
-                                  type="button"
-                                  variant="outline"
-                                >
-                                  Manage feature flags
-                                </Button>
-                              </div>
-                            </div>
+                          <div className="flex justify-end">
+                            <WorkspaceActions
+                              workspace={workspace}
+                              disabled={workspaceActionPending}
+                              onSuspendWorkspace={onSuspendWorkspace}
+                              onReactivateWorkspace={onReactivateWorkspace}
+                              onToggleMaintenance={onToggleMaintenance}
+                              onToggleIsolation={onToggleIsolation}
+                              onOpenWorkspaceEditor={onOpenWorkspaceEditor}
+                            />
                           </div>
                         </TableCell>
                       </TableRow>
@@ -214,6 +154,45 @@ export function AdminDashboardTabs({
                   </TableBody>
                 </Table>
               </div>
+              <div className="grid gap-3 p-4 lg:hidden">
+                {workspaces.map((workspace) => (
+                  <article key={workspace.id} className="rounded-lg border bg-card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium">{workspace.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{workspace.slug}</p>
+                      </div>
+                      <WorkspaceActions
+                        workspace={workspace}
+                        disabled={workspaceActionPending}
+                        onSuspendWorkspace={onSuspendWorkspace}
+                        onReactivateWorkspace={onReactivateWorkspace}
+                        onToggleMaintenance={onToggleMaintenance}
+                        onToggleIsolation={onToggleIsolation}
+                        onOpenWorkspaceEditor={onOpenWorkspaceEditor}
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      <Badge variant={workspace.tenant_mode === 'dedicated' ? 'default' : 'secondary'}>
+                        {workspace.tenant_mode}
+                      </Badge>
+                      {workspace.maintenance_mode && <Badge variant="outline">maintenance</Badge>}
+                      <StatusBadge status={workspace.lifecycle_status} label={workspace.lifecycle_status} />
+                    </div>
+                    <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Members</dt>
+                        <dd className="mt-1 font-medium">{workspace.memberships_count}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-muted-foreground">Tickets</dt>
+                        <dd className="mt-1 font-medium">{workspace.tickets_count}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              </>
             )}
           </CardContent>
         </Card>
@@ -248,44 +227,130 @@ export function AdminDashboardTabs({
             ) : users.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">No users found.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <Table className="min-w-[720px]">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Created</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">
-                          {user.first_name} {user.last_name}
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.username}</TableCell>
-                        <TableCell>
-                          {user.is_platform_admin ? (
-                            <Badge>Platform admin</Badge>
-                          ) : (
-                            <Badge variant="secondary">User</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <UsersList users={users} />
             )}
           </CardContent>
         </Card>
       </TabsContent>
     </Tabs>
+  );
+}
+
+function UsersList({ users }: { users: AdminUser[] }) {
+  return (
+    <>
+      <div className="hidden overflow-x-auto md:block">
+        <Table className="min-w-[720px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Username</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Created</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="font-medium">{formatUserName(user)}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.username}</TableCell>
+                <TableCell>
+                  <UserRoleBadge user={user} />
+                </TableCell>
+                <TableCell className="text-xs text-muted-foreground">
+                  {new Date(user.created_at).toLocaleDateString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="grid gap-3 p-4 md:hidden">
+        {users.map((user) => (
+          <article key={user.id} aria-label={`User ${formatUserName(user)}`} className="rounded-lg border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium">{formatUserName(user)}</p>
+                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              </div>
+              <UserRoleBadge user={user} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <dt className="text-xs text-muted-foreground">Username</dt>
+                <dd className="mt-1 truncate font-medium">{user.username}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Created</dt>
+                <dd className="mt-1 font-medium">{new Date(user.created_at).toLocaleDateString()}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function UserRoleBadge({ user }: { user: AdminUser }) {
+  return user.is_platform_admin ? <Badge>Platform admin</Badge> : <Badge variant="secondary">User</Badge>;
+}
+
+function formatUserName(user: AdminUser) {
+  return `${user.first_name} ${user.last_name}`.trim();
+}
+
+function WorkspaceActions({
+  workspace,
+  disabled,
+  onSuspendWorkspace,
+  onReactivateWorkspace,
+  onToggleMaintenance,
+  onToggleIsolation,
+  onOpenWorkspaceEditor,
+}: {
+  workspace: AdminWorkspace;
+  disabled: boolean;
+  onSuspendWorkspace: (workspace: AdminWorkspace) => void;
+  onReactivateWorkspace: (workspace: AdminWorkspace) => void;
+  onToggleMaintenance: (workspace: AdminWorkspace) => void;
+  onToggleIsolation: (workspace: AdminWorkspace) => void;
+  onOpenWorkspaceEditor: (workspace: AdminWorkspace, kind: 'limits' | 'featureFlags') => void;
+}) {
+  return (
+    <RowActionMenu
+      label={`Actions for ${workspace.name}`}
+      actions={[
+        {
+          label: workspace.lifecycle_status === 'active' ? 'Suspend' : 'Reactivate',
+          onSelect: () => workspace.lifecycle_status === 'active' ? onSuspendWorkspace(workspace) : onReactivateWorkspace(workspace),
+          disabled,
+          destructive: workspace.lifecycle_status === 'active',
+        },
+        {
+          label: workspace.maintenance_mode ? 'Disable maintenance' : 'Enable maintenance',
+          onSelect: () => onToggleMaintenance(workspace),
+          disabled,
+        },
+        {
+          label: workspace.tenant_mode === 'shared' ? 'Mark dedicated' : 'Mark shared',
+          onSelect: () => onToggleIsolation(workspace),
+          disabled,
+        },
+        {
+          label: 'Manage limits',
+          onSelect: () => onOpenWorkspaceEditor(workspace, 'limits'),
+          disabled,
+        },
+        {
+          label: 'Manage feature flags',
+          onSelect: () => onOpenWorkspaceEditor(workspace, 'featureFlags'),
+          disabled,
+        },
+      ]}
+    />
   );
 }

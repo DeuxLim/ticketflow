@@ -30,7 +30,7 @@ type TicketDetailsRelatedTicketsDialogProps = {
   relatedTicketsCoverageHint: string | null;
   relatedTicketIdValue?: string;
   relatedTicketRelationshipValue?: string;
-  onDeleteRelatedTicket: (linkId: number) => void;
+  onDeleteRelatedTicket: (link: NonNullable<Ticket['related_tickets']>[number]) => void;
   isPending: boolean;
   mutationError: unknown;
 };
@@ -79,7 +79,7 @@ export function TicketDetailsRelatedTicketsDialog({
                 <Button
                   className="mt-2"
                   disabled={isPending}
-                  onClick={() => onDeleteRelatedTicket(link.id)}
+                  onClick={() => onDeleteRelatedTicket(link)}
                   size="sm"
                   type="button"
                   variant="outline"

@@ -3,10 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
+import { ConfirmDialog, PageHeader } from '@/components/app';
 import { ForbiddenState } from '@/components/forbidden-state';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWorkspaceAccess } from '@/hooks/use-workspace-access';
 import { ApiError } from '@/services/api/client';
 import {
@@ -78,6 +81,9 @@ export function TicketsPage() {
   const [bulkPriority, setBulkPriority] = useState<'none' | TicketForm['priority']>('none');
   const [bulkAssignee, setBulkAssignee] = useState<string>('none');
   const [assignmentPendingTicketId, setAssignmentPendingTicketId] = useState<number | null>(null);
+  const [assignTarget, setAssignTarget] = useState<Ticket | null>(null);
+  const [assignValue, setAssignValue] = useState<string>('none');
+  const [deleteTarget, setDeleteTarget] = useState<Ticket | null>(null);
 
   const createForm = useForm<TicketForm>({
     resolver: zodResolver(ticketFormSchema),
@@ -346,10 +352,12 @@ export function TicketsPage() {
   };
 
   const requestDeleteTicket = (ticket: Ticket) => {
-    const shouldDelete = window.confirm(`Delete ${ticket.ticket_number}? This cannot be undone.`);
-    if (shouldDelete) {
-      deleteTicket.mutate(ticket.id);
-    }
+    setDeleteTarget(ticket);
+  };
+
+  const openAssignTicket = (ticket: Ticket) => {
+    setAssignTarget(ticket);
+    setAssignValue(ticket.assigned_to_user_id ? String(ticket.assigned_to_user_id) : 'none');
   };
 
   if (accessQuery.isLoading) {
@@ -397,13 +405,12 @@ export function TicketsPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Badge variant="secondary">Tickets</Badge>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">Ticket Queue</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Scan the queue first, then open focused controls for saved views, filtering, and bulk updates when you need them.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageHeader
+        eyebrow="Tickets"
+        title="Ticket Queue"
+        description="Scan the queue first, then open focused controls for saved views, filtering, and bulk updates when you need them."
+        actions={
+          <>
           <Button onClick={() => setIsControlsOpen(true)} type="button" variant="outline">
             {selectedVisibleTicketIds.length > 0
               ? `Views & Filters (${selectedVisibleTicketIds.length} selected)`
@@ -421,8 +428,9 @@ export function TicketsPage() {
           >
             Create Ticket
           </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <Card className="shadow-none">
         <CardHeader className="border-b">
@@ -455,19 +463,81 @@ export function TicketsPage() {
             selectedTicketIds={selectedTicketIds}
             selectedVisibleTicketIds={selectedVisibleTicketIds}
             onSelectedTicketIdsChange={setSelectedTicketIds}
-            members={members}
             canManage={canManage}
             deletePending={deleteTicket.isPending}
             assignmentPendingTicketId={assignmentPendingTicketId}
             onEdit={openEditTicket}
             onDelete={requestDeleteTicket}
-            onAssign={(ticket, assigneeId) => {
-              if (ticket.assigned_to_user_id === assigneeId) return;
-              updateTicketAssignee.mutate({ ticketId: ticket.id, assigneeId });
-            }}
+            onOpenAssign={openAssignTicket}
           />
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(assignTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAssignTarget(null);
+            setAssignValue('none');
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign ticket</DialogTitle>
+            <DialogDescription>
+              Choose the agent responsible for {assignTarget?.ticket_number ?? 'this ticket'}.
+            </DialogDescription>
+          </DialogHeader>
+          <Field>
+            <FieldLabel htmlFor="queue-assign-ticket">Assignee</FieldLabel>
+            <Select value={assignValue} onValueChange={(value) => setAssignValue(value ?? 'none')}>
+              <SelectTrigger id="queue-assign-ticket" aria-label={assignTarget ? `Assign ${assignTarget.ticket_number}` : 'Assign ticket'}>
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="none">Unassigned</SelectItem>
+                  {assignTarget?.assignee && !members.some((member) => member.user.id === assignTarget.assignee?.id) && (
+                    <SelectItem value={String(assignTarget.assignee.id)}>
+                      {assignTarget.assignee.first_name} {assignTarget.assignee.last_name}
+                    </SelectItem>
+                  )}
+                  {members.map((member) => (
+                    <SelectItem key={member.user.id} value={String(member.user.id)}>
+                      {member.user.first_name} {member.user.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <DialogFooter>
+            <Button
+              disabled={updateTicketAssignee.isPending}
+              onClick={() => setAssignTarget(null)}
+              type="button"
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!assignTarget || updateTicketAssignee.isPending}
+              onClick={() => {
+                if (!assignTarget) return;
+                const assigneeId = assignValue === 'none' ? null : Number(assignValue);
+                if (assignTarget.assigned_to_user_id !== assigneeId) {
+                  updateTicketAssignee.mutate({ ticketId: assignTarget.id, assigneeId });
+                }
+                setAssignTarget(null);
+              }}
+              type="button"
+            >
+              {updateTicketAssignee.isPending ? 'Assigning...' : 'Save assignment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <TicketQueueControlsSheet
         open={isControlsOpen}
@@ -584,6 +654,25 @@ export function TicketsPage() {
         selectedTemplateId={editTemplateId}
         submitDisabled={updateTicket.isPending || editForm.formState.isSubmitting || !editTarget}
         templates={activeTemplateConfigs}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="Delete ticket"
+        description={`Delete ${deleteTarget?.ticket_number ?? 'this ticket'}? This cannot be undone.`}
+        confirmLabel="Delete ticket"
+        variant="destructive"
+        isPending={deleteTicket.isPending}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTicket.mutate(deleteTarget.id, {
+              onSuccess: () => setDeleteTarget(null),
+            });
+          }
+        }}
       />
     </section>
   );
