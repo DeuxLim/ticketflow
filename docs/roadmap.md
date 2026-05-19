@@ -4,9 +4,25 @@ This file is synchronized from `docs/project-state.yaml`. Treat `docs/project-st
 
 ## Current Focus
 
-No active focus is set.
+- `RELIABILITY-P1` Post-Deployment Reliability Guardrails
 
 ## MVP Items
+
+### `RELIABILITY-P1` Post-Deployment Reliability Guardrails
+
+- Status: `in_progress`
+- Priority: high
+- Scope: Strengthen production reliability after initial free-platform launch with repeatable smoke checks, credential hygiene, and a rollback-first response playbook.
+- Current state: `RELIABILITY-P1-T01` is complete, and `RELIABILITY-P1-T02` is in progress after documenting credential-rotation ownership, cadence, and verification evidence workflow.
+- Next actions: execute one live hosted admin credential rotation and record non-sensitive verification evidence.
+- Blockers: hosted platform-admin credential access is required to execute the live rotation step.
+
+#### Child Items
+
+- `RELIABILITY-P1-T01` Add hosted smoke-check and rollback triage checklist - `complete`
+- `RELIABILITY-P1-T02` Formalize admin credential rotation ownership workflow - `in_progress`
+- `RELIABILITY-P1-T03` Add reusable non-sensitive reliability evidence templates - `complete`
+- `RELIABILITY-P1-T04` Add blocked-rotation escalation protocol - `complete`
 
 ### `MOBILE-RESP-P2` Operational Compact Responsive Hardening
 

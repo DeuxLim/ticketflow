@@ -145,6 +145,126 @@ After deployment:
 5. Confirm direct deep links like `/auth/login` and `/workspaces/demo-workspace/tickets/1` do not 404.
 6. Confirm the backend health endpoint returns `{"status":"ok"}`.
 
+## Hosted Smoke Check (Repeatable)
+
+Run this checklist after deploys and during incident triage.
+
+1. Frontend reachability:
+
+```bash
+curl -sS -i https://ticketflow-frontend-flax.vercel.app/auth/login
+```
+
+Expected: `HTTP 200`, HTML payload, and Vercel security headers (`x-frame-options`, `x-content-type-options`).
+
+2. Backend health:
+
+```bash
+curl -sS -i https://ticketflow-api-rut0.onrender.com/api/health
+```
+
+Expected: `HTTP 200` and JSON containing `"status":"ok"`.
+
+3. Auth endpoint behavior:
+
+```bash
+curl -sS -i -X POST https://ticketflow-api-rut0.onrender.com/api/auth/login \
+  -H 'Content-Type: application/json' \
+  --data '{"email":"nobody@example.com","password":"wrongpass"}'
+```
+
+Expected: non-5xx response (typically `401` or `422`) proving the auth endpoint is reachable and responding predictably.
+
+4. Authenticated UI path:
+
+- Sign in with a valid admin account.
+- Confirm `/admin` and one workspace route load successfully.
+
+## Rollback-First Incident Triage
+
+Use this order to restore service quickly before deeper debugging.
+
+1. Classify the failure quickly:
+- Frontend-only regression: API health is OK, but UI path is broken.
+- Backend/API regression: `/api/health` fails or auth endpoints fail unexpectedly.
+- Data/DB regression: API is up but key reads/writes fail due to schema/data issues.
+
+2. Frontend rollback path (Vercel):
+- Revert to the last known-good deployment in Vercel.
+- Re-run the hosted smoke check.
+- Keep backend unchanged unless backend checks also fail.
+
+3. Backend rollback path (Render):
+- Roll back to last known-good Render deploy if the health or auth checks regress.
+- Confirm DB connectivity with `/api/health` after rollback.
+- Re-run auth behavior check.
+
+4. Database safety:
+- Do not apply additional migrations during active outage response unless rollback cannot restore service.
+- If a migration caused failure, roll back app code first, then evaluate targeted migration remediation.
+
+5. Recovery verification:
+- Re-run the full hosted smoke checklist.
+- Confirm admin login and core workspace pages.
+- Log incident summary, root cause, and permanent fix tasks in tracker/docs.
+
+## Admin Credential Rotation Workflow
+
+Use this workflow for the hosted initial platform-admin account. Never commit passwords, tokens, or one-time reset links into git-tracked files.
+
+Ownership and cadence:
+
+- Owner: workspace/project owner (current operator for this repo/deployment).
+- Backup owner: one designated maintainer with platform access.
+- Cadence: rotate immediately after initial bootstrap, then every 30 days, and immediately after any suspected credential exposure.
+
+Rotation procedure:
+
+1. Generate a strong replacement password using a password manager.
+2. Update the credential through the app/admin flow or direct admin tooling.
+3. Ensure the old credential no longer works.
+4. Store the new credential only in approved secret storage (password manager, secure vault, or equivalent).
+5. Do not paste raw credential values in terminal history, tracker docs, commits, or PR text.
+
+Verification evidence (non-sensitive):
+
+- Record rotation timestamp (`YYYY-MM-DD HH:MM +TZ`).
+- Record operator identity (who performed the rotation).
+- Record login verification result (`success`/`failed`) using the rotated credential.
+- Record that old credential access was invalidated.
+- Add this evidence to `docs/changelog/progress-log.md` without secret values.
+
+Blocked-rotation escalation protocol:
+
+1. If the designated owner cannot access the hosted admin account, open a reliability incident entry in `docs/changelog/progress-log.md`.
+2. Assign the backup owner and set a resolution target within 24 hours.
+3. Run hosted smoke checks while blocked to confirm service remains healthy.
+4. Once access is restored, execute rotation immediately and log non-sensitive verification evidence.
+
+Rotation evidence template:
+
+```text
+Credential Rotation Evidence
+- Rotation timestamp: YYYY-MM-DD HH:MM +TZ
+- Operator: <name or handle>
+- Environment: production
+- Verification login using rotated credential: success|failed
+- Old credential invalidated: yes|no
+- Notes: <optional non-sensitive context>
+```
+
+Incident recovery evidence template:
+
+```text
+Incident Recovery Evidence
+- Incident timestamp: YYYY-MM-DD HH:MM +TZ
+- Incident class: frontend|backend|database|mixed
+- Initial symptom: <short description>
+- Recovery action: rollback|config-fix|service-restart|other
+- Smoke check result after recovery: pass|fail
+- Follow-up task ID: <tracker id>
+```
+
 ## Free-Tier Caveats
 
 - Render free services are not recommended for production workloads.

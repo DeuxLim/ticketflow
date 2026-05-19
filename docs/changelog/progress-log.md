@@ -1,5 +1,58 @@
 # Progress Log
 
+## 2026-05-18 11:05 +08:00 - Added Blocked-Rotation Escalation Protocol
+
+- Completed `RELIABILITY-P1-T04`.
+- Added a blocked-rotation escalation protocol in `docs/deployment/free-platforms.md` to define backup-owner assignment, response timing, and required smoke-check continuity while credential access is unavailable.
+- Kept `RELIABILITY-P1-T02` as the active next step pending live hosted credential access.
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Validated canonical tracker synchronization and YAML parse for `docs/project-state.yaml`.
+
+## 2026-05-18 10:40 +08:00 - Added Reliability Evidence Templates
+
+- Completed `RELIABILITY-P1-T03`.
+- Added reusable non-sensitive templates in `docs/deployment/free-platforms.md` for:
+  - credential-rotation evidence
+  - incident-recovery evidence
+- Kept `RELIABILITY-P1-T02` as the active next step because live credential access is still required to execute and verify a real rotation.
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Validated canonical tracker synchronization and YAML parse for `docs/project-state.yaml`.
+
+## 2026-05-18 10:20 +08:00 - Advanced Credential Rotation Workflow Hardening
+
+- Moved `RELIABILITY-P1-T02` to `in_progress`.
+- Added an explicit admin credential rotation workflow to `docs/deployment/free-platforms.md`, including ownership, cadence, rotation procedure, and non-sensitive verification evidence requirements.
+- Kept `RELIABILITY-P1` active and documented the remaining live-execution blocker: hosted platform-admin credential access is required to perform and verify an actual rotation.
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Validated canonical tracker synchronization and YAML parse for `docs/project-state.yaml`.
+
+## 2026-05-17 13:25 +08:00 - Completed Hosted Smoke and Rollback Triage Checklist
+
+- Completed `RELIABILITY-P1-T01`.
+- Updated `docs/deployment/free-platforms.md` with a repeatable hosted smoke-check procedure and a rollback-first incident triage sequence.
+- Kept `RELIABILITY-P1` active and moved next action to credential-rotation ownership/verification planning (`RELIABILITY-P1-T02`).
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Ran `curl -sS -i https://ticketflow-frontend-flax.vercel.app/auth/login` and confirmed `HTTP 200`.
+- Ran `curl -sS -i https://ticketflow-api-rut0.onrender.com/api/health` and confirmed `HTTP 200` with `{"name":"Ticketing","status":"ok"}`.
+- Ran `curl -sS -i -X POST https://ticketflow-api-rut0.onrender.com/api/auth/login ...` with invalid credentials and confirmed `HTTP 422` with `Invalid credentials.`.
+
+## 2026-05-17 13:10 +08:00 - Started Post-Deployment Reliability Guardrails
+
+- Added `RELIABILITY-P1` as the active roadmap focus.
+- Added `RELIABILITY-P1-T01` to define the next execution slice: hosted smoke-check checklist plus rollback-first triage guidance.
+- Synchronized canonical tracker docs: `docs/project-state.yaml`, `docs/roadmap.md`, and `docs/changelog/progress-log.md`.
+
+Verification:
+- Validated tracker sync across canonical docs.
+
 ## 2026-05-14 12:20 +08:00 - Closed Operational Compact Responsive Hardening
 
 - Added and completed `MOBILE-RESP-P2` plus child items `MOBILE-RESP-P2-T01` through `MOBILE-RESP-P2-T05`.
@@ -78,7 +131,7 @@ Verification:
 
 ## Resume From Here
 
-No active focus is set. Pick the next roadmap item before starting new implementation.
+Continue with `RELIABILITY-P1-T02` by executing one hosted admin credential rotation and recording non-sensitive verification evidence.
 
 ## 2026-05-08 15:41 +08:00 - Added Backend Workspace Member Management APIs
 

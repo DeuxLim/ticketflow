@@ -1,13 +1,175 @@
 schema_version: 1
 project: Ticketing
-updated_at: "2026-05-14T12:20:00+08:00"
+updated_at: "2026-05-18T11:05:00+08:00"
 updated_by: codex
 source_files:
   canonical: docs/project-state.yaml
   roadmap: docs/roadmap.md
   progress_log: docs/changelog/progress-log.md
-current_focus: []
+current_focus:
+  - RELIABILITY-P1
 items:
+  - id: RELIABILITY-P1
+    title: Post-Deployment Reliability Guardrails
+    type: epic
+    parent_id: null
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Strengthen production reliability after initial free-platform launch with repeatable smoke checks, credential hygiene, and a clear rollback/failure playbook.
+    definition_of_done:
+      - A lightweight repeatable smoke-check workflow exists for hosted frontend and backend critical paths.
+      - Initial platform-admin credential handling is moved from temporary bootstrap to an explicit rotation/ownership workflow.
+      - Deployment runbook documents failure triage and rollback-first response steps for the current free-platform architecture.
+      - Canonical tracker docs are synchronized after verification.
+    dependencies:
+      - DEPLOY-P1
+    notes:
+      - "2026-05-17: Opened as the next active focus immediately after deployment-prep and responsive closeout."
+      - "2026-05-17: Completed RELIABILITY-P1-T01 by adding hosted smoke-check + rollback triage guidance and running live checks against hosted frontend/backend."
+      - "2026-05-18: Completed RELIABILITY-P1-T03 by adding reusable credential-rotation and incident-recovery evidence templates to the deployment runbook."
+      - "2026-05-18: Completed RELIABILITY-P1-T04 by adding a blocked-rotation escalation protocol to keep reliability operations moving while credential access is unavailable."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Complete RELIABILITY-P1-T02 once hosted admin credential access is available for live rotation execution.
+    tags:
+      - deployment
+      - reliability
+      - operations
+    created_at: "2026-05-17T13:10:00+08:00"
+    updated_at: "2026-05-18T11:05:00+08:00"
+    changed_at: "2026-05-18T11:05:00+08:00"
+    changed_source: codex
+
+  - id: RELIABILITY-P1-T01
+    title: Add hosted smoke-check and rollback triage checklist
+    type: task
+    parent_id: RELIABILITY-P1
+    status: complete
+    priority: high
+    mvp: true
+    description: Document and validate a minimal hosted smoke-check sequence plus rollback-oriented triage steps for frontend and backend incidents.
+    definition_of_done:
+      - "`docs/deployment/free-platforms.md` contains a concise smoke-check checklist covering health, auth login, and admin load paths."
+      - Runbook includes a rollback-first triage section for frontend deploy regressions and backend service/database incidents.
+      - Checklist is executed once and results are recorded in the progress log.
+    dependencies: []
+    notes:
+      - "2026-05-17: Updated `docs/deployment/free-platforms.md` with repeatable hosted smoke checks and rollback-first triage."
+      - "2026-05-17: Live checks passed: frontend `/auth/login` returned HTTP 200; backend `/api/health` returned HTTP 200 with `{\"status\":\"ok\"}`; invalid-credential login returned HTTP 422 with `Invalid credentials.`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - deployment
+      - reliability
+      - docs
+      - verification
+    created_at: "2026-05-17T13:10:00+08:00"
+    updated_at: "2026-05-17T13:25:00+08:00"
+    changed_at: "2026-05-17T13:25:00+08:00"
+    changed_source: codex
+
+  - id: RELIABILITY-P1-T02
+    title: Formalize admin credential rotation ownership workflow
+    type: task
+    parent_id: RELIABILITY-P1
+    status: in_progress
+    priority: high
+    mvp: true
+    description: Define who owns hosted platform-admin credential rotation, where the procedure lives, and how completion is verified after each rotation.
+    definition_of_done:
+      - Deployment runbook includes an explicit credential-rotation procedure with ownership and cadence.
+      - Verification step confirms login with the rotated credential and records timestamped completion evidence in the progress log.
+      - Sensitive values are never written to repo docs.
+    dependencies:
+      - RELIABILITY-P1-T01
+    notes:
+      - "2026-05-18: Added explicit admin credential rotation ownership, cadence, procedure, and non-sensitive verification evidence requirements in `docs/deployment/free-platforms.md`."
+    incomplete_reason: "Waiting for live credential rotation execution and verification evidence."
+    blocked_reason: "Hosted platform-admin credential access is required to execute and verify a real rotation."
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions:
+      - Execute one hosted admin credential rotation.
+      - Record non-sensitive verification evidence in the progress log.
+    tags:
+      - deployment
+      - security
+      - operations
+      - credentials
+    created_at: "2026-05-17T13:25:00+08:00"
+    updated_at: "2026-05-18T10:20:00+08:00"
+    changed_at: "2026-05-18T10:20:00+08:00"
+    changed_source: codex
+
+  - id: RELIABILITY-P1-T03
+    title: Add reusable non-sensitive reliability evidence templates
+    type: task
+    parent_id: RELIABILITY-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Add reusable templates for credential-rotation and incident-recovery evidence so operators can log verification outcomes consistently without storing secrets.
+    definition_of_done:
+      - Deployment runbook includes a credential-rotation evidence template with required non-sensitive fields.
+      - Deployment runbook includes an incident-recovery evidence template aligned with rollback-first triage.
+      - Tracker docs are synchronized after template addition.
+    dependencies:
+      - RELIABILITY-P1-T01
+    notes:
+      - "2026-05-18: Added credential-rotation and incident-recovery evidence templates to `docs/deployment/free-platforms.md`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - deployment
+      - reliability
+      - operations
+      - docs
+    created_at: "2026-05-18T10:40:00+08:00"
+    updated_at: "2026-05-18T10:40:00+08:00"
+    changed_at: "2026-05-18T10:40:00+08:00"
+    changed_source: codex
+
+  - id: RELIABILITY-P1-T04
+    title: Add blocked-rotation escalation protocol
+    type: task
+    parent_id: RELIABILITY-P1
+    status: complete
+    priority: medium
+    mvp: true
+    description: Define what operators should do when admin credential access is unavailable so reliability checks and ownership escalation still happen promptly.
+    definition_of_done:
+      - Deployment runbook includes a clear blocked-rotation escalation protocol.
+      - Protocol covers backup-owner assignment and response target.
+      - Protocol keeps smoke-check verification active while rotation is blocked.
+    dependencies:
+      - RELIABILITY-P1-T03
+    notes:
+      - "2026-05-18: Added blocked-rotation escalation protocol in `docs/deployment/free-platforms.md`."
+    incomplete_reason: null
+    blocked_reason: null
+    deferred_reason: null
+    discovered_during_implementation: false
+    next_actions: []
+    tags:
+      - deployment
+      - reliability
+      - operations
+      - docs
+    created_at: "2026-05-18T11:05:00+08:00"
+    updated_at: "2026-05-18T11:05:00+08:00"
+    changed_at: "2026-05-18T11:05:00+08:00"
+    changed_source: codex
+
   - id: MOBILE-RESP-P2
     title: Operational Compact Responsive Hardening
     type: epic
