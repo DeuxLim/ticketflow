@@ -105,6 +105,16 @@ docs/developer/routes.md
 
 `docs/project-state.yaml` is the canonical tracker. If roadmap and tracker disagree, trust `docs/project-state.yaml`.
 
+## Tracker Maintenance Checklist
+
+Run these checks after roadmap or progress-log updates:
+
+```bash
+ruby -e 'require "yaml"; YAML.load_file("docs/project-state.yaml"); puts "project-state.yaml OK"'
+rg -n "Current Focus|Resume From Here|RELIABILITY-P1" docs/roadmap.md docs/changelog/progress-log.md
+git diff --check
+```
+
 ## 4. Local Setup
 
 From the repo root:
