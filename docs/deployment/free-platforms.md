@@ -149,6 +149,12 @@ After deployment:
 
 Run this checklist after deploys and during incident triage.
 
+Preferred command from repo root:
+
+```bash
+./scripts/hosted-smoke-check.sh
+```
+
 1. Frontend reachability:
 
 ```bash
