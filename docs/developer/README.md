@@ -115,6 +115,13 @@ rg -n "Current Focus|Resume From Here|RELIABILITY-P1" docs/roadmap.md docs/chang
 git diff --check
 ```
 
+Hosted reliability checks:
+
+```bash
+./scripts/hosted-smoke-check.sh
+./scripts/check-tracker-sync.sh
+```
+
 ## 4. Local Setup
 
 From the repo root:
