@@ -122,6 +122,13 @@ Hosted reliability checks:
 ./scripts/check-tracker-sync.sh
 ```
 
+Maintenance scripts:
+
+- `./scripts/hosted-smoke-check.sh`: checks hosted frontend reachability, backend health, and auth endpoint non-5xx behavior.
+- `./scripts/check-tracker-sync.sh`: validates canonical tracker structure across `project-state`, roadmap, and progress log markers.
+- `./scripts/check-doc-presence.sh`: ensures core canonical docs still exist before updates.
+- `./scripts/check-script-hygiene.sh`: ensures shell scripts remain executable and keep strict mode enabled.
+
 ## 4. Local Setup
 
 From the repo root:
