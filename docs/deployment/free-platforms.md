@@ -155,6 +155,12 @@ Preferred command from repo root:
 ./scripts/hosted-smoke-check.sh
 ```
 
+Optional overrides for unstable networks:
+
+```bash
+CURL_CONNECT_TIMEOUT=12 CURL_MAX_TIME=30 CURL_RETRY=2 ./scripts/hosted-smoke-check.sh
+```
+
 1. Frontend reachability:
 
 ```bash
